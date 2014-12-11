@@ -24,6 +24,7 @@ namespace WindowsFormsApplication1
         TextBox[] param_list = new TextBox[param_list_size];
         int timeout = Timeout.Infinite;
         int MinMem = 1000;  // in MB
+        int cores = 8;
         int failed = 0;
         StreamWriter logfile = new System.IO.StreamWriter(@"C:\temp\log.txt");
         StreamWriter csvfile;
@@ -129,15 +130,48 @@ namespace WindowsFormsApplication1
             }
             return -1;
         }
-        
+
+        void process_out(string fileName, int par, ref int cnt, ref string csvheader)
+        {
+            ++cnt;
+            //run("grep \"### time\" " + outfile(fileName) + " | sed -e s/\"### time\"// > tmp ", true);
+            run("grep \"### \" " + outfile(fileName) + "  > tmp ", true);
+            StreamReader sr = new StreamReader("tmp");
+            try
+            {
+                csvtext += "\"\t" + param_list[par].Text + "\"," + fileName + ",";  // the \t is necessary for excel, so it does not interpret e.g. -auto as a formula. 
+                //float fres = Convert.ToSingle(System.IO.File.ReadAllText("tmp"));
+
+
+                csvheader = "";
+                while (!sr.EndOfStream)
+                {
+                    var parts = sr.ReadLine().Split(new char[] { ' ' });
+                    string tag = parts[1];
+                    csvheader += tag + ",";
+                    float fres = Convert.ToSingle(parts[2]);
+                    csvtext += fres + ",";
+                    float current = results.ContainsKey(tag) ? (float)results[tag] : 0.0f;
+                    results[tag] = current + fres;
+                }
+                csvtext += "\n";
+            }
+            catch
+            {
+                bg.ReportProgress(0, "failed to read result from " + outfile(fileName));
+                failed++;
+                csvtext += "\n";
+            }
+            sr.Close();
+        }
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
             string csvheader = "";
             int cnt = 0;            
             PerformanceCounter[] C;
-            C = new PerformanceCounter[8];
-            for (int i = 0; i < 8; ++i)
+            C = new PerformanceCounter[cores];
+            for (int i = 0; i < cores; ++i)
             {
                 C[i] = new PerformanceCounter("Processor", "% Processor Time", i.ToString(), true);
             }
@@ -168,7 +202,7 @@ namespace WindowsFormsApplication1
                         int load;
                         float fload;
                         bool first = false;
-                        for (; i < 8; ++i)
+                        for (; i < cores; ++i)
                         {
                             fload = C[i].NextValue();
                             load = Convert.ToInt32(fload);
@@ -180,7 +214,7 @@ namespace WindowsFormsApplication1
                             }
                         }
                         Int64 AvailableMem = PerformanceInfo.GetPhysicalAvailableMemoryInMiB();
-                        if (i == 8) {
+                        if (i == cores) {
                             bg.ReportProgress(-1, "all cores busy...");                            
                             i = 0; 
                         }
@@ -214,47 +248,10 @@ namespace WindowsFormsApplication1
                 
                 cnt = 0;
                 results.Clear();
-                foreach (string fileName in fileEntries)
-                {
-                    ++cnt;
-                    //run("grep \"### time\" " + outfile(fileName) + " | sed -e s/\"### time\"// > tmp ", true);
-                    run("grep \"### \" " + outfile(fileName) + "  > tmp ", true);
-                    StreamReader sr = new StreamReader("tmp");
-                    try
-                    {
-                        csvtext += "\"\t" + param_list[par].Text + "\"," + fileName + ",";  // the \t is necessary for excel, so it does not interpret e.g. -auto as a formula. 
-                        //float fres = Convert.ToSingle(System.IO.File.ReadAllText("tmp"));
-
-                    
-                        csvheader = "";
-                        while (!sr.EndOfStream)
-                        {
-                            var parts = sr.ReadLine().Split(new char[] { ' ' });
-                            string tag = parts[1];
-                            csvheader += tag + ",";
-                            float fres = Convert.ToSingle(parts[2]);
-                            csvtext += fres + ",";
-                            float current = results.ContainsKey(tag) ? (float)results[tag] : 0.0f;
-                            results[tag] = current + fres;
-                        }
-                        csvtext += "\n";
-                    }
-                    catch
-                    {
-                        bg.ReportProgress(0, "failed to read result from " + outfile(fileName));
-                        failed++;
-                        csvtext += "\n";
-                    }
-                    sr.Close();
-                }
-                bg.ReportProgress(0, "fails = " + failed.ToString());
-
-                foreach (DictionaryEntry de in results)
-                {
-                    bg.ReportProgress(0, "Total `" + de.Key.ToString() + "' reported by exe = " + de.Value.ToString());
-                }
+                foreach (string fileName in fileEntries) process_out(fileName, par, ref cnt, ref csvheader);
                 
-
+                bg.ReportProgress(0, "fails = " + failed.ToString());
+                foreach (DictionaryEntry de in results) bg.ReportProgress(0, "Total `" + de.Key.ToString() + "' reported by exe = " + de.Value.ToString());                
             }
             
             stopwatch.Stop();
@@ -271,8 +268,7 @@ namespace WindowsFormsApplication1
             bg.ReportProgress(5, failed.ToString());
             bg.ReportProgress(4, ""); // button1.Enabled = true;
 
-            csvfile.Write("param, bench, " + csvheader);
-           
+            csvfile.Write("param, bench, " + csvheader);           
             csvfile.WriteLine();
             csvfile.Write(csvtext);
             csvfile.Close();
