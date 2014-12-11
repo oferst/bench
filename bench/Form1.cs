@@ -39,7 +39,7 @@ namespace WindowsFormsApplication1
             {
                 param_list[i] = new TextBox();
                 param_list[i].Location = new System.Drawing.Point(60, 345 + i * 30);
-                param_list[i].Size = new System.Drawing.Size(407, 20);
+                param_list[i].Size = new System.Drawing.Size(479, 20);
                 param_list[i].Text = "<>";
                 Controls.Add(param_list[i]);
             }
@@ -88,9 +88,9 @@ namespace WindowsFormsApplication1
     
         int run(string cmd, bool wait = false)
         {
-            System.Diagnostics.Process process = new System.Diagnostics.Process();
-            System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
-            startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+            Process process = new Process();
+            ProcessStartInfo startInfo = new ProcessStartInfo();
+            startInfo.WindowStyle = ProcessWindowStyle.Hidden;
             startInfo.FileName = "cmd.exe";
             startInfo.Arguments = " /c \"" + cmd + "\"";
             process.StartInfo = startInfo;
@@ -324,8 +324,19 @@ namespace WindowsFormsApplication1
             csvfile.Close();
             button1.Enabled = true;
         }
-        
+
+        private void button_csv_Click(object sender, EventArgs e)
+        {
+            Process p = new Process();
+            ProcessStartInfo startInfo = new ProcessStartInfo();
+            startInfo.UseShellExecute = true;
+            startInfo.FileName = text_csv.Text;
+            p.StartInfo = startInfo;
+            p.Start();
+        }
         #endregion
+
+        
 
     }
 }

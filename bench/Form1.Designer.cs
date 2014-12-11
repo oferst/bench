@@ -54,6 +54,7 @@
             this.text_csv = new System.Windows.Forms.TextBox();
             this.label11 = new System.Windows.Forms.Label();
             this.button2 = new System.Windows.Forms.Button();
+            this.button3 = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // button1
@@ -171,7 +172,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(303, 493);
+            this.label3.Location = new System.Drawing.Point(276, 493);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(53, 13);
             this.label3.TabIndex = 15;
@@ -180,7 +181,7 @@
             // label_cnt
             // 
             this.label_cnt.AutoSize = true;
-            this.label_cnt.Location = new System.Drawing.Point(357, 494);
+            this.label_cnt.Location = new System.Drawing.Point(330, 494);
             this.label_cnt.Name = "label_cnt";
             this.label_cnt.Size = new System.Drawing.Size(16, 13);
             this.label_cnt.TabIndex = 16;
@@ -202,6 +203,7 @@
             // 
             // textBox3
             // 
+            this.textBox3.Enabled = false;
             this.textBox3.Location = new System.Drawing.Point(439, 314);
             this.textBox3.Name = "textBox3";
             this.textBox3.Size = new System.Drawing.Size(100, 20);
@@ -219,7 +221,7 @@
             // label9
             // 
             this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(166, 319);
+            this.label9.Location = new System.Drawing.Point(167, 318);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(73, 13);
             this.label9.TabIndex = 20;
@@ -228,16 +230,17 @@
             // label10
             // 
             this.label10.AutoSize = true;
+            this.label10.Enabled = false;
             this.label10.Location = new System.Drawing.Point(360, 316);
             this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(73, 13);
+            this.label10.Size = new System.Drawing.Size(76, 13);
             this.label10.TabIndex = 21;
-            this.label10.Text = "max-mem(MB)";
+            this.label10.Text = "max-mem (MB)";
             // 
             // label_fails
             // 
             this.label_fails.AutoSize = true;
-            this.label_fails.Location = new System.Drawing.Point(439, 494);
+            this.label_fails.Location = new System.Drawing.Point(420, 494);
             this.label_fails.Name = "label_fails";
             this.label_fails.Size = new System.Drawing.Size(16, 13);
             this.label_fails.TabIndex = 22;
@@ -246,7 +249,7 @@
             // label12
             // 
             this.label12.AutoSize = true;
-            this.label12.Location = new System.Drawing.Point(399, 494);
+            this.label12.Location = new System.Drawing.Point(380, 494);
             this.label12.Name = "label12";
             this.label12.Size = new System.Drawing.Size(38, 13);
             this.label12.TabIndex = 23;
@@ -256,13 +259,13 @@
             // 
             this.text_csv.Location = new System.Drawing.Point(352, 288);
             this.text_csv.Name = "text_csv";
-            this.text_csv.Size = new System.Drawing.Size(184, 20);
+            this.text_csv.Size = new System.Drawing.Size(187, 20);
             this.text_csv.TabIndex = 24;
             // 
             // label11
             // 
             this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(303, 294);
+            this.label11.Location = new System.Drawing.Point(303, 291);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(43, 13);
             this.label11.TabIndex = 25;
@@ -278,11 +281,22 @@
             this.button2.UseVisualStyleBackColor = true;
             this.button2.Click += new System.EventHandler(this.button_kill_Click);
             // 
+            // button3
+            // 
+            this.button3.Location = new System.Drawing.Point(266, 515);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(75, 23);
+            this.button3.TabIndex = 27;
+            this.button3.Text = "open csv";
+            this.button3.UseVisualStyleBackColor = true;
+            this.button3.Click += new System.EventHandler(this.button_csv_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(556, 551);
+            this.Controls.Add(this.button3);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.label11);
             this.Controls.Add(this.text_csv);
@@ -344,6 +358,7 @@
         private System.Windows.Forms.TextBox text_csv;
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.Button button3;
     }
 }
 
