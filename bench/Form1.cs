@@ -53,6 +53,8 @@ namespace WindowsFormsApplication1
             text_csv.Text = @"c:\temp\res.csv";
         }
 
+        #region utils
+
         void kill_process(Object stateinfo)
         {
             Process process = (Process)stateinfo;
@@ -62,10 +64,28 @@ namespace WindowsFormsApplication1
                 process.Kill();
             }
         }
+         
+        string outfile(string filename) {
+            return filename + ".out";
+        }
+
+        void Log(string msg, bool tofile = true)
+        {
+            listBox1.Items.Add(msg);
+            if (tofile)
+            {
+                logfile.WriteLine(msg);
+            }
+        }
+
+        #endregion
+
+        #region work
+
 
         int run_native(string cmd, bool wait = false)
         {
-            System.Diagnostics.Process process = new System.Diagnostics.Process();            
+            System.Diagnostics.Process process = new System.Diagnostics.Process();
             System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
             process.StartInfo.RedirectStandardOutput = true;
             startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
@@ -86,18 +106,17 @@ namespace WindowsFormsApplication1
             }
             return -1;
         }
-      
-        
+
         int run(string cmd, bool wait = false)
         {
-            System.Diagnostics.Process process = new System.Diagnostics.Process();            
+            System.Diagnostics.Process process = new System.Diagnostics.Process();
             System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
             startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
             startInfo.FileName = "cmd.exe";
-            startInfo.Arguments = " /c \"" + cmd + "\"";            
-            process.StartInfo = startInfo;            
+            startInfo.Arguments = " /c \"" + cmd + "\"";
+            process.StartInfo = startInfo;
             //process.MaxWorkingSet = new IntPtr(2000000000); //2Gb            
-            processes.Add(process);           
+            processes.Add(process);
 
             process.Start();
 
@@ -105,62 +124,12 @@ namespace WindowsFormsApplication1
 
             if (wait)
             {
-                process.WaitForExit();                
+                process.WaitForExit();
                 return process.ExitCode;
             }
             return -1;
         }
-                 
-        string outfile(string filename) {
-            return filename + ".out";
-        }
-
-        void Log(string msg, bool tofile = true)
-        {
-            listBox1.Items.Add(msg);
-            if (tofile)
-            {
-                logfile.WriteLine(msg);
-            }
-        }
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-            label_paralel_time.Text = "";
-            label_total_time.Text = "";
-            label_cnt.Text = "";
-            label_fails.Text = "";
-            csvtext = "";
-
-            try  // in case the field contains non-numeral.
-            {
-                int x = Convert.ToInt32(text_timeout.Text);
-                timeout = x * 1000; // need milliseconds.
-            }
-            catch { timeout = Timeout.Infinite; }
-
-            try  // in case the field contains non-numeral.
-            {
-                int x = Convert.ToInt32(text_minmem.Text);
-                MinMem = x; 
-            }
-            catch { MinMem = 0; }
-
-            try
-            {
-                csvfile = new System.IO.StreamWriter(text_csv.Text);      //(@"C:\temp\res.csv");
-                //csvfile.WriteLine("param, bench, time");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Cannot open the csv file!\n" + ex.ToString());
-                return;
-            }
-
-            button1.Enabled = false;
-            bg.WorkerReportsProgress = true;
-            bg.RunWorkerAsync();
-        }
+        
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
@@ -325,72 +294,61 @@ namespace WindowsFormsApplication1
             }            
         }
 
-        private void button2_Click(object sender, EventArgs e)
+        #endregion
+
+        #region GUI
+
+        private void button_start_Click(object sender, EventArgs e)
+        {
+            label_paralel_time.Text = "";
+            label_total_time.Text = "";
+            label_cnt.Text = "";
+            label_fails.Text = "";
+            csvtext = "";
+
+            try  // in case the field contains non-numeral.
+            {
+                int x = Convert.ToInt32(text_timeout.Text);
+                timeout = x * 1000; // need milliseconds.
+            }
+            catch { timeout = Timeout.Infinite; }
+
+            try  // in case the field contains non-numeral.
+            {
+                int x = Convert.ToInt32(text_minmem.Text);
+                MinMem = x;
+            }
+            catch { MinMem = 0; }
+
+            try
+            {
+                csvfile = new System.IO.StreamWriter(text_csv.Text);      //(@"C:\temp\res.csv");
+                //csvfile.WriteLine("param, bench, time");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Cannot open the csv file!\n" + ex.ToString());
+                return;
+            }
+
+            button1.Enabled = false;
+            bg.WorkerReportsProgress = true;
+            bg.RunWorkerAsync();
+        }
+
+        private void button_kill_Click(object sender, EventArgs e)
         {
             foreach (Process p in processes)
             {
                 if (!p.HasExited) p.Kill();
             }
         }
-
+        
+        #endregion
     }
 
 
-    // code taken from stack-exchange 
-    public static class PerformanceInfo
-    {
-        [DllImport("psapi.dll", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool GetPerformanceInfo([Out] out PerformanceInformation PerformanceInformation, [In] int Size);
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct PerformanceInformation
-        {
-            public int Size;
-            public IntPtr CommitTotal;
-            public IntPtr CommitLimit;
-            public IntPtr CommitPeak;
-            public IntPtr PhysicalTotal;
-            public IntPtr PhysicalAvailable;
-            public IntPtr SystemCache;
-            public IntPtr KernelTotal;
-            public IntPtr KernelPaged;
-            public IntPtr KernelNonPaged;
-            public IntPtr PageSize;
-            public int HandlesCount;
-            public int ProcessCount;
-            public int ThreadCount;
-        }
-
-        public static Int64 GetPhysicalAvailableMemoryInMiB()
-        {
-            PerformanceInformation pi = new PerformanceInformation();
-            if (GetPerformanceInfo(out pi, Marshal.SizeOf(pi)))
-            {
-                return Convert.ToInt64((pi.PhysicalAvailable.ToInt64() * pi.PageSize.ToInt64() / 1048576));
-            }
-            else
-            {
-                return -1;
-            }
-
-        }
-
-        public static Int64 GetTotalMemoryInMiB()
-        {
-            PerformanceInformation pi = new PerformanceInformation();
-            if (GetPerformanceInfo(out pi, Marshal.SizeOf(pi)))
-            {
-                return Convert.ToInt64((pi.PhysicalTotal.ToInt64() * pi.PageSize.ToInt64() / 1048576));
-            }
-            else
-            {
-                return -1;
-            }
-
-        }
-    }
-
+    
 
 
 }
