@@ -43,7 +43,6 @@
             this.label_total_time = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.label_cnt = new System.Windows.Forms.Label();
-            this.bg = new System.ComponentModel.BackgroundWorker();
             this.text_timeout = new System.Windows.Forms.TextBox();
             this.text_minmem = new System.Windows.Forms.TextBox();
             this.textBox3 = new System.Windows.Forms.TextBox();
@@ -186,11 +185,6 @@
             this.label_cnt.Size = new System.Drawing.Size(16, 13);
             this.label_cnt.TabIndex = 16;
             this.label_cnt.Text = "...";
-            // 
-            // bg
-            // 
-            this.bg.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker1_DoWork);
-            this.bg.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.backgroundWorker1_ProgressChanged);
             // 
             // text_timeout
             // 
@@ -339,7 +333,6 @@
         private System.Windows.Forms.Label label_total_time;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label_cnt;
-        private System.ComponentModel.BackgroundWorker bg;
         private System.Windows.Forms.TextBox text_timeout;
         private System.Windows.Forms.TextBox text_minmem;
         private System.Windows.Forms.TextBox textBox3;

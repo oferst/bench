@@ -30,6 +30,7 @@ namespace WindowsFormsApplication1
         StreamWriter csvfile;
         string csvtext;
         Hashtable results = new Hashtable();
+        AbortableBackgroundWorker bg;
 
         public Form1()
         {
@@ -49,7 +50,7 @@ namespace WindowsFormsApplication1
             //text_dir.Text = @"C:\temp\muc_test\SAT02\industrial\biere\cmpadd";
             text_dir.Text = @"C:\temp\muc_test\marques-silva\hardware-verification";
             //text_exe.Text = "\"C:\\Users\\ofers\\Documents\\Visual Studio 2012\\Projects\\hhlmuc\\Release\\hhlmuc.exe\" ";
-            text_exe.Text = "\"C:\\Users\\ofers\\Documents\\Visual Studio 2012\\Projects\\hmuc\\Release\\hmuc.exe\" ";
+            text_exe.Text = "\"C:\\Users\\ofers\\Documents\\Visual Studio 2012\\Projects\\hmuc\\Release\\hmuc.exe\"";
             text_minmem.Text = MinMem.ToString();
             text_csv.Text = @"c:\temp\res.csv";
         }
@@ -84,30 +85,7 @@ namespace WindowsFormsApplication1
         #region work
 
 
-        int run_native(string cmd, bool wait = false)
-        {
-            System.Diagnostics.Process process = new System.Diagnostics.Process();
-            System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
-            process.StartInfo.RedirectStandardOutput = true;
-            startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
-            startInfo.FileName = "cmd.exe";
-            startInfo.Arguments = " /c \"" + cmd + "\"";
-            process.StartInfo = startInfo;
-            //process.MaxWorkingSet = new IntPtr(2000000000); //2Gb            
-            processes.Add(process);
-
-            process.Start();
-
-            var timer = new System.Threading.Timer(kill_process, process, timeout, Timeout.Infinite);  // 10 min. time-out
-
-            if (wait)
-            {
-                process.WaitForExit();
-                return process.ExitCode;
-            }
-            return -1;
-        }
-
+    
         int run(string cmd, bool wait = false)
         {
             System.Diagnostics.Process process = new System.Diagnostics.Process();
@@ -133,16 +111,12 @@ namespace WindowsFormsApplication1
 
         void process_out(string fileName, int par, ref int cnt, ref string csvheader)
         {
-            ++cnt;
-            //run("grep \"### time\" " + outfile(fileName) + " | sed -e s/\"### time\"// > tmp ", true);
+            ++cnt;            
             run("grep \"### \" " + outfile(fileName) + "  > tmp ", true);
             StreamReader sr = new StreamReader("tmp");
             try
             {
                 csvtext += "\"\t" + param_list[par].Text + "\"," + fileName + ",";  // the \t is necessary for excel, so it does not interpret e.g. -auto as a formula. 
-                //float fres = Convert.ToSingle(System.IO.File.ReadAllText("tmp"));
-
-
                 csvheader = "";
                 while (!sr.EndOfStream)
                 {
@@ -228,8 +202,7 @@ namespace WindowsFormsApplication1
                         System.Threading.Thread.Sleep(5000);// 5 seconds wait
                     }
                     bg.ReportProgress(0, "running " + fileName);
-                    run(exe + fileName + " > " + outfile(fileName));
-                    // run_native(fileName);
+                    run(exe + " " + fileName + " > " + outfile(fileName));                   
 
                 }
 
@@ -301,6 +274,7 @@ namespace WindowsFormsApplication1
             label_cnt.Text = "";
             label_fails.Text = "";
             csvtext = "";
+            bg = new AbortableBackgroundWorker();
 
             try  // in case the field contains non-numeral.
             {
@@ -329,23 +303,30 @@ namespace WindowsFormsApplication1
 
             button1.Enabled = false;
             bg.WorkerReportsProgress = true;
+            bg.DoWork += new System.ComponentModel.DoWorkEventHandler(backgroundWorker1_DoWork);
+            bg.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(backgroundWorker1_ProgressChanged);
             bg.RunWorkerAsync();
         }
 
         private void button_kill_Click(object sender, EventArgs e)
         {
-            foreach (Process p in processes)
+            int ind1 = text_exe.Text.LastIndexOf('\\'),
+                ind2 = text_exe.Text.LastIndexOf('.'); 
+            string exe = text_exe.Text.Substring(ind1 + 1, ind2 -ind1 -1);
+            
+            Process[] Pr = Process.GetProcessesByName(exe);
+            foreach (Process p in Pr)
             {
                 if (!p.HasExited) p.Kill();
             }
+            bg.Abort();
+            bg.Dispose();
+            csvfile.Close();
+            button1.Enabled = true;
         }
         
         #endregion
+
     }
-
-
-    
-
-
 }
 
