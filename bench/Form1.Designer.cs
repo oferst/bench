@@ -75,6 +75,7 @@
             this.listBox1.Name = "listBox1";
             this.listBox1.Size = new System.Drawing.Size(535, 225);
             this.listBox1.TabIndex = 2;
+            this.listBox1.TabStop = false;
             // 
             // label1
             // 
@@ -108,7 +109,7 @@
             this.text_filter.Location = new System.Drawing.Point(60, 289);
             this.text_filter.Name = "text_filter";
             this.text_filter.Size = new System.Drawing.Size(233, 20);
-            this.text_filter.TabIndex = 7;
+            this.text_filter.TabIndex = 2;
             // 
             // text_dir
             // 
@@ -192,7 +193,7 @@
             this.text_timeout.Location = new System.Drawing.Point(60, 316);
             this.text_timeout.Name = "text_timeout";
             this.text_timeout.Size = new System.Drawing.Size(100, 20);
-            this.text_timeout.TabIndex = 17;
+            this.text_timeout.TabIndex = 3;
             // 
             // text_minmem
             // 

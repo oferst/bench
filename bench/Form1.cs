@@ -20,7 +20,8 @@ namespace bench
     public partial class Form1 : Form
     {
 
-        List<Tuple<Process, string>> processes = new List<Tuple<Process, string>>();
+        List<Tuple<Process, string>> processes = new List<Tuple<Process, string>>();  // process, output-file. 
+        List<System.Threading.Timer> timers = new List<System.Threading.Timer>();
         static int param_list_size = 4;
         TextBox[] param_list = new TextBox[param_list_size];
         int timeout = Timeout.Infinite;
@@ -32,6 +33,7 @@ namespace bench
         string csvtext;
         Hashtable results = new Hashtable();        
         AbortableBackgroundWorker bg;
+
 
         public Form1()
         {
@@ -46,7 +48,7 @@ namespace bench
             }
             param_list[0].Text = " -no-muc-print-sol -no-pre";
             //text_filter.Text = "2dlx_ca_mc_ex_bp_f_new.gcnf";
-            text_filter.Text = "*.cnf";
+            text_filter.Text = "g*.cnf";
             //text_dir.Text = @"C:\temp\gcnf_test\belov\";
             //text_dir.Text = @"C:\temp\muc_test\SAT02\industrial\biere\cmpadd";
             text_dir.Text = @"C:\temp\muc_test\marques-silva\hardware-verification";
@@ -60,11 +62,11 @@ namespace bench
 
         void kill_process(Object stateinfo)
         {
-            Process process = (Process)stateinfo;
-            if (!process.HasExited)
+            Process p = (Process)stateinfo;
+            if (!p.HasExited)
             {
-                Log("timeout: process killed: " + process.StartInfo.Arguments);
-                process.Kill();
+                bg.ReportProgress(0,"timeout: process killed: " + p.StartInfo.Arguments);
+                p.Kill();
             }
         }
          
@@ -87,28 +89,30 @@ namespace bench
 
 
     
-        int run(string cmd, string filename, bool back_process = false)
+        int run(string cmd, string args, string filename, bool front_process = false)
         {
-            Process process = new Process();
-            ProcessStartInfo startInfo = new ProcessStartInfo();
-            startInfo.WindowStyle = ProcessWindowStyle.Hidden;
-            startInfo.FileName = "cmd.exe";
-            startInfo.Arguments = " /c \"" + cmd + "\"";
-            process.StartInfo = startInfo;
+            Process p = new Process();
+
+            p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            p.StartInfo.FileName = cmd;
+            p.StartInfo.Arguments = args + " " + filename;
+            p.StartInfo.UseShellExecute = false;
+            p.StartInfo.RedirectStandardOutput = true;
+            p.StartInfo.CreateNoWindow = true;
             //process.MaxWorkingSet = new IntPtr(2000000000); //2Gb                       
+            
+            p.Start();            
 
-            process.Start();
-
-            var timer = new System.Threading.Timer(kill_process, process, timeout, Timeout.Infinite);  // 10 min. time-out
-
-            if (back_process)
+            if (front_process)
             {
-                process.WaitForExit();
-                return process.ExitCode;
+                p.WaitForExit();
+                return p.ExitCode;
             }
             else
             {
-                Tuple<Process, string> pair = new Tuple<Process, string>(process, filename);
+                var timer = new System.Threading.Timer(kill_process, p, timeout, Timeout.Infinite);
+                timers.Add(timer);
+                Tuple<Process, string> pair = new Tuple<Process, string>(p, filename);
                 processes.Add(pair);
             }
             return -1;
@@ -116,7 +120,7 @@ namespace bench
 
         void process_out(string fileName, int par, ref string csvheader)
         {            
-            run("grep \"### \" " + fileName + "  > tmp ", "", true);
+            run("cmd", "/c grep \"### \" " + fileName + "  > tmp ", "", true);
             StreamReader sr = new StreamReader("tmp");
             try
             {
@@ -165,8 +169,7 @@ namespace bench
             for (int par = 0; par < param_list_size; ++par)
             {
                 if (param_list[par].Text == "<>") continue;
-                bg.ReportProgress(0, "- - - - - " + param_list[par].Text + "- - - - - ");
-                string exe = text_exe.Text + " " + param_list[par].Text + " ";
+                bg.ReportProgress(0, "- - - - - " + param_list[par].Text + "- - - - - ");                
                 failed = 0;
 
                 foreach (string fileName in fileEntries)
@@ -206,35 +209,41 @@ namespace bench
                         System.Threading.Thread.Sleep(5000);// 5 seconds wait
                     }
                     bg.ReportProgress(0, "running " + fileName);
-                    run(exe + " " + fileName + " > " + outfile(fileName), outfile(fileName));
+                    run(text_exe.Text, param_list[par].Text, fileName);
                 }
 
                 // waiting for all processes to end before collecting statistics.
 
                 cnt = 0;
                 results.Clear();
-                foreach (Tuple<Process,string> pair in processes)
+                foreach (Tuple<Process, string> pair in processes)
                 {
                     Process p = (Process)pair.Item1;
                     string fileName = (string)pair.Item2;
-                    if (!p.HasExited)
-                    {                        
-                        bg.ReportProgress(0, "waiting for " + p.StartInfo.Arguments);
-                        p.WaitForExit();
-                    }
+                    if (!p.HasExited) bg.ReportProgress(0, "waiting for " + p.StartInfo.Arguments);                        
+                    string outstring = p.StandardOutput.ReadToEnd();
+                    p.WaitForExit(); // is this even necessary given the previous line ? 
+                    
                     bg.ReportProgress(0, "process existed with code " + p.ExitCode);
                     ++cnt;
                     if (p.ExitCode == -1) // time-out
                     {
                         failed++;
-                        bg.ReportProgress(0, "timed-out: " + fileName);
-                        csvtext += "\"\t" + param_list[par].Text + "\"," + fileName + ",\n";  
+                        bg.ReportProgress(0, "timed-out: " + outfile(fileName));
+                        csvtext += "\"\t" + param_list[par].Text + "\"," + fileName + ",\n";
                     }
-                    else process_out((string)pair.Item2, par, ref csvheader);
-                }              
-                
+                    else
+                    {
+                        StreamWriter sw = new StreamWriter(outfile(fileName));
+                        sw.WriteLine(outstring);
+                        sw.Close();
+                        process_out(outfile(fileName), par, ref csvheader);
+                    }
+                }
+                processes.Clear();
                 bg.ReportProgress(0, "fails = " + failed.ToString());
                 foreach (DictionaryEntry de in results) bg.ReportProgress(0, "Total `" + de.Key.ToString() + "' reported by exe = " + de.Value.ToString());                
+
             }
             
             stopwatch.Stop();
