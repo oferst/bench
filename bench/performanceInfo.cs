@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 
 // code taken from stack-exchange 
-namespace WindowsFormsApplication1
+namespace bench
 {
     public static class PerformanceInfo
     {

@@ -12,14 +12,15 @@ using System.IO;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Web;
 
-namespace WindowsFormsApplication1
+namespace bench
 {
-
+    // todo: timeout doesn't kill the actual process, only the cmd process. 
     public partial class Form1 : Form
     {
 
-        List<Process> processes = new List<Process>();
+        List<Tuple<Process, string>> processes = new List<Tuple<Process, string>>();
         static int param_list_size = 4;
         TextBox[] param_list = new TextBox[param_list_size];
         int timeout = Timeout.Infinite;
@@ -29,7 +30,7 @@ namespace WindowsFormsApplication1
         StreamWriter logfile = new System.IO.StreamWriter(@"C:\temp\log.txt");
         StreamWriter csvfile;
         string csvtext;
-        Hashtable results = new Hashtable();
+        Hashtable results = new Hashtable();        
         AbortableBackgroundWorker bg;
 
         public Form1()
@@ -86,7 +87,7 @@ namespace WindowsFormsApplication1
 
 
     
-        int run(string cmd, bool wait = false)
+        int run(string cmd, string filename, bool back_process = false)
         {
             Process process = new Process();
             ProcessStartInfo startInfo = new ProcessStartInfo();
@@ -94,25 +95,28 @@ namespace WindowsFormsApplication1
             startInfo.FileName = "cmd.exe";
             startInfo.Arguments = " /c \"" + cmd + "\"";
             process.StartInfo = startInfo;
-            //process.MaxWorkingSet = new IntPtr(2000000000); //2Gb            
-            processes.Add(process);
+            //process.MaxWorkingSet = new IntPtr(2000000000); //2Gb                       
 
             process.Start();
 
             var timer = new System.Threading.Timer(kill_process, process, timeout, Timeout.Infinite);  // 10 min. time-out
 
-            if (wait)
+            if (back_process)
             {
                 process.WaitForExit();
                 return process.ExitCode;
             }
+            else
+            {
+                Tuple<Process, string> pair = new Tuple<Process, string>(process, filename);
+                processes.Add(pair);
+            }
             return -1;
         }
 
-        void process_out(string fileName, int par, ref int cnt, ref string csvheader)
-        {
-            ++cnt;            
-            run("grep \"### \" " + outfile(fileName) + "  > tmp ", true);
+        void process_out(string fileName, int par, ref string csvheader)
+        {            
+            run("grep \"### \" " + fileName + "  > tmp ", "", true);
             StreamReader sr = new StreamReader("tmp");
             try
             {
@@ -202,26 +206,32 @@ namespace WindowsFormsApplication1
                         System.Threading.Thread.Sleep(5000);// 5 seconds wait
                     }
                     bg.ReportProgress(0, "running " + fileName);
-                    run(exe + " " + fileName + " > " + outfile(fileName));                   
-
+                    run(exe + " " + fileName + " > " + outfile(fileName), outfile(fileName));
                 }
 
                 // waiting for all processes to end before collecting statistics.
 
-                foreach (Process p in processes)
-                {                    
+                cnt = 0;
+                results.Clear();
+                foreach (Tuple<Process,string> pair in processes)
+                {
+                    Process p = (Process)pair.Item1;
+                    string fileName = (string)pair.Item2;
                     if (!p.HasExited)
                     {                        
                         bg.ReportProgress(0, "waiting for " + p.StartInfo.Arguments);
                         p.WaitForExit();
                     }
-                }
-                
-                // processing output
-                
-                cnt = 0;
-                results.Clear();
-                foreach (string fileName in fileEntries) process_out(fileName, par, ref cnt, ref csvheader);
+                    bg.ReportProgress(0, "process existed with code " + p.ExitCode);
+                    ++cnt;
+                    if (p.ExitCode == -1) // time-out
+                    {
+                        failed++;
+                        bg.ReportProgress(0, "timed-out: " + fileName);
+                        csvtext += "\"\t" + param_list[par].Text + "\"," + fileName + ",\n";  
+                    }
+                    else process_out((string)pair.Item2, par, ref csvheader);
+                }              
                 
                 bg.ReportProgress(0, "fails = " + failed.ToString());
                 foreach (DictionaryEntry de in results) bg.ReportProgress(0, "Total `" + de.Key.ToString() + "' reported by exe = " + de.Value.ToString());                
@@ -275,6 +285,8 @@ namespace WindowsFormsApplication1
             label_fails.Text = "";
             csvtext = "";
             bg = new AbortableBackgroundWorker();
+            processes.Clear();
+            results.Clear();
 
             try  // in case the field contains non-numeral.
             {

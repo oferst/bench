@@ -1,4 +1,4 @@
-﻿namespace WindowsFormsApplication1
+﻿namespace bench
 {
     partial class Form1
     {
