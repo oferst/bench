@@ -11,7 +11,7 @@ using System.Collections;
 using System.IO;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Threading;
+using System.Threading; 
 using System.Web;
 
 namespace bench
@@ -20,8 +20,9 @@ namespace bench
     public partial class Form1 : Form
     {
 
-        List<Tuple<Process, string>> processes = new List<Tuple<Process, string>>();  // process, output-file. 
+        Hashtable processes = new Hashtable();  // from process to <args, benchmark, list of results>
         List<System.Threading.Timer> timers = new List<System.Threading.Timer>();
+        List<string> labels = new List<string>();
         static int param_list_size = 4;
         TextBox[] param_list = new TextBox[param_list_size];
         int timeout = Timeout.Infinite;
@@ -31,6 +32,7 @@ namespace bench
         StreamWriter logfile = new System.IO.StreamWriter(@"C:\temp\log.txt");
         StreamWriter csvfile;
         string csvtext;
+        Hashtable accum_results = new Hashtable();
         Hashtable results = new Hashtable();        
         AbortableBackgroundWorker bg;
 
@@ -87,9 +89,25 @@ namespace bench
 
         #region work
 
+        void read_stdout(object sender, DataReceivedEventArgs e)
+        {
+            Process p = (Process)sender;
+            if (e.Data != null)
+            {
+                string consoleLine = e.Data;
+                if (consoleLine.Substring(0, 3) == "###")
+                {
+                    var parts = consoleLine.Split(new char[] { ' ' });
+                    string tag = parts[1];
+                    if (!labels.Exists(x => x == tag)) labels.Add(tag);  // todo: wasteful. Perhaps get # of items from user. 
+                    float res = Convert.ToSingle(parts[2]);
+                    Tuple<string, string, List<float>> data = ((Tuple<string, string, List<float>>)processes[p]);
+                    data.Item3.Add(res);                    
+                }
+            }
+        }
 
-    
-        int run(string cmd, string args, string filename, bool front_process = false)
+        void run(string cmd, string args, string filename)
         {
             Process p = new Process();
 
@@ -99,54 +117,20 @@ namespace bench
             p.StartInfo.UseShellExecute = false;
             p.StartInfo.RedirectStandardOutput = true;
             p.StartInfo.CreateNoWindow = true;
-            //process.MaxWorkingSet = new IntPtr(2000000000); //2Gb                       
-            
-            p.Start();            
+            //process.MaxWorkingSet = new IntPtr(2000000000); //2Gb 
 
-            if (front_process)
-            {
-                p.WaitForExit();
-                return p.ExitCode;
-            }
-            else
-            {
-                var timer = new System.Threading.Timer(kill_process, p, timeout, Timeout.Infinite);
-                timers.Add(timer);
-                Tuple<Process, string> pair = new Tuple<Process, string>(p, filename);
-                processes.Add(pair);
-            }
-            return -1;
+            p.OutputDataReceived += read_stdout;
+
+            p.Start();
+            p.BeginOutputReadLine();
+
+
+            var timer = new System.Threading.Timer(kill_process, p, timeout, Timeout.Infinite);
+            timers.Add(timer); // needed ?
+            List<float> l = new List<float>();
+            processes[p] = new Tuple<string, string, List<float>>(args, filename, l);            
         }
-
-        void process_out(string fileName, int par, ref string csvheader)
-        {            
-            run("cmd", "/c grep \"### \" " + fileName + "  > tmp ", "", true);
-            StreamReader sr = new StreamReader("tmp");
-            try
-            {
-                csvtext += "\"\t" + param_list[par].Text + "\"," + fileName + ",";  // the \t is necessary for excel, so it does not interpret e.g. -auto as a formula. 
-                csvheader = "";
-                while (!sr.EndOfStream)
-                {
-                    var parts = sr.ReadLine().Split(new char[] { ' ' });
-                    string tag = parts[1];
-                    csvheader += tag + ",";
-                    float fres = Convert.ToSingle(parts[2]);
-                    csvtext += fres + ",";
-                    float current = results.ContainsKey(tag) ? (float)results[tag] : 0.0f;
-                    results[tag] = current + fres;
-                }
-                csvtext += "\n";
-            }
-            catch
-            {
-                bg.ReportProgress(0, "failed to read result from " + outfile(fileName));
-                failed++;
-                csvtext += "\n";
-            }
-            sr.Close();
-        }
-
+                
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
             string csvheader = "";
@@ -167,10 +151,13 @@ namespace bench
             Stopwatch stopwatch = Stopwatch.StartNew(); 
 
             for (int par = 0; par < param_list_size; ++par)
-            {
+            {                
                 if (param_list[par].Text == "<>") continue;
                 bg.ReportProgress(0, "- - - - - " + param_list[par].Text + "- - - - - ");                
                 failed = 0;
+                results.Clear();
+                accum_results.Clear();
+                cnt = 0;
 
                 foreach (string fileName in fileEntries)
                 {
@@ -187,7 +174,7 @@ namespace bench
                         {
                             fload = C[i].NextValue();
                             load = Convert.ToInt32(fload);
-                            bg.ReportProgress(-1, "load = " + fload.ToString());
+                    //        bg.ReportProgress(-1, "load = " + fload.ToString());
                             if (load < 3)
                             {
                                 if (!first) first = true;   // this way we make sure two cores are free, to leave one for OS and such. 
@@ -205,48 +192,35 @@ namespace bench
                             else bg.ReportProgress(0, "not enough memory...");                            
                             
                         }
-                        bg.ReportProgress(0, "echo waiting 5 sec....");                            
+                        bg.ReportProgress(0, "echo waiting 5 sec....");
+                        //process_finished(par, ref cnt, ref csvheader);                        
+
                         System.Threading.Thread.Sleep(5000);// 5 seconds wait
                     }
                     bg.ReportProgress(0, "running " + fileName);
                     run(text_exe.Text, param_list[par].Text, fileName);
-                }
-
-                // waiting for all processes to end before collecting statistics.
-
-                cnt = 0;
-                results.Clear();
-                foreach (Tuple<Process, string> pair in processes)
-                {
-                    Process p = (Process)pair.Item1;
-                    string fileName = (string)pair.Item2;
-                    if (!p.HasExited) bg.ReportProgress(0, "waiting for " + p.StartInfo.Arguments);                        
-                    string outstring = p.StandardOutput.ReadToEnd();
-                    p.WaitForExit(); // is this even necessary given the previous line ? 
-                    
-                    bg.ReportProgress(0, "process existed with code " + p.ExitCode);
-                    ++cnt;
-                    if (p.ExitCode == -1) // time-out
-                    {
-                        failed++;
-                        bg.ReportProgress(0, "timed-out: " + outfile(fileName));
-                        csvtext += "\"\t" + param_list[par].Text + "\"," + fileName + ",\n";
-                    }
-                    else
-                    {
-                        StreamWriter sw = new StreamWriter(outfile(fileName));
-                        sw.WriteLine(outstring);
-                        sw.Close();
-                        process_out(outfile(fileName), par, ref csvheader);
-                    }
-                }
-                processes.Clear();
-                bg.ReportProgress(0, "fails = " + failed.ToString());
-                foreach (DictionaryEntry de in results) bg.ReportProgress(0, "Total `" + de.Key.ToString() + "' reported by exe = " + de.Value.ToString());                
-
+                }           
             }
-            
+
+            // post processing           
+
+            foreach (DictionaryEntry entry in processes)
+            {
+                Tuple<string, string, List<float>> trio = entry.Value as Tuple<string, string, List<float>>;
+                Process p = (Process)entry.Key;                
+                p.WaitForExit();
+                List<float> l = (List<float>) trio.Item3;
+                csvtext += trio.Item1 + ",";
+                csvtext += trio.Item2 + ","; // benchmark
+                for (int i = 0; i < l.Count; ++i)
+                    csvtext += l[i].ToString() + ",";
+                csvtext += "\n";
+            }           
+
+            bg.ReportProgress(0, "* all processes finished *");
             stopwatch.Stop();
+
+            foreach (string lbl in labels) csvheader += lbl + ",";
             string time = (Convert.ToSingle(stopwatch.ElapsedMilliseconds)/1000.0).ToString();
             bg.ReportProgress(0, "# of benchmarks:" + cnt);
             
@@ -254,13 +228,13 @@ namespace bench
             bg.ReportProgress(0, "============================");
 
             bg.ReportProgress(1, time); //label_paralel_time.Text
-            try { bg.ReportProgress(2, results["time"].ToString()); }
+            try { bg.ReportProgress(2, accum_results["time"].ToString()); }
             catch { };  //label_total_time.Text}
             bg.ReportProgress(3, cnt.ToString()); // label_cnt.Text 
             bg.ReportProgress(5, failed.ToString());
             bg.ReportProgress(4, ""); // button1.Enabled = true;
-
-            csvfile.Write("param, bench, " + csvheader);           
+            
+            csvfile.Write("param, bench, " + csvheader);  
             csvfile.WriteLine();
             csvfile.Write(csvtext);
             csvfile.Close();
@@ -295,6 +269,7 @@ namespace bench
             csvtext = "";
             bg = new AbortableBackgroundWorker();
             processes.Clear();
+            accum_results.Clear();
             results.Clear();
 
             try  // in case the field contains non-numeral.
