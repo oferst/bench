@@ -11,7 +11,7 @@ using System.Collections;
 using System.IO;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Threading; 
+using System.Threading;
 using System.Web;
 
 namespace bench
@@ -26,20 +26,21 @@ namespace bench
         static int param_list_size = 4;
         TextBox[] param_list = new TextBox[param_list_size];
         int timeout = Timeout.Infinite;
-        int MinMem = 1000;  // in MB
+        int MinMem = 1000;  // in MB        
         int cores = 8;
+        int[] active = new int[] {2, 4, 6 }; //note that we push all other processes to 0,1
         int failed = 0;
         StreamWriter logfile = new System.IO.StreamWriter(@"C:\temp\log.txt");
         StreamWriter csvfile;
         string csvtext;
         Hashtable accum_results = new Hashtable();
-        Hashtable results = new Hashtable();        
+        Hashtable results = new Hashtable();
         AbortableBackgroundWorker bg;
 
 
         public Form1()
         {
-            InitializeComponent();                        
+            InitializeComponent();
             for (int i = 0; i < param_list_size; ++i)
             {
                 param_list[i] = new TextBox();
@@ -48,16 +49,17 @@ namespace bench
                 param_list[i].Text = "<>";
                 Controls.Add(param_list[i]);
             }
-            param_list[0].Text = " -no-muc-print-sol -no-pre";
+            param_list[0].Text = " -no-muc-print-sol -no-pre -no-muc-progress";
             //text_filter.Text = "2dlx_ca_mc_ex_bp_f_new.gcnf";
-            text_filter.Text = "g*.cnf";
+            text_filter.Text = "4pipe*.cnf";
             //text_dir.Text = @"C:\temp\gcnf_test\belov\";
             //text_dir.Text = @"C:\temp\muc_test\SAT02\industrial\biere\cmpadd";
-            text_dir.Text = @"C:\temp\muc_test\marques-silva\hardware-verification";
+            //text_dir.Text = @"C:\temp\muc_test\marques-silva\hardware-verification";
+            text_dir.Text = @"C:\temp\muc_test\sat11_comp\";
             //text_exe.Text = "\"C:\\Users\\ofers\\Documents\\Visual Studio 2012\\Projects\\hhlmuc\\Release\\hhlmuc.exe\" ";
             text_exe.Text = "\"C:\\Users\\ofers\\Documents\\Visual Studio 2012\\Projects\\hmuc\\Release\\hmuc.exe\"";
             text_minmem.Text = MinMem.ToString();
-            text_csv.Text = @"c:\temp\res.csv";
+            text_csv.Text = @"c:\temp\res_1.csv";
         }
 
         #region utils
@@ -67,12 +69,13 @@ namespace bench
             Process p = (Process)stateinfo;
             if (!p.HasExited)
             {
-                bg.ReportProgress(0,"timeout: process killed: " + p.StartInfo.Arguments);
+                bg.ReportProgress(0, "timeout: process killed: " + p.StartInfo.Arguments);
                 p.Kill();
             }
         }
-         
-        string outfile(string filename) {
+
+        string outfile(string filename)
+        {
             return filename + ".out";
         }
 
@@ -92,22 +95,23 @@ namespace bench
         void read_stdout(object sender, DataReceivedEventArgs e)
         {
             Process p = (Process)sender;
+
             if (e.Data != null)
-            {
+            {                
                 string consoleLine = e.Data;
-                if (consoleLine.Substring(0, 3) == "###")
+                if (consoleLine.Length >= 4 && consoleLine.Substring(0, 3) == "###")
                 {
                     var parts = consoleLine.Split(new char[] { ' ' });
                     string tag = parts[1];
                     if (!labels.Exists(x => x == tag)) labels.Add(tag);  // todo: wasteful. Perhaps get # of items from user. 
                     float res = Convert.ToSingle(parts[2]);
                     Tuple<string, string, List<float>> data = ((Tuple<string, string, List<float>>)processes[p]);
-                    data.Item3.Add(res);                    
+                    data.Item3.Add(res);
                 }
             }
         }
 
-        void run(string cmd, string args, string filename)
+        void run(string cmd, string args, string filename, int affinity = 0x007F)
         {
             Process p = new Process();
 
@@ -117,89 +121,75 @@ namespace bench
             p.StartInfo.UseShellExecute = false;
             p.StartInfo.RedirectStandardOutput = true;
             p.StartInfo.CreateNoWindow = true;
+
             //process.MaxWorkingSet = new IntPtr(2000000000); //2Gb 
 
             p.OutputDataReceived += read_stdout;
 
             p.Start();
             p.BeginOutputReadLine();
-
+            p.ProcessorAffinity = (IntPtr)affinity;
+            p.PriorityClass = ProcessPriorityClass.RealTime;
 
             var timer = new System.Threading.Timer(kill_process, p, timeout, Timeout.Infinite);
             timers.Add(timer); // needed ?
             List<float> l = new List<float>();
-            processes[p] = new Tuple<string, string, List<float>>(args, filename, l);            
+            processes[p] = new Tuple<string, string, List<float>>(args, filename, l);
         }
-                
+
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
             string csvheader = "";
-            int cnt = 0;            
+            int cnt = 0;
             PerformanceCounter[] C;
             C = new PerformanceCounter[cores];
-            for (int i = 0; i < cores; ++i)
+            foreach (int i in active)
             {
-                C[i] = new PerformanceCounter("Processor", "% Processor Time", i.ToString(), true);
+                C[i] = new PerformanceCounter("Processor", "% Processor Time", (i).ToString(), true);
             }
             string benchmarksDir = text_dir.Text,
                 searchPattern = text_filter.Text;
 
-            
-            string[] fileEntries = Directory.GetFiles(benchmarksDir, searchPattern);            
 
-            
-            Stopwatch stopwatch = Stopwatch.StartNew(); 
+            string[] fileEntries = Directory.GetFiles(benchmarksDir, searchPattern);
+
+
+            Stopwatch stopwatch = Stopwatch.StartNew();
 
             for (int par = 0; par < param_list_size; ++par)
-            {                
+            {
                 if (param_list[par].Text == "<>") continue;
-                bg.ReportProgress(0, "- - - - - " + param_list[par].Text + "- - - - - ");                
+                bg.ReportProgress(0, "- - - - - " + param_list[par].Text + "- - - - - ");
                 failed = 0;
                 results.Clear();
                 accum_results.Clear();
                 cnt = 0;
-
+                
+                int ind1 = text_exe.Text.LastIndexOf('\\'),
+                ind2 = text_exe.Text.LastIndexOf('.');
+                string exe = text_exe.Text.Substring(ind1 + 1, ind2 - ind1 - 1);
                 foreach (string fileName in fileEntries)
-                {
-                    int i = 0;
-                    while (true)
-                    {
-                        //run(@"powershell -ExecutionPolicy ByPass -File  c:\temp\cores.ps1", true);
-                        //run("unix2dos report.txt", true);
-                        //if (run("grep -c \" 0 %\" report.txt", true) == 0) break;
-                        int load;
-                        float fload;
-                        bool first = false;
-                        for (; i < cores; ++i)
+                {                 
+                    int free_core;
+                    
+                  
+                    while (true) {
+
+                        Process[] Pr = Process.GetProcessesByName(exe);
+                        if (Pr.Length == 3)
                         {
-                            fload = C[i].NextValue();
-                            load = Convert.ToInt32(fload);
-                    //        bg.ReportProgress(-1, "load = " + fload.ToString());
-                            if (load < 3)
-                            {
-                                if (!first) first = true;   // this way we make sure two cores are free, to leave one for OS and such. 
-                                else break;
-                            }
+                            bg.ReportProgress(0, "echo waiting 5 sec....");
+                            //process_finished(par, ref cnt, ref csvheader);     
+                            System.Threading.Thread.Sleep(5000);// 5 seconds wait
+                            continue;
                         }
                         Int64 AvailableMem = PerformanceInfo.GetPhysicalAvailableMemoryInMiB();
-                        if (i == cores) {
-                            bg.ReportProgress(-1, "all cores busy...");                            
-                            i = 0; 
-                        }
-                        else
-                        {
-                            if (AvailableMem > MinMem) break;
-                            else bg.ReportProgress(0, "not enough memory...");                            
-                            
-                        }
-                        bg.ReportProgress(0, "echo waiting 5 sec....");
-                        //process_finished(par, ref cnt, ref csvheader);                        
-
-                        System.Threading.Thread.Sleep(5000);// 5 seconds wait
+                        if (AvailableMem > MinMem) break;
+                        bg.ReportProgress(0, "not enough memory...");                                              
                     }
-                    bg.ReportProgress(0, "running " + fileName);
-                    run(text_exe.Text, param_list[par].Text, fileName);
-                }           
+                    bg.ReportProgress(0, "running " + fileName ); 
+                    run(text_exe.Text, param_list[par].Text, fileName, 0x54);//1 << free_core);
+                }
             }
 
             // post processing           
@@ -207,24 +197,24 @@ namespace bench
             foreach (DictionaryEntry entry in processes)
             {
                 Tuple<string, string, List<float>> trio = entry.Value as Tuple<string, string, List<float>>;
-                Process p = (Process)entry.Key;                
+                Process p = (Process)entry.Key;
                 p.WaitForExit();
-                List<float> l = (List<float>) trio.Item3;
+                List<float> l = (List<float>)trio.Item3;
                 csvtext += trio.Item1 + ",";
                 csvtext += trio.Item2 + ","; // benchmark
                 for (int i = 0; i < l.Count; ++i)
                     csvtext += l[i].ToString() + ",";
                 csvtext += "\n";
-            }           
+            }
 
             bg.ReportProgress(0, "* all processes finished *");
             stopwatch.Stop();
 
             foreach (string lbl in labels) csvheader += lbl + ",";
-            string time = (Convert.ToSingle(stopwatch.ElapsedMilliseconds)/1000.0).ToString();
+            string time = (Convert.ToSingle(stopwatch.ElapsedMilliseconds) / 1000.0).ToString();
             bg.ReportProgress(0, "# of benchmarks:" + cnt);
-            
-            bg.ReportProgress(0, "parallel time = " + time);           
+
+            bg.ReportProgress(0, "parallel time = " + time);
             bg.ReportProgress(0, "============================");
 
             bg.ReportProgress(1, time); //label_paralel_time.Text
@@ -233,8 +223,8 @@ namespace bench
             bg.ReportProgress(3, cnt.ToString()); // label_cnt.Text 
             bg.ReportProgress(5, failed.ToString());
             bg.ReportProgress(4, ""); // button1.Enabled = true;
-            
-            csvfile.Write("param, bench, " + csvheader);  
+
+            csvfile.Write("param, bench, " + csvheader);
             csvfile.WriteLine();
             csvfile.Write(csvtext);
             csvfile.Close();
@@ -253,7 +243,7 @@ namespace bench
                 case 3: label_cnt.Text = log; break;
                 case 4: button1.Enabled = true; break;
                 case 5: label_fails.Text = log; break;
-            }            
+            }
         }
 
         #endregion
@@ -301,23 +291,56 @@ namespace bench
             bg.WorkerReportsProgress = true;
             bg.DoWork += new System.ComponentModel.DoWorkEventHandler(backgroundWorker1_DoWork);
             bg.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(backgroundWorker1_ProgressChanged);
+
+            Process[] localAll = Process.GetProcesses();
+            int success = 0, failure = 0;
+            foreach (Process p in localAll)
+            {
+                try
+                {
+                    p.ProcessorAffinity = (IntPtr)((int)p.ProcessorAffinity & 3);
+                    ++success;
+                }
+                catch
+                {
+                    ++failure;
+                }
+            }
+
+
             bg.RunWorkerAsync();
         }
 
         private void button_kill_Click(object sender, EventArgs e)
         {
             int ind1 = text_exe.Text.LastIndexOf('\\'),
-                ind2 = text_exe.Text.LastIndexOf('.'); 
-            string exe = text_exe.Text.Substring(ind1 + 1, ind2 -ind1 -1);
-            
+                ind2 = text_exe.Text.LastIndexOf('.');
+            string exe = text_exe.Text.Substring(ind1 + 1, ind2 - ind1 - 1);
+
             Process[] Pr = Process.GetProcessesByName(exe);
             foreach (Process p in Pr)
             {
                 if (!p.HasExited) p.Kill();
             }
-            bg.Abort();
-            bg.Dispose();
-            csvfile.Close();
+            if (bg != null)
+            {
+                bg.Abort();
+                bg.Dispose();
+            }
+            if (csvfile != null) csvfile.Close();
+            
+            Process[] localAll = Process.GetProcesses();
+            foreach (Process p in localAll)
+            {
+                try
+                {
+                    p.ProcessorAffinity = (IntPtr)(0xFF);            
+                }
+                catch
+                {                    
+                }
+            }
+
             button1.Enabled = true;
         }
 
@@ -332,8 +355,41 @@ namespace bench
         }
         #endregion
 
-        
+
 
     }
 }
 
+//int j = 0;
+//while (true)
+//{
+//    //run(@"powershell -ExecutionPolicy ByPass -File  c:\temp\cores.ps1", true);
+//    //run("unix2dos report.txt", true);
+//    //if (run("grep -c \" 0 %\" report.txt", true) == 0) break;
+//    int load;
+//    float fload;
+//    free_core = -1;
+
+//    for (; RR < cores; ++RR)
+//    {
+//        foreach (int i in active)
+//        {
+//            if (i < RR) continue;
+//            j = i;                                
+//            break;
+//        }
+//        fload = C[j].NextValue();
+//        load = Convert.ToInt32(fload);
+//        bg.ReportProgress(-1, "load = " + fload.ToString());
+//        if (load < 3)
+//        {
+//            free_core = j;
+//            RR = j + 1;
+//            break;
+//        }
+//    }
+//    if (RR == cores)
+//    {
+//        RR = 0;
+//        continue;
+//    }
