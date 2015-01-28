@@ -62,21 +62,49 @@ namespace bench
             
             
 
-            param_list[0].Text = " -no-muc-print-sol -no-pre -no-muc-progress";
+            param_list[0].Text = "-no-muc-print-sol -no-pre -no-muc-progress";
             //text_filter.Text = "2dlx_ca_mc_ex_bp_f_new.gcnf";
-            text_filter.Text = "f6n.cnf";
+            text_filter.Text = "try*.cnf";
             //text_dir.Text = @"C:\temp\gcnf_test\belov\";
             //text_dir.Text = @"C:\temp\muc_test\SAT02\industrial\biere\cmpadd";
             //text_dir.Text = @"C:\temp\muc_test\marques-silva\hardware-verification";
-            text_dir.Text = @"C:\temp\muc_test\SAT11\mus\marques-silva\hardware-verification";
+            //text_dir.Text = @"C:\temp\muc_test\SAT11\mus\marques-silva\hardware-verification";
+            text_dir.Text = @"C:\temp";
             //text_exe.Text = "\"C:\\Users\\ofers\\Documents\\Visual Studio 2012\\Projects\\hhlmuc\\Release\\hhlmuc.exe\" ";
             text_exe.Text = "\"C:\\Users\\ofers\\Documents\\Visual Studio 2012\\Projects\\hmuc\\Release\\hmuc.exe\"";
             text_minmem.Text = MinMem.ToString();
-            text_timeout = "600";
-            text_csv.Text = @"c:\temp\res_2.csv";
+            text_timeout.Text = "600";
+            text_csv.Text = @"c:\temp\res_1.csv";
         }
 
         #region utils
+
+
+        string getid(string param, string filename)
+        {
+            return "P: " + param + " ," +
+                Path.GetDirectoryName(filename) + "," +  // benchmark
+                Path.GetFileName(filename);
+        }
+
+
+        void readEntries()
+        {
+            StreamReader csvfile = new System.IO.StreamReader(text_csv.Text);      //(@"C:\temp\res.csv");
+            string line, res;
+            csvfile.ReadLine(); // header
+            int i = 0;
+            while ((line = csvfile.ReadLine()) != null)
+            {                
+                for (int j = 0; j < 3; ++j) {
+                    i = line.IndexOf(',', i+1);
+                }	
+                res = line.Substring(0,i);
+                entries.Add(res);
+            }
+            csvfile.Close();
+        }
+
 
         void kill_process(Object stateinfo)
         {
@@ -189,6 +217,8 @@ namespace bench
                 foreach (FileInfo fileinfo in fileEntries)  // for each benchmark file
                 {
                     string fileName = fileinfo.FullName;
+                    string id = getid(param_list[par].Text, fileName);
+                    if (entries.Contains(id)) continue;
                     ok = false;
                     do
                     {
@@ -223,9 +253,8 @@ namespace bench
                 Process p1 = (Process)entry.Key;
                 p1.WaitForExit();
                 List<float> l = (List<float>)trio.Item3;
-                csvtext += "P:" + trio.Item1 + " ,";
-                csvtext += Path.GetDirectoryName(trio.Item2) + ","; // benchmark
-                csvtext += Path.GetFileName(trio.Item2) + ",";
+                csvtext += getid(trio.Item1, trio.Item2) + ","; // benchmark
+                
                 for (int i = 0; i < l.Count; ++i)
                     csvtext += l[i].ToString() + ",";
                 if (l.Count == 0)   // in case of timeout / mem-out / whatever
@@ -314,6 +343,7 @@ namespace bench
 
             try
             {
+                if (checkBox_append.Checked) readEntries();
                 csvfile = new System.IO.StreamWriter(text_csv.Text, checkBox_append.Checked);      //(@"C:\temp\res.csv");
                 //csvfile.WriteLine("param, bench, time");
             }
@@ -399,36 +429,3 @@ namespace bench
     }
 }
 
-//int j = 0;
-//while (true)
-//{
-//    //run(@"powershell -ExecutionPolicy ByPass -File  c:\temp\cores.ps1", true);
-//    //run("unix2dos report.txt", true);
-//    //if (run("grep -c \" 0 %\" report.txt", true) == 0) break;
-//    int load;
-//    float fload;
-//    free_core = -1;
-
-//    for (; RR < cores; ++RR)
-//    {
-//        foreach (int i in active)
-//        {
-//            if (i < RR) continue;
-//            j = i;                                
-//            break;
-//        }
-//        fload = C[j].NextValue();
-//        load = Convert.ToInt32(fload);
-//        bg.ReportProgress(-1, "load = " + fload.ToString());
-//        if (load < 3)
-//        {
-//            free_core = j;
-//            RR = j + 1;
-//            break;
-//        }
-//    }
-//    if (RR == cores)
-//    {
-//        RR = 0;
-//        continue;
-//    }
