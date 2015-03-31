@@ -14,6 +14,33 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Web;
 
+/*
+-pf-mode=0
+-pf-mode=1 -no-always_prove
+-pf-mode=2 -no-always_prove
+-pf-mode=3 -no-always_prove
+-pf-mode=4 -no-always_prove
+-pf-mode=3 -pf_reset_z_budget -pf_z_budget=20
+-pf-mode=3 -pf_reset_z_budget -pf_z_budget=40
+-pf-mode=3 -pf_reset_z_budget -pf_z_budget=80
+-pf-mode=3 -pf_z_budget=20
+-pf-mode=3 -pf_z_budget=40
+-pf-mode=3 -pf_z_budget=80
+-pf-mode=3 -pf_z_budget=120
+-pf-mode=3 -pf_z_budget=160
+-pf-mode=2 -pf_z_budget=120
+-pf-mode=2 -pf_z_budget=80
+-pf-mode=4 -pf_z_budget=120
+-pf-mode=4 -pf_z_budget=80
+-pf-mode=2 -pf_z_budget=20
+-pf-mode=2 -pf_z_budget=40
+-pf-mode=4 -pf_z_budget=20
+-pf-mode=4 -pf_z_budget=40
+
+*/
+
+
+
 namespace bench
 {
     // todo: timeout doesn't kill the actual process, only the cmd process. 
@@ -23,7 +50,7 @@ namespace bench
         Hashtable processes = new Hashtable();  // from process to <args, benchmark, list of results>
         List<System.Threading.Timer> timers = new List<System.Threading.Timer>();
         List<string> labels = new List<string>();
-        static int param_list_size = 8;
+        static int param_list_size = 24;
         TextBox[] param_list = new TextBox[param_list_size];
         int timeout = Timeout.Infinite;
         int MinMem = 1000;  // in MB        
@@ -62,19 +89,48 @@ namespace bench
             
             
 
-            param_list[0].Text = "-no-muc-print-sol -no-pre -no-muc-progress";
+//            param_list[0].Text = "-pf-mode=";
+
+param_list[0].Text="-pf-mode=0";
+param_list[1].Text="-pf-mode=1 -no-always_prove";
+param_list[2].Text="-pf-mode=2 -no-always_prove";
+param_list[3].Text="-pf-mode=3 -no-always_prove";
+param_list[4].Text="-pf-mode=4 -no-always_prove";
+param_list[5].Text="-pf-mode=3 -pf_reset_z_budget -pf_z_budget=20";
+param_list[6].Text="-pf-mode=3 -pf_reset_z_budget -pf_z_budget=40";
+param_list[7].Text="-pf-mode=3 -pf_reset_z_budget -pf_z_budget=80";
+param_list[8].Text="-pf-mode=3 -pf_z_budget=20";
+param_list[9].Text="-pf-mode=3 -pf_z_budget=40";
+param_list[10].Text="-pf-mode=3 -pf_z_budget=80"; 
+param_list[11].Text="-pf-mode=3 -pf_z_budget=120";
+param_list[12].Text="-pf-mode=3 -pf_z_budget=160";
+param_list[13].Text="-pf-mode=2 -pf_z_budget=120"; 
+param_list[14].Text="-pf-mode=2 -pf_z_budget=80";
+param_list[15].Text="-pf-mode=4 -pf_z_budget=120";
+param_list[16].Text="-pf-mode=4 -pf_z_budget=80";
+param_list[17].Text="-pf-mode=2 -pf_z_budget=20"; 
+param_list[18].Text="-pf-mode=2 -pf_z_budget=40";
+param_list[19].Text="-pf-mode=4 -pf_z_budget=20"; 
+param_list[20].Text="-pf-mode=4 -pf_z_budget=40";
+param_list[21].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=10";
+param_list[22].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=5";
+param_list[23].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=15";
+            
+
+
+
             //text_filter.Text = "2dlx_ca_mc_ex_bp_f_new.gcnf";
-            text_filter.Text = "try*.cnf";
+            text_filter.Text = "*.cnf";
             //text_dir.Text = @"C:\temp\gcnf_test\belov\";
             //text_dir.Text = @"C:\temp\muc_test\SAT02\industrial\biere\cmpadd";
             //text_dir.Text = @"C:\temp\muc_test\marques-silva\hardware-verification";
-            //text_dir.Text = @"C:\temp\muc_test\SAT11\mus\marques-silva\hardware-verification";
-            text_dir.Text = @"C:\temp";
+            text_dir.Text = @"C:\temp\muc_test\SAT11\mus\";
+            
             //text_exe.Text = "\"C:\\Users\\ofers\\Documents\\Visual Studio 2012\\Projects\\hhlmuc\\Release\\hhlmuc.exe\" ";
-            text_exe.Text = "\"C:\\Users\\ofers\\Documents\\Visual Studio 2012\\Projects\\hmuc\\Release\\hmuc.exe\"";
+            text_exe.Text = "\"C:\\Users\\ofers\\Documents\\Visual Studio 2012\\Projects\\hmuc\\x64\\Release\\hmuc.exe\"";
             text_minmem.Text = MinMem.ToString();
             text_timeout.Text = "600";
-            text_csv.Text = @"c:\temp\res_1.csv";
+            text_csv.Text = @"c:\temp\res_try1.csv";
         }
 
         #region utils
@@ -82,7 +138,7 @@ namespace bench
 
         string getid(string param, string filename)
         {
-            return "P: " + param + " ," +
+            return "P: " + param + "," +
                 Path.GetDirectoryName(filename) + "," +  // benchmark
                 Path.GetFileName(filename);
         }
@@ -93,14 +149,17 @@ namespace bench
             StreamReader csvfile = new System.IO.StreamReader(text_csv.Text);      //(@"C:\temp\res.csv");
             string line, res;
             csvfile.ReadLine(); // header
-            int i = 0;
+            int i;
             while ((line = csvfile.ReadLine()) != null)
-            {                
+            {
+                i = 0;
                 for (int j = 0; j < 3; ++j) {
                     i = line.IndexOf(',', i+1);
-                }	
+                }
+                System.Diagnostics.Debug.Assert(i >= 0);
                 res = line.Substring(0,i);
-                entries.Add(res);
+                if (line.IndexOf(',', i + 1) > i + 1) entries.Add(res);  // in case we have after file name ",," it means that time was not recorded; 
+                else listBox1.Items.Add("remove line: " + line);
             }
             csvfile.Close();
         }
@@ -112,6 +171,9 @@ namespace bench
             if (!p.HasExited)
             {
                 bg.ReportProgress(0, "timeout: process killed: " + p.StartInfo.Arguments);
+                Tuple<string, string, List<float>> data = ((Tuple<string, string, List<float>>)processes[p]);
+                List<float> l = (List<float>)data.Item3;
+                l.Add(Convert.ToInt32(text_timeout.Text) + 1); // +1 for debugging                
                 p.Kill();
             }            
         }
@@ -259,8 +321,9 @@ namespace bench
                     csvtext += l[i].ToString() + ",";
                 if (l.Count == 0)   // in case of timeout / mem-out / whatever
                 {
-                    try { csvtext += Convert.ToInt32(text_timeout.Text); }
-                    catch { }
+                    csvtext += (Convert.ToInt32(text_timeout.Text) * 10).ToString(); //supposed to get here only on memout/fail (not time-out). We add 10 times the time-out to make sure it is noticeable and not takn as part of the average. 
+                    //try { csvtext += "-1"; }//Convert.ToInt32(text_timeout.Text); }
+                    //catch { }
                 }
                 csvtext += "\n";
             }
