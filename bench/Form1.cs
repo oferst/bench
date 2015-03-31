@@ -14,31 +14,6 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Web;
 
-/*
--pf-mode=0
--pf-mode=1 -no-always_prove
--pf-mode=2 -no-always_prove
--pf-mode=3 -no-always_prove
--pf-mode=4 -no-always_prove
--pf-mode=3 -pf_reset_z_budget -pf_z_budget=20
--pf-mode=3 -pf_reset_z_budget -pf_z_budget=40
--pf-mode=3 -pf_reset_z_budget -pf_z_budget=80
--pf-mode=3 -pf_z_budget=20
--pf-mode=3 -pf_z_budget=40
--pf-mode=3 -pf_z_budget=80
--pf-mode=3 -pf_z_budget=120
--pf-mode=3 -pf_z_budget=160
--pf-mode=2 -pf_z_budget=120
--pf-mode=2 -pf_z_budget=80
--pf-mode=4 -pf_z_budget=120
--pf-mode=4 -pf_z_budget=80
--pf-mode=2 -pf_z_budget=20
--pf-mode=2 -pf_z_budget=40
--pf-mode=4 -pf_z_budget=20
--pf-mode=4 -pf_z_budget=40
-
-*/
-
 
 
 namespace bench
@@ -51,7 +26,10 @@ namespace bench
         List<System.Threading.Timer> timers = new List<System.Threading.Timer>();
         List<string> labels = new List<string>();
         static int param_list_size = 24;
+        string graphDir = @"c:\temp\cpbm0.5\";
         TextBox[] param_list = new TextBox[param_list_size];
+        RadioButton[] scatter1 = new RadioButton[param_list_size];
+        RadioButton[] scatter2 = new RadioButton[param_list_size];
         int timeout = Timeout.Infinite;
         int MinMem = 1000;  // in MB        
         int cores = 8;
@@ -60,6 +38,7 @@ namespace bench
         bool hyperthreading = true;
         StreamWriter logfile = new System.IO.StreamWriter(@"C:\temp\log.txt");
         StreamWriter csvfile;
+        Hashtable csv4plot = new Hashtable();        
         string csvtext;
         Hashtable accum_results = new Hashtable();
         Hashtable results = new Hashtable();
@@ -69,22 +48,36 @@ namespace bench
         public Form1()
         {
             InitializeComponent();
+            GroupBox radioset1 = new GroupBox();
+            GroupBox radioset2 = new GroupBox();
+            radioset1.Location = new Point(2, 0);
+            radioset2.Location = new Point(30, 0);
+            radioset1.Size = new Size(20, param_list_size * 25);
+            radioset2.Size = new Size(20, param_list_size * 25);
+
             for (int i = 0; i < param_list_size; ++i)
             {
                 param_list[i] = new TextBox();
                 //param_list[i].Location = new System.Drawing.Point(60, 345 + i * 30);
-                param_list[i].Location = new System.Drawing.Point(10,  i * 25);
-                param_list[i].Size = new System.Drawing.Size(479, 20);
+                param_list[i].Location = new System.Drawing.Point(60,  i * 25);
+                param_list[i].Size = new System.Drawing.Size(429, 20);
                 param_list[i].Text = "<>";
                 panel1.Controls.Add(param_list[i]);
-                //Controls.Add(param_list[i]);
-            }
 
+                scatter1[i] = new RadioButton();
+                scatter1[i].Location = new System.Drawing.Point(0, i * 25);
+                radioset1.Controls.Add(scatter1[i]);
+                scatter2[i] = new RadioButton();
+                scatter2[i].Location = new System.Drawing.Point(0, i * 25);
+                radioset2.Controls.Add(scatter2[i]);                
+            }
+            panel1.Controls.Add(radioset1);
+            panel1.Controls.Add(radioset2);
             
             
             checkedListBox1.SetItemCheckState(0, CheckState.Checked);
-            checkedListBox1.SetItemCheckState(2, CheckState.Checked);
-            checkedListBox1.SetItemCheckState(4, CheckState.Checked);
+            //checkedListBox1.SetItemCheckState(2, CheckState.Checked);
+            //checkedListBox1.SetItemCheckState(4, CheckState.Checked);
             
             
             
@@ -92,7 +85,7 @@ namespace bench
 //            param_list[0].Text = "-pf-mode=";
 
 param_list[0].Text="-pf-mode=0";
-param_list[1].Text="-pf-mode=1 -no-always_prove";
+/*param_list[1].Text="-pf-mode=1 -no-always_prove";
 param_list[2].Text="-pf-mode=2 -no-always_prove";
 param_list[3].Text="-pf-mode=3 -no-always_prove";
 param_list[4].Text="-pf-mode=4 -no-always_prove";
@@ -114,20 +107,22 @@ param_list[19].Text="-pf-mode=4 -pf_z_budget=20";
 param_list[20].Text="-pf-mode=4 -pf_z_budget=40";
 param_list[21].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=10";
 param_list[22].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=5";
-param_list[23].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=15";
+param_list[23].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=15";*/
             
 
 
 
             //text_filter.Text = "2dlx_ca_mc_ex_bp_f_new.gcnf";
-            text_filter.Text = "*.cnf";
+text_filter.Text = "barrel2.cnf";
             //text_dir.Text = @"C:\temp\gcnf_test\belov\";
             //text_dir.Text = @"C:\temp\muc_test\SAT02\industrial\biere\cmpadd";
             //text_dir.Text = @"C:\temp\muc_test\marques-silva\hardware-verification";
-            text_dir.Text = @"C:\temp\muc_test\SAT11\mus\";
+            //text_dir.Text = @"C:\temp\muc_test\SAT11\mus\";
+            text_dir.Text = @"C:\temp\small";
             
-            //text_exe.Text = "\"C:\\Users\\ofers\\Documents\\Visual Studio 2012\\Projects\\hhlmuc\\Release\\hhlmuc.exe\" ";
-            text_exe.Text = "\"C:\\Users\\ofers\\Documents\\Visual Studio 2012\\Projects\\hmuc\\x64\\Release\\hmuc.exe\"";
+            //text_exe.Text = "\"C:\\Users\\ofers\\Documents\\Visual Studio 2012\\Projects\\hmuc\\x64\\Release\\hmuc.exe\" ";
+            text_exe.Text = @"C:\Users\Ofer\Documents\Visual Studio 2012\Projects\hmuc\x64\Release\hmuc.exe";
+            //text_exe.Text = "\"C:\\Users\\ofers\\Documents\\Visual Studio 2012\\Projects\\hmuc\\x64\\Release\\hmuc.exe\"";
             text_minmem.Text = MinMem.ToString();
             text_timeout.Text = "600";
             text_csv.Text = @"c:\temp\res_try1.csv";
@@ -135,6 +130,10 @@ param_list[23].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=15";
 
         #region utils
 
+        string normalize_string(string s)
+        {
+            return s.Replace("=","").Replace(" ", "").Replace("-",""); // to make param a legal file name
+        }
 
         string getid(string param, string filename)
         {
@@ -309,6 +308,8 @@ param_list[23].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=15";
             }
 
             // post processing
+                            
+
             foreach (DictionaryEntry entry in processes)
             {
                 Tuple<string, string, List<float>> trio = entry.Value as Tuple<string, string, List<float>>;
@@ -326,6 +327,13 @@ param_list[23].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=15";
                     //catch { }
                 }
                 csvtext += "\n";
+
+                ((System.IO.StreamWriter)csv4plot[normalize_string(trio.Item1)]).WriteLine(
+                    trio.Item2 + "," + // full benchmark path
+                    normalize_string(trio.Item1) + "," + // param
+                    l[labels.IndexOf("time")].ToString() + "," + 
+                    text_timeout.Text + "s");
+
             }
 
             bg.ReportProgress(0, "* all processes finished *");
@@ -352,6 +360,7 @@ param_list[23].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=15";
             }
             csvfile.Write(csvtext);
             csvfile.Close();
+            foreach (var key in csv4plot.Keys) ((System.IO.StreamWriter)csv4plot[key]).Close(); 
         }
 
         private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e)
@@ -415,6 +424,24 @@ param_list[23].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=15";
                 MessageBox.Show("Cannot open the csv file!\n" + ex.ToString());
                 return;
             }
+
+
+            try
+            {
+                for (int par = 0; par < param_list_size; ++par)
+                {
+                    string param = normalize_string(param_list[par].Text);
+                    if (param == "<>") continue;
+                    csv4plot[param] = new System.IO.StreamWriter(graphDir + param + ".csv");
+                    ((System.IO.StreamWriter)csv4plot[param]).WriteLine("Benchmark,command,usertime,timeout");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Cannot create csv files!\n" + ex.ToString());
+                return;
+            }
+
 
             button1.Enabled = false;
             bg.WorkerReportsProgress = true;
@@ -487,8 +514,35 @@ param_list[23].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=15";
         }
         #endregion
 
+        public static int getCheckedRadioButton(RadioButton[] c)
+        {
+            int i;
+                          
+                for (i = 0; i < c.Length; i++)
+                {                    
+                    if (c[i].Checked)
+                    {
+                        return i;
+                    }
+                }
+                return -1;
+        }
 
-
+        private void button4_Click(object sender, EventArgs e)
+        {
+            int param1 = getCheckedRadioButton(scatter1);
+            if (param1 == -1) return;
+            int param2 = getCheckedRadioButton(scatter2);
+            if (param2 == -1) return;
+            
+            Process p = new Process();
+            ProcessStartInfo startInfo = new ProcessStartInfo();
+            startInfo.FileName = "run-scatter.bat";
+            startInfo.Arguments = normalize_string(param_list[param1].Text) + " " + normalize_string(param_list[param2].Text);
+            startInfo.WorkingDirectory = graphDir;
+            p.StartInfo = startInfo;
+            p.Start();
+        }
     }
 }
 

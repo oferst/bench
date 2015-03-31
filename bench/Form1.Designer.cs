@@ -60,11 +60,12 @@
             this.checkBox_rec = new System.Windows.Forms.CheckBox();
             this.panel1 = new System.Windows.Forms.Panel();
             this.checkBox_append = new System.Windows.Forms.CheckBox();
+            this.button4 = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(464, 533);
+            this.button1.Location = new System.Drawing.Point(363, 609);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(75, 23);
             this.button1.TabIndex = 1;
@@ -279,7 +280,7 @@
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(464, 567);
+            this.button2.Location = new System.Drawing.Point(462, 609);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(75, 23);
             this.button2.TabIndex = 26;
@@ -289,7 +290,7 @@
             // 
             // button3
             // 
-            this.button3.Location = new System.Drawing.Point(464, 603);
+            this.button3.Location = new System.Drawing.Point(333, 538);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(75, 23);
             this.button3.TabIndex = 27;
@@ -308,7 +309,7 @@
             "C6",
             "C7",
             "C8"});
-            this.checkedListBox1.Location = new System.Drawing.Point(363, 533);
+            this.checkedListBox1.Location = new System.Drawing.Point(267, 538);
             this.checkedListBox1.Name = "checkedListBox1";
             this.checkedListBox1.Size = new System.Drawing.Size(46, 94);
             this.checkedListBox1.TabIndex = 29;
@@ -316,7 +317,7 @@
             // label13
             // 
             this.label13.AutoSize = true;
-            this.label13.Location = new System.Drawing.Point(309, 533);
+            this.label13.Location = new System.Drawing.Point(219, 538);
             this.label13.Name = "label13";
             this.label13.Size = new System.Drawing.Size(37, 13);
             this.label13.TabIndex = 30;
@@ -353,11 +354,22 @@
             this.checkBox_append.Text = "append";
             this.checkBox_append.UseVisualStyleBackColor = true;
             // 
+            // button4
+            // 
+            this.button4.Location = new System.Drawing.Point(415, 538);
+            this.button4.Name = "button4";
+            this.button4.Size = new System.Drawing.Size(75, 23);
+            this.button4.TabIndex = 34;
+            this.button4.Text = "scatter";
+            this.button4.UseVisualStyleBackColor = true;
+            this.button4.Click += new System.EventHandler(this.button4_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(556, 637);
+            this.Controls.Add(this.button4);
             this.Controls.Add(this.checkBox_append);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.checkBox_rec);
@@ -431,6 +443,7 @@
         private System.Windows.Forms.CheckBox checkBox_rec;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.CheckBox checkBox_append;
+        private System.Windows.Forms.Button button4;
     }
 }
 
