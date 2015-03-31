@@ -510,7 +510,7 @@ text_filter.Text = "barrel2.cnf";
             startInfo.UseShellExecute = true;
             startInfo.FileName = text_csv.Text;
             p.StartInfo = startInfo;
-            p.Start();
+            p.Start(); 
         }
         #endregion
 
