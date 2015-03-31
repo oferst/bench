@@ -61,16 +61,18 @@
             this.panel1 = new System.Windows.Forms.Panel();
             this.checkBox_append = new System.Windows.Forms.CheckBox();
             this.button4 = new System.Windows.Forms.Button();
+            this.button5 = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(363, 609);
+            this.button1.BackColor = System.Drawing.SystemColors.ActiveCaption;
+            this.button1.Location = new System.Drawing.Point(464, 602);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(75, 23);
             this.button1.TabIndex = 1;
             this.button1.Text = "start";
-            this.button1.UseVisualStyleBackColor = true;
+            this.button1.UseVisualStyleBackColor = false;
             this.button1.Click += new System.EventHandler(this.button_start_Click);
             // 
             // listBox1
@@ -280,7 +282,7 @@
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(462, 609);
+            this.button2.Location = new System.Drawing.Point(464, 570);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(75, 23);
             this.button2.TabIndex = 26;
@@ -290,7 +292,7 @@
             // 
             // button3
             // 
-            this.button3.Location = new System.Drawing.Point(333, 538);
+            this.button3.Location = new System.Drawing.Point(15, 538);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(75, 23);
             this.button3.TabIndex = 27;
@@ -309,7 +311,7 @@
             "C6",
             "C7",
             "C8"});
-            this.checkedListBox1.Location = new System.Drawing.Point(267, 538);
+            this.checkedListBox1.Location = new System.Drawing.Point(401, 531);
             this.checkedListBox1.Name = "checkedListBox1";
             this.checkedListBox1.Size = new System.Drawing.Size(46, 94);
             this.checkedListBox1.TabIndex = 29;
@@ -317,7 +319,7 @@
             // label13
             // 
             this.label13.AutoSize = true;
-            this.label13.Location = new System.Drawing.Point(219, 538);
+            this.label13.Location = new System.Drawing.Point(353, 531);
             this.label13.Name = "label13";
             this.label13.Size = new System.Drawing.Size(37, 13);
             this.label13.TabIndex = 30;
@@ -356,7 +358,7 @@
             // 
             // button4
             // 
-            this.button4.Location = new System.Drawing.Point(415, 538);
+            this.button4.Location = new System.Drawing.Point(15, 570);
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(75, 23);
             this.button4.TabIndex = 34;
@@ -364,11 +366,22 @@
             this.button4.UseVisualStyleBackColor = true;
             this.button4.Click += new System.EventHandler(this.button4_Click);
             // 
+            // button5
+            // 
+            this.button5.Location = new System.Drawing.Point(15, 602);
+            this.button5.Name = "button5";
+            this.button5.Size = new System.Drawing.Size(75, 23);
+            this.button5.TabIndex = 35;
+            this.button5.Text = "cactus";
+            this.button5.UseVisualStyleBackColor = true;
+            this.button5.Click += new System.EventHandler(this.button5_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(556, 637);
+            this.Controls.Add(this.button5);
             this.Controls.Add(this.button4);
             this.Controls.Add(this.checkBox_append);
             this.Controls.Add(this.panel1);
@@ -444,6 +457,7 @@
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.CheckBox checkBox_append;
         private System.Windows.Forms.Button button4;
+        private System.Windows.Forms.Button button5;
     }
 }
 

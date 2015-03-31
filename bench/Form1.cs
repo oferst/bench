@@ -26,7 +26,7 @@ namespace bench
         List<System.Threading.Timer> timers = new List<System.Threading.Timer>();
         List<string> labels = new List<string>();
         static int param_list_size = 24;
-        string graphDir = @"c:\temp\cpbm0.5\";
+        string graphDir = @"c:\temp\cpbm-0.5\";
         TextBox[] param_list = new TextBox[param_list_size];
         RadioButton[] scatter1 = new RadioButton[param_list_size];
         RadioButton[] scatter2 = new RadioButton[param_list_size];
@@ -65,19 +65,22 @@ namespace bench
                 panel1.Controls.Add(param_list[i]);
 
                 scatter1[i] = new RadioButton();
+                
                 scatter1[i].Location = new System.Drawing.Point(0, i * 25);
                 radioset1.Controls.Add(scatter1[i]);
                 scatter2[i] = new RadioButton();
+            
                 scatter2[i].Location = new System.Drawing.Point(0, i * 25);
-                radioset2.Controls.Add(scatter2[i]);                
+                radioset2.Controls.Add(scatter2[i]);
             }
+            scatter1[0].Checked = scatter2[1].Checked = true; 
             panel1.Controls.Add(radioset1);
             panel1.Controls.Add(radioset2);
             
-            
+            // active cores: 
             checkedListBox1.SetItemCheckState(0, CheckState.Checked);
-            //checkedListBox1.SetItemCheckState(2, CheckState.Checked);
-            //checkedListBox1.SetItemCheckState(4, CheckState.Checked);
+            checkedListBox1.SetItemCheckState(2, CheckState.Checked);
+            checkedListBox1.SetItemCheckState(4, CheckState.Checked);
             
             
             
@@ -85,7 +88,7 @@ namespace bench
 //            param_list[0].Text = "-pf-mode=";
 
 param_list[0].Text="-pf-mode=0";
-/*param_list[1].Text="-pf-mode=1 -no-always_prove";
+param_list[1].Text="-pf-mode=1 -no-always_prove";
 param_list[2].Text="-pf-mode=2 -no-always_prove";
 param_list[3].Text="-pf-mode=3 -no-always_prove";
 param_list[4].Text="-pf-mode=4 -no-always_prove";
@@ -107,25 +110,26 @@ param_list[19].Text="-pf-mode=4 -pf_z_budget=20";
 param_list[20].Text="-pf-mode=4 -pf_z_budget=40";
 param_list[21].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=10";
 param_list[22].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=5";
-param_list[23].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=15";*/
+param_list[23].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=15";
             
 
 
 
             //text_filter.Text = "2dlx_ca_mc_ex_bp_f_new.gcnf";
-text_filter.Text = "barrel2.cnf";
+text_filter.Text = "*.cnf";
             //text_dir.Text = @"C:\temp\gcnf_test\belov\";
             //text_dir.Text = @"C:\temp\muc_test\SAT02\industrial\biere\cmpadd";
             //text_dir.Text = @"C:\temp\muc_test\marques-silva\hardware-verification";
-            //text_dir.Text = @"C:\temp\muc_test\SAT11\mus\";
-            text_dir.Text = @"C:\temp\small";
+            text_dir.Text = @"C:\temp\muc_test\SAT11\mus\";
+            //text_dir.Text = @"C:\temp\small";
+//text_dir.Text = @"C:\temp\muc_test\small";
             
-            //text_exe.Text = "\"C:\\Users\\ofers\\Documents\\Visual Studio 2012\\Projects\\hmuc\\x64\\Release\\hmuc.exe\" ";
-            text_exe.Text = @"C:\Users\Ofer\Documents\Visual Studio 2012\Projects\hmuc\x64\Release\hmuc.exe";
+            text_exe.Text = "\"C:\\Users\\ofers\\Documents\\Visual Studio 2012\\Projects\\hmuc\\x64\\Release\\hmuc.exe\" ";            
+          //  text_exe.Text = @"C:\Users\Ofer\Documents\Visual Studio 2012\Projects\hmuc\x64\Release\hmuc.exe";
             //text_exe.Text = "\"C:\\Users\\ofers\\Documents\\Visual Studio 2012\\Projects\\hmuc\\x64\\Release\\hmuc.exe\"";
             text_minmem.Text = MinMem.ToString();
             text_timeout.Text = "600";
-            text_csv.Text = @"c:\temp\res_try1.csv";
+            text_csv.Text = @"c:\temp\res_try2.csv";
         }
 
         #region utils
@@ -235,7 +239,11 @@ text_filter.Text = "barrel2.cnf";
 
             p.OutputDataReceived += read_stdout;
 
-            p.Start();
+            try
+            {
+                p.Start();
+            }
+            catch { MessageBox.Show("cannot start process" + p.StartInfo.FileName); throw; }
             p.BeginOutputReadLine();
             p.ProcessorAffinity = (IntPtr)affinity;
             p.PriorityClass = ProcessPriorityClass.RealTime;
@@ -269,7 +277,7 @@ text_filter.Text = "barrel2.cnf";
                 failed = 0;
                 results.Clear();
                 accum_results.Clear();
-                cnt = 0;
+                cnt ++;
 
                 int ind1 = text_exe.Text.LastIndexOf('\\'),
                 ind2 = text_exe.Text.LastIndexOf('.');
@@ -291,7 +299,11 @@ text_filter.Text = "barrel2.cnf";
                                 if (p[i] == null || p[i].HasExited)
                                 {
                                     bg.ReportProgress(0, "running " + fileName + " on core " + i.ToString());
-                                    p[i] = run(text_exe.Text, param_list[par].Text, fileName, 1 << (i-1));
+                                    try
+                                    {
+                                        p[i] = run(text_exe.Text, param_list[par].Text, fileName, 1 << (i - 1));
+                                    }
+                                    catch { return; }
                                     ok = true;
                                     break;
                                 }
@@ -514,18 +526,11 @@ text_filter.Text = "barrel2.cnf";
         }
         #endregion
 
-        public static int getCheckedRadioButton(RadioButton[] c)
-        {
-            int i;
-                          
-                for (i = 0; i < c.Length; i++)
-                {                    
-                    if (c[i].Checked)
-                    {
-                        return i;
-                    }
-                }
-                return -1;
+        private int getCheckedRadioButton(RadioButton[] c)
+        {                 
+           for (int i = 0; i < c.Length; i++)                
+               if (c[i].Checked) return i;                
+           return -1;
         }
 
         private void button4_Click(object sender, EventArgs e)
@@ -542,6 +547,24 @@ text_filter.Text = "barrel2.cnf";
             startInfo.WorkingDirectory = graphDir;
             p.StartInfo = startInfo;
             p.Start();
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            Process p = new Process();
+            ProcessStartInfo startInfo = new ProcessStartInfo();
+            startInfo.FileName = "run-cactus.bat";
+            startInfo.Arguments = "";
+            for (int par = 0; par < param_list_size; ++par)  // for each parameter
+            {
+                if (param_list[par].Text == "<>") continue;
+                startInfo.Arguments += " " + normalize_string(param_list[par].Text) + ".csv";
+            }
+            startInfo.WorkingDirectory = graphDir;
+            startInfo.CreateNoWindow = false;
+            p.StartInfo = startInfo;
+            p.Start();
+
         }
     }
 }
