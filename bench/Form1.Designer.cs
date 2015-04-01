@@ -62,6 +62,7 @@
             this.checkBox_append = new System.Windows.Forms.CheckBox();
             this.button4 = new System.Windows.Forms.Button();
             this.button5 = new System.Windows.Forms.Button();
+            this.del_fails = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // button1
@@ -376,11 +377,22 @@
             this.button5.UseVisualStyleBackColor = true;
             this.button5.Click += new System.EventHandler(this.button5_Click);
             // 
+            // del_fails
+            // 
+            this.del_fails.Location = new System.Drawing.Point(110, 539);
+            this.del_fails.Name = "del_fails";
+            this.del_fails.Size = new System.Drawing.Size(70, 22);
+            this.del_fails.TabIndex = 36;
+            this.del_fails.Text = "del Fails";
+            this.del_fails.UseVisualStyleBackColor = true;
+            this.del_fails.Click += new System.EventHandler(this.del_fails_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(556, 637);
+            this.Controls.Add(this.del_fails);
             this.Controls.Add(this.button5);
             this.Controls.Add(this.button4);
             this.Controls.Add(this.checkBox_append);
@@ -458,6 +470,7 @@
         private System.Windows.Forms.CheckBox checkBox_append;
         private System.Windows.Forms.Button button4;
         private System.Windows.Forms.Button button5;
+        private System.Windows.Forms.Button del_fails;
     }
 }
 
