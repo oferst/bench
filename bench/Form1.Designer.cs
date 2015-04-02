@@ -60,8 +60,8 @@
             this.checkBox_rec = new System.Windows.Forms.CheckBox();
             this.panel1 = new System.Windows.Forms.Panel();
             this.checkBox_append = new System.Windows.Forms.CheckBox();
-            this.button4 = new System.Windows.Forms.Button();
-            this.button5 = new System.Windows.Forms.Button();
+            this.button_scatter = new System.Windows.Forms.Button();
+            this.button_cactus = new System.Windows.Forms.Button();
             this.del_fails = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
@@ -357,25 +357,25 @@
             this.checkBox_append.Text = "append";
             this.checkBox_append.UseVisualStyleBackColor = true;
             // 
-            // button4
+            // button_scatter
             // 
-            this.button4.Location = new System.Drawing.Point(15, 570);
-            this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(75, 23);
-            this.button4.TabIndex = 34;
-            this.button4.Text = "scatter";
-            this.button4.UseVisualStyleBackColor = true;
-            this.button4.Click += new System.EventHandler(this.button4_Click);
+            this.button_scatter.Location = new System.Drawing.Point(15, 570);
+            this.button_scatter.Name = "button_scatter";
+            this.button_scatter.Size = new System.Drawing.Size(75, 23);
+            this.button_scatter.TabIndex = 34;
+            this.button_scatter.Text = "scatter";
+            this.button_scatter.UseVisualStyleBackColor = true;
+            this.button_scatter.Click += new System.EventHandler(this.button_scatter_Click);
             // 
-            // button5
+            // button_cactus
             // 
-            this.button5.Location = new System.Drawing.Point(15, 602);
-            this.button5.Name = "button5";
-            this.button5.Size = new System.Drawing.Size(75, 23);
-            this.button5.TabIndex = 35;
-            this.button5.Text = "cactus";
-            this.button5.UseVisualStyleBackColor = true;
-            this.button5.Click += new System.EventHandler(this.button5_Click);
+            this.button_cactus.Location = new System.Drawing.Point(15, 602);
+            this.button_cactus.Name = "button_cactus";
+            this.button_cactus.Size = new System.Drawing.Size(75, 23);
+            this.button_cactus.TabIndex = 35;
+            this.button_cactus.Text = "cactus";
+            this.button_cactus.UseVisualStyleBackColor = true;
+            this.button_cactus.Click += new System.EventHandler(this.button_cactus_Click);
             // 
             // del_fails
             // 
@@ -393,8 +393,8 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(556, 637);
             this.Controls.Add(this.del_fails);
-            this.Controls.Add(this.button5);
-            this.Controls.Add(this.button4);
+            this.Controls.Add(this.button_cactus);
+            this.Controls.Add(this.button_scatter);
             this.Controls.Add(this.checkBox_append);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.checkBox_rec);
@@ -468,8 +468,8 @@
         private System.Windows.Forms.CheckBox checkBox_rec;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.CheckBox checkBox_append;
-        private System.Windows.Forms.Button button4;
-        private System.Windows.Forms.Button button5;
+        private System.Windows.Forms.Button button_scatter;
+        private System.Windows.Forms.Button button_cactus;
         private System.Windows.Forms.Button del_fails;
     }
 }

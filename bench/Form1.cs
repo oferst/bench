@@ -537,7 +537,7 @@ param_list[22].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=5";
            return -1;
         }
 
-        private void button4_Click(object sender, EventArgs e)
+        private void button_scatter_Click(object sender, EventArgs e)
         {
             int param1 = getCheckedRadioButton(scatter1);
             if (param1 == -1) return;
@@ -547,13 +547,14 @@ param_list[22].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=5";
             Process p = new Process();
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.FileName = "run-scatter.bat";
-            startInfo.Arguments = normalize_string(param_list[param1].Text) + " " + normalize_string(param_list[param2].Text);
+            string f1 = normalize_string(param_list[param1].Text), f2 = normalize_string(param_list[param2].Text);
+            startInfo.Arguments =  String.Compare(f1, f2) < 0 ? f1 + " " + f2 : f2 + " " + f1; // apparently make_graph treats them alphabetically, so we need to give them alphabetically to know what pdf is eventually generated. 
             startInfo.WorkingDirectory = graphDir;
             p.StartInfo = startInfo;
             p.Start();
         }
 
-        private void button5_Click(object sender, EventArgs e)
+        private void button_cactus_Click(object sender, EventArgs e)
         {
             Process p = new Process();
             ProcessStartInfo startInfo = new ProcessStartInfo();
