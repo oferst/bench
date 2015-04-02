@@ -35,6 +35,7 @@ namespace bench
         int cores = 8;
         int[] active = new int[8]; // {3, 5, 7 }; //note that we push all other processes to 1,2  [core # begin at 1]. with hyperthreading=off use {2,3,4}
         int failed = 0;
+        HashSet<string> fails = new HashSet<string>();        
         bool hyperthreading = true;
         StreamWriter logfile = new System.IO.StreamWriter(@"C:\temp\log.txt");
         StreamWriter csvfile;
@@ -117,7 +118,7 @@ param_list[23].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=15";
 
 
             //text_filter.Text = "2dlx_ca_mc_ex_bp_f_new.gcnf";
-text_filter.Text = "*.cnf";
+            text_filter.Text = "*.cnf";
             //text_dir.Text = @"C:\temp\gcnf_test\belov\";
             //text_dir.Text = @"C:\temp\muc_test\SAT02\industrial\biere\cmpadd";
             //text_dir.Text = @"C:\temp\muc_test\marques-silva\hardware-verification";
@@ -130,7 +131,7 @@ text_filter.Text = "*.cnf";
             //text_exe.Text = "\"C:\\Users\\ofers\\Documents\\Visual Studio 2012\\Projects\\hmuc\\x64\\Release\\hmuc.exe\"";
             text_minmem.Text = MinMem.ToString();
             text_timeout.Text = "600";
-            text_csv.Text = @"c:\temp\res_try2.csv";
+            text_csv.Text = @"c:\temp\res_1.csv";
         }
 
         #region utils
@@ -336,6 +337,7 @@ text_filter.Text = "*.cnf";
                 if (l.Count == 0)   // in case of timeout / mem-out / whatever
                 {
                     csvtext += (Convert.ToInt32(text_timeout.Text) * 10).ToString(); //supposed to get here only on memout/fail (not time-out). We add 10 times the time-out to make sure it is noticeable and not takn as part of the average. 
+                    fails.Add(trio.Item2);
                     //try { csvtext += "-1"; }//Convert.ToInt32(text_timeout.Text); }
                     //catch { }
                 }
@@ -536,7 +538,7 @@ text_filter.Text = "*.cnf";
            return -1;
         }
 
-        private void button4_Click(object sender, EventArgs e)
+        private void button_scatter_Click(object sender, EventArgs e)
         {
             int param1 = getCheckedRadioButton(scatter1);
             if (param1 == -1) return;
@@ -546,13 +548,14 @@ text_filter.Text = "*.cnf";
             Process p = new Process();
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.FileName = "run-scatter.bat";
-            startInfo.Arguments = normalize_string(param_list[param1].Text) + " " + normalize_string(param_list[param2].Text);
+            string f1 = normalize_string(param_list[param1].Text), f2 = normalize_string(param_list[param2].Text);
+            startInfo.Arguments =  String.Compare(f1, f2) < 0 ? f1 + " " + f2 : f2 + " " + f1; // apparently make_graph treats them alphabetically, so we need to give them alphabetically to know what pdf is eventually generated. 
             startInfo.WorkingDirectory = graphDir;
             p.StartInfo = startInfo;
             p.Start();
         }
 
-        private void button5_Click(object sender, EventArgs e)
+        private void button_cactus_Click(object sender, EventArgs e)
         {
             Process p = new Process();
             ProcessStartInfo startInfo = new ProcessStartInfo();
@@ -567,6 +570,48 @@ text_filter.Text = "*.cnf";
             startInfo.CreateNoWindow = false;
             p.StartInfo = startInfo;
             p.Start();
+
+        }
+
+        // Gets field # idx in a comma-separated line
+        private string getfield(string line, int idx)
+        {
+            int i=0;
+            for (int j = 0; j < idx-1; ++j)
+            {
+                i = line.IndexOf(',', i + 1);
+            }
+            string res = line.Substring(i+1, line.IndexOf(',', i + 1)-i-1);
+            return res;
+        }
+
+        private void del_fails_Click(object sender, EventArgs e)
+        {            
+            string fileName = text_csv.Text;    
+            // finding failed benchmarks 
+            foreach (string line in File.ReadLines(fileName)) 
+            {
+                string time = getfield(line, 4);
+                double d;
+                bool isdouble = double.TryParse(time, out d);
+                if (isdouble)
+                {
+                    if (d > Convert.ToInt32(text_timeout.Text) + 1)
+                    {
+                        listBox1.Items.Add("failed line: " + line);
+                        fails.Add(getfield(line, 3));
+                    }
+                }                
+            }
+            
+            // keeping only benchmarks that are not failed by any parameter combination. 
+            var linesToKeep = File.ReadLines(fileName).Where(l => !fails.Contains(getfield(l,3)));            
+            var tempFile = Path.GetTempFileName();
+
+            File.WriteAllLines(tempFile, linesToKeep);
+
+            File.Delete(fileName);
+            File.Move(tempFile, fileName);
 
         }
     }
