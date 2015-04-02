@@ -87,31 +87,32 @@ namespace bench
 
 //            param_list[0].Text = "-pf-mode=";
 
-param_list[0].Text="-pf-mode=0";
-param_list[1].Text="-pf-mode=1 -no-always_prove";
-//param_list[2].Text="-pf-mode=2 -no-always_prove";
-//param_list[3].Text="-pf-mode=3 -no-always_prove";
-//param_list[4].Text="-pf-mode=4 -no-always_prove";
-//param_list[5].Text="-pf-mode=3 -pf_reset_z_budget -pf_z_budget=20";
-//param_list[6].Text="-pf-mode=3 -pf_reset_z_budget -pf_z_budget=40";
-//param_list[7].Text="-pf-mode=3 -pf_reset_z_budget -pf_z_budget=80";
+//param_list[0].Text="-pf-mode=0";
+//param_list[1].Text="-pf-mode=1 -no-always_prove";
+/*param_list[2].Text="-pf-mode=2 -no-always_prove";
+param_list[3].Text="-pf-mode=3 -no-always_prove";
+param_list[4].Text="-pf-mode=4 -no-always_prove";
+param_list[5].Text="-pf-mode=3 -pf_reset_z_budget -pf_z_budget=20";
+param_list[6].Text="-pf-mode=3 -pf_reset_z_budget -pf_z_budget=40";
+param_list[7].Text="-pf-mode=3 -pf_reset_z_budget -pf_z_budget=80";*/
 /*param_list[8].Text="-pf-mode=3 -pf_z_budget=20";
-//param_list[9].Text="-pf-mode=3 -pf_z_budget=40";
+param_list[9].Text="-pf-mode=3 -pf_z_budget=40";
 param_list[10].Text="-pf-mode=3 -pf_z_budget=80"; 
-//param_list[11].Text="-pf-mode=3 -pf_z_budget=120";
-//param_list[12].Text="-pf-mode=3 -pf_z_budget=160";
-//param_list[13].Text="-pf-mode=2 -pf_z_budget=120"; 
+param_list[11].Text="-pf-mode=3 -pf_z_budget=120";*/
+
+param_list[12].Text="-pf-mode=3 -pf_z_budget=160";
+param_list[13].Text="-pf-mode=2 -pf_z_budget=120"; 
 param_list[14].Text="-pf-mode=2 -pf_z_budget=80";
-//param_list[15].Text="-pf-mode=4 -pf_z_budget=120";
+param_list[15].Text="-pf-mode=4 -pf_z_budget=120";
 param_list[16].Text="-pf-mode=4 -pf_z_budget=80";
 param_list[17].Text="-pf-mode=2 -pf_z_budget=20"; 
-//param_list[18].Text="-pf-mode=2 -pf_z_budget=40";
+param_list[18].Text="-pf-mode=2 -pf_z_budget=40";
 param_list[19].Text="-pf-mode=4 -pf_z_budget=20"; 
-//param_list[20].Text="-pf-mode=4 -pf_z_budget=40";
+param_list[20].Text="-pf-mode=4 -pf_z_budget=40";
 param_list[21].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=10";
 param_list[22].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=5";
-//param_list[23].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=15";
-  */        
+param_list[23].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=15";
+        
 
 
 
