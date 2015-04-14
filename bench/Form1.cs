@@ -26,7 +26,7 @@ namespace bench
         List<System.Threading.Timer> timers = new List<System.Threading.Timer>();
         List<string> labels = new List<string>();
         static int param_list_size = 24;
-        string graphDir = @"c:\temp\cpbm-0.5\";
+        string graphDir = @"c:\temp\cpbm-0.5\";        
         TextBox[] param_list = new TextBox[param_list_size];
         RadioButton[] scatter1 = new RadioButton[param_list_size];
         RadioButton[] scatter2 = new RadioButton[param_list_size];
@@ -82,38 +82,38 @@ namespace bench
             checkedListBox1.SetItemCheckState(0, CheckState.Checked);
             checkedListBox1.SetItemCheckState(2, CheckState.Checked);
             checkedListBox1.SetItemCheckState(4, CheckState.Checked);
-            
-            
-            
+
+            checkBox_remote.Checked = true;
+            checkBox_rec.Checked = true;
 
 //            param_list[0].Text = "-pf-mode=";
 
-//param_list[0].Text="-pf-mode=0";
+param_list[0].Text="-pf-mode=0";
 //param_list[1].Text="-pf-mode=1 -no-always_prove";
-/*param_list[2].Text="-pf-mode=2 -no-always_prove";
-param_list[3].Text="-pf-mode=3 -no-always_prove";
-param_list[4].Text="-pf-mode=4 -no-always_prove";
-param_list[5].Text="-pf-mode=3 -pf_reset_z_budget -pf_z_budget=20";
-param_list[6].Text="-pf-mode=3 -pf_reset_z_budget -pf_z_budget=40";
-param_list[7].Text="-pf-mode=3 -pf_reset_z_budget -pf_z_budget=80";*/
-/*param_list[8].Text="-pf-mode=3 -pf_z_budget=20";
-param_list[9].Text="-pf-mode=3 -pf_z_budget=40";
+param_list[2].Text="-pf-mode=2 -no-always_prove";
+//param_list[3].Text="-pf-mode=3 -no-always_prove";
+//param_list[4].Text="-pf-mode=4 -no-always_prove";
+//param_list[5].Text="-pf-mode=3 -pf_reset_z_budget -pf_z_budget=20";
+//param_list[6].Text="-pf-mode=3 -pf_reset_z_budget -pf_z_budget=40";
+//param_list[7].Text="-pf-mode=3 -pf_reset_z_budget -pf_z_budget=80";
+//param_list[8].Text="-pf-mode=3 -pf_z_budget=20";
+//param_list[9].Text="-pf-mode=3 -pf_z_budget=40";
 param_list[10].Text="-pf-mode=3 -pf_z_budget=80"; 
-param_list[11].Text="-pf-mode=3 -pf_z_budget=120";*/
+param_list[11].Text="-pf-mode=3 -pf_z_budget=120";
 
-param_list[12].Text="-pf-mode=3 -pf_z_budget=160";
-param_list[13].Text="-pf-mode=2 -pf_z_budget=120"; 
-param_list[14].Text="-pf-mode=2 -pf_z_budget=80";
+//param_list[12].Text="-pf-mode=3 -pf_z_budget=160";
+//param_list[13].Text="-pf-mode=2 -pf_z_budget=120"; 
+//param_list[14].Text="-pf-mode=2 -pf_z_budget=80";
 param_list[15].Text="-pf-mode=4 -pf_z_budget=120";
 param_list[16].Text="-pf-mode=4 -pf_z_budget=80";
-param_list[17].Text="-pf-mode=2 -pf_z_budget=20"; 
-param_list[18].Text="-pf-mode=2 -pf_z_budget=40";
-param_list[19].Text="-pf-mode=4 -pf_z_budget=20"; 
-param_list[20].Text="-pf-mode=4 -pf_z_budget=40";
-param_list[21].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=10";
-param_list[22].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=5";
-param_list[23].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=15";
-        
+//param_list[17].Text="-pf-mode=2 -pf_z_budget=20"; 
+//param_list[18].Text="-pf-mode=2 -pf_z_budget=40";
+//param_list[19].Text="-pf-mode=4 -pf_z_budget=20"; 
+//param_list[20].Text="-pf-mode=4 -pf_z_budget=40";
+//param_list[21].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=10";
+//param_list[22].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=5";
+//param_list[23].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=15";
+       
 
 
 
@@ -122,16 +122,17 @@ param_list[23].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=15";
             //text_dir.Text = @"C:\temp\gcnf_test\belov\";
             //text_dir.Text = @"C:\temp\muc_test\SAT02\industrial\biere\cmpadd";
             //text_dir.Text = @"C:\temp\muc_test\marques-silva\hardware-verification";
-            text_dir.Text = @"C:\temp\muc_test\SAT11\mus\";
+            //text_dir.Text = @"C:\temp\muc_test\SAT11\mus\";
             //text_dir.Text = @"C:\temp\small";
-//text_dir.Text = @"C:\temp\muc_test\small";
+            //text_dir.Text = @"C:\temp\muc_test\small";
+            text_dir.Text = @"C:\temp\muc_test\SAT11\mus_satcomp09-main-track-selected";
             
             text_exe.Text = "\"C:\\Users\\ofers\\Documents\\Visual Studio 2012\\Projects\\hmuc\\x64\\Release\\hmuc.exe\" ";            
           //  text_exe.Text = @"C:\Users\Ofer\Documents\Visual Studio 2012\Projects\hmuc\x64\Release\hmuc.exe";
             //text_exe.Text = "\"C:\\Users\\ofers\\Documents\\Visual Studio 2012\\Projects\\hmuc\\x64\\Release\\hmuc.exe\"";
             text_minmem.Text = MinMem.ToString();
             text_timeout.Text = "600";
-            text_csv.Text = @"c:\temp\res_1.csv";
+            text_csv.Text = @"c:\temp\res_3.csv";
         }
 
         #region utils
@@ -148,6 +149,11 @@ param_list[23].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=15";
                 Path.GetFileName(filename);
         }
 
+        void init_csv_file()
+        {
+            if (checkBox_append.Checked) readEntries();
+            csvfile = new System.IO.StreamWriter(text_csv.Text, checkBox_append.Checked);      //(@"C:\temp\res.csv");   
+        }
 
         void readEntries()
         {
@@ -168,7 +174,6 @@ param_list[23].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=15";
             }
             csvfile.Close();
         }
-
 
         void kill_process(Object stateinfo)
         {
@@ -226,40 +231,134 @@ param_list[23].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=15";
             }
         }
 
-        Process run(string cmd, string args, string filename, int affinity = 0x007F)
+        void read_out_file(Process p, string filename) // under construction
         {
-            Process p = new Process();
+            StreamReader file =   new StreamReader(filename);
+            string line;
+            while ((line = file.ReadLine()) != null)            
+            {                
+                if (line.Length >= 4 && line.Substring(0, 3) == "###")
+                {
+                    var parts = line.Split(new char[] { ' ' });
+                    string tag = parts[1];
+                    if (tag == "Abort")
+                    {
+                        bg.ReportProgress(0, "* * * * * * * * * * * * *  Abort!");
+                        return;
+                    }
 
-            p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                    if (!labels.Exists(x => x == tag)) labels.Add(tag);  // todo: wasteful. Perhaps get # of items from user. 
+                    float res = Convert.ToSingle(parts[2]);
+                    Tuple<string, string, List<float>> data = ((Tuple<string, string, List<float>>)processes[p]);
+                    data.Item3.Add(res);
+                }
+            }
+        }
+
+        void buildcsv(bool wait = true)
+        {
+            string csvheader = "";
+            foreach (DictionaryEntry entry in processes)
+            {
+                Tuple<string, string, List<float>> trio = entry.Value as Tuple<string, string, List<float>>;
+                Process p1 = (Process)entry.Key;
+                if (wait) p1.WaitForExit();
+                List<float> l = (List<float>)trio.Item3;
+                csvtext += getid(trio.Item1, trio.Item2) + ","; // benchmark
+
+                for (int i = 0; i < l.Count; ++i)
+                    csvtext += l[i].ToString() + ",";
+                if (l.Count == 0)   // in case of timeout / mem-out / whatever
+                {
+                    csvtext += (Convert.ToInt32(text_timeout.Text) * 10).ToString() + ","; //supposed to get here only on memout/fail (not time-out). We add 10 times the time-out to make sure it is noticeable and not taken as part of the average. 
+                    fails.Add(trio.Item2);
+                    //try { csvtext += "-1"; }//Convert.ToInt32(text_timeout.Text); }
+                    //catch { }
+                }
+                csvtext += "\n";
+                try
+                {
+                    ((System.IO.StreamWriter)csv4plot[normalize_string(trio.Item1)]).WriteLine(
+                        trio.Item2 + "," + // full benchmark path
+                        normalize_string(trio.Item1) + "," + // param
+                        l[labels.IndexOf("time")].ToString() + "," +
+                        text_timeout.Text + "s");
+                }
+                catch (Exception ex) { listBox1.Items.Add("exception: " + ex.Message); }
+            }
+            foreach (string lbl in labels) csvheader += lbl + ",";
+            
+            if (!checkBox_append.Checked)
+            {
+                csvfile.Write("param, dir, bench, " + csvheader);
+                csvfile.WriteLine();
+            }
+            csvfile.Write(csvtext);
+            csvfile.Close();
+            foreach (var key in csv4plot.Keys) ((System.IO.StreamWriter)csv4plot[key]).Close(); 
+        }
+
+
+
+        void run_remote(string cmd, string args) // for unix commands. Synchronous. 
+        {
+            Process p = new Process();         
+
             p.StartInfo.FileName = cmd;
-            p.StartInfo.Arguments = args + " " + filename;
+            p.StartInfo.Arguments = args;
             p.StartInfo.UseShellExecute = false;
-            p.StartInfo.RedirectStandardOutput = true;
-            p.StartInfo.CreateNoWindow = true;
+            p.StartInfo.RedirectStandardOutput = false;
+            p.StartInfo.CreateNoWindow = true;            
 
-            //process.MaxWorkingSet = new IntPtr(2000000000); //2Gb 
-
-            p.OutputDataReceived += read_stdout;
 
             try
             {
                 p.Start();
             }
             catch { MessageBox.Show("cannot start process" + p.StartInfo.FileName); throw; }
+            p.WaitForExit();
+        }
+        
+        
+        Process run(string cmd, string args, string filename, int affinity = 0x007F)
+        {
+            Process p = new Process();
+
+            
+            p.StartInfo.FileName = cmd;
+            p.StartInfo.Arguments = args + " " + filename;
+
+            p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            p.OutputDataReceived += read_stdout;
+            
+            p.StartInfo.UseShellExecute = false;
+            p.StartInfo.RedirectStandardOutput = true;
+            p.StartInfo.CreateNoWindow = true;
+
+            //process.MaxWorkingSet = new IntPtr(2000000000); //2Gb                       
+                
+
+            try
+            {
+                p.Start();
+            }
+            catch { MessageBox.Show("cannot start process" + p.StartInfo.FileName); throw; }
+
+
             p.BeginOutputReadLine();
             p.ProcessorAffinity = (IntPtr)affinity;
             p.PriorityClass = ProcessPriorityClass.RealTime;
 
             var timer = new System.Threading.Timer(kill_process, p, timeout, Timeout.Infinite);
             timers.Add(timer); // needed ?
+            
             List<float> l = new List<float>();
             processes[p] = new Tuple<string, string, List<float>>(args, filename, l);
             return p;
         }
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
-        {
-            string csvheader = "";
+        {            
             int cnt = 0;
             Process[] p = new Process[cores + 1];
             
@@ -271,7 +370,7 @@ param_list[23].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=15";
 
             Stopwatch stopwatch = Stopwatch.StartNew();
             bool ok = false;
-
+            bool copied = false;
             for (int par = 0; par < param_list_size; ++par)  // for each parameter
             {
                 if (param_list[par].Text == "<>") continue;
@@ -279,11 +378,7 @@ param_list[23].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=15";
                 failed = 0;
                 results.Clear();
                 accum_results.Clear();
-                cnt ++;
-
-                int ind1 = text_exe.Text.LastIndexOf('\\'),
-                ind2 = text_exe.Text.LastIndexOf('.');
-                string exe = text_exe.Text.Substring(ind1 + 1, ind2 - ind1 - 1);
+                cnt ++;                              
 
                 foreach (FileInfo fileinfo in fileEntries)  // for each benchmark file
                 {
@@ -301,6 +396,19 @@ param_list[23].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=15";
                                 if (p[i] == null || p[i].HasExited)
                                 {
                                     bg.ReportProgress(0, "running " + fileName + " on core " + i.ToString());
+
+                                    if (checkBox_remote.Checked)
+                                    {
+                                        string bench = Path.GetFileName(fileName);
+                                        if (!copied)
+                                        {
+                                            File.Copy(fileName, bench, true); // copying benchmark to work dir. 
+                                            run_remote("scp", bench + " ofers@tamnun.technion.ac.il:~/hmuc/test");
+                                            File.Delete(bench);
+                                        }
+                                        run_remote("ssh", "ofers@tamnun.technion.ac.il \"cd hmuc;qsub -v bench=" + bench + ",arg='" + param_list[par].Text + "',argname=" + normalize_string(param_list[par].Text) + " hmuc.sh\"");
+                                    }
+                                    else
                                     try
                                     {
                                         p[i] = run(text_exe.Text, param_list[par].Text, fileName, 1 << (i - 1));
@@ -319,44 +427,18 @@ param_list[23].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=15";
                         }
                     } while (!ok);
                 }
+                copied = true;
             }
 
             // post processing
-                            
 
-            foreach (DictionaryEntry entry in processes)
-            {
-                Tuple<string, string, List<float>> trio = entry.Value as Tuple<string, string, List<float>>;
-                Process p1 = (Process)entry.Key;
-                p1.WaitForExit();
-                List<float> l = (List<float>)trio.Item3;
-                csvtext += getid(trio.Item1, trio.Item2) + ","; // benchmark
-                
-                for (int i = 0; i < l.Count; ++i)
-                    csvtext += l[i].ToString() + ",";
-                if (l.Count == 0)   // in case of timeout / mem-out / whatever
-                {
-                    csvtext += (Convert.ToInt32(text_timeout.Text) * 10).ToString(); //supposed to get here only on memout/fail (not time-out). We add 10 times the time-out to make sure it is noticeable and not takn as part of the average. 
-                    fails.Add(trio.Item2);
-                    //try { csvtext += "-1"; }//Convert.ToInt32(text_timeout.Text); }
-                    //catch { }
-                }
-                csvtext += "\n";
-                try
-                {
-                    ((System.IO.StreamWriter)csv4plot[normalize_string(trio.Item1)]).WriteLine(
-                        trio.Item2 + "," + // full benchmark path
-                        normalize_string(trio.Item1) + "," + // param
-                        l[labels.IndexOf("time")].ToString() + "," +
-                        text_timeout.Text + "s");
-                }
-                catch (Exception ex) { MessageBox.Show(ex.Message); }
-            }
+            if (checkBox_remote.Checked) return;
+
+            buildcsv();
 
             bg.ReportProgress(0, "* all processes finished *");
             stopwatch.Stop();
-
-            foreach (string lbl in labels) csvheader += lbl + ",";
+                        
             string time = (Convert.ToSingle(stopwatch.ElapsedMilliseconds) / 1000.0).ToString();
             bg.ReportProgress(0, "# of benchmarks:" + cnt);
 
@@ -369,15 +451,7 @@ param_list[23].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=15";
             bg.ReportProgress(3, cnt.ToString()); // label_cnt.Text 
             bg.ReportProgress(5, failed.ToString());
             bg.ReportProgress(4, ""); // button1.Enabled = true;
-
-            if (!checkBox_append.Checked)
-            {
-                csvfile.Write("param, dir, bench, " + csvheader);
-                csvfile.WriteLine();
-            }
-            csvfile.Write(csvtext);
-            csvfile.Close();
-            foreach (var key in csv4plot.Keys) ((System.IO.StreamWriter)csv4plot[key]).Close(); 
+                       
         }
 
         private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e)
@@ -432,9 +506,7 @@ param_list[23].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=15";
 
             try
             {
-                if (checkBox_append.Checked) readEntries();
-                csvfile = new System.IO.StreamWriter(text_csv.Text, checkBox_append.Checked);      //(@"C:\temp\res.csv");
-                //csvfile.WriteLine("param, bench, time");
+                init_csv_file();             
             }
             catch (Exception ex)
             {
@@ -445,6 +517,7 @@ param_list[23].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=15";
 
             try
             {
+                if (!checkBox_remote.Checked)
                 for (int par = 0; par < param_list_size; ++par)
                 {
                     string param = normalize_string(param_list[par].Text);
@@ -458,8 +531,7 @@ param_list[23].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=15";
                 MessageBox.Show("Cannot create csv files!\n" + ex.ToString());
                 return;
             }
-
-
+            
             button1.Enabled = false;
             bg.WorkerReportsProgress = true;
             bg.DoWork += new System.ComponentModel.DoWorkEventHandler(backgroundWorker1_DoWork);
@@ -490,8 +562,8 @@ param_list[23].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=15";
         {
             int ind1 = text_exe.Text.LastIndexOf('\\'),  // we cannot use Path.GetFileNameWithoutExtension because the string contains "
                 ind2 = text_exe.Text.LastIndexOf('.');
-            string exe = text_exe.Text.Substring(ind1 + 1, ind2 - ind1 - 1);
-            
+            string exe = text_exe.Text.Substring(ind1 + 1, ind2 - ind1 - 1);            
+
             Process[] Pr = Process.GetProcessesByName(exe);
             foreach (Process p in Pr)
             {
@@ -613,6 +685,52 @@ param_list[23].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=15";
             File.Delete(fileName);
             File.Move(tempFile, fileName);
 
+        }
+
+        private void button_import_Click(object sender, EventArgs e)  // import out files from remote server, and process them to generate the csv + plot files. 
+        {
+            string benchmarksDir = text_dir.Text,
+            searchPattern = text_filter.Text;
+            var fileEntries = new DirectoryInfo(benchmarksDir).GetFiles(searchPattern, checkBox_rec.Checked ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+            if (fileEntries.Length == 0) bg.ReportProgress(0, "empty file list\n");
+            
+            processes.Clear();            
+            
+            for (int par = 0; par < param_list_size; ++par)  // for each parameter
+            {
+                if (param_list[par].Text == "<>") continue;
+                foreach (FileInfo fileinfo in fileEntries)  // for each benchmark file
+                {
+                    string fileName = fileinfo.FullName;                    
+                    string outfile = Path.GetFileName(fileName) + "." + normalize_string(param_list[par].Text) + ".out";
+                    run_remote("scp", "ofers@tamnun.technion.ac.il:~/hmuc/test/" + outfile + " " + outfile); // download the file
+
+                    if (File.Exists(outfile))
+                    {
+                        Process p = new Process(); // we are only using this process as a carrier of the information from the file, so we can use the buildcsv function. 
+                        List<float> l = new List<float>();
+                        processes[p] = new Tuple<string, string, List<float>>(param_list[par].Text, fileName, l);
+                        read_out_file(p, outfile);
+                    }
+                    else listBox1.Items.Add(fileName + " is missing");
+                }
+            }
+            try
+            {
+                init_csv_file();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Cannot open the csv file!\n" + ex.ToString());
+                return;
+            }
+
+            buildcsv(false);
+        }
+
+        private void checkBox_remote_CheckedChanged(object sender, EventArgs e)
+        {
+            button_kill.Enabled = checkedListBox1.Enabled = !(((CheckBox)sender).Checked);             
         }
     }
 }

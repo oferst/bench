@@ -53,7 +53,7 @@
             this.label12 = new System.Windows.Forms.Label();
             this.text_csv = new System.Windows.Forms.TextBox();
             this.label11 = new System.Windows.Forms.Label();
-            this.button2 = new System.Windows.Forms.Button();
+            this.button_kill = new System.Windows.Forms.Button();
             this.button3 = new System.Windows.Forms.Button();
             this.checkedListBox1 = new System.Windows.Forms.CheckedListBox();
             this.label13 = new System.Windows.Forms.Label();
@@ -63,14 +63,17 @@
             this.button_scatter = new System.Windows.Forms.Button();
             this.button_cactus = new System.Windows.Forms.Button();
             this.del_fails = new System.Windows.Forms.Button();
+            this.checkBox_remote = new System.Windows.Forms.CheckBox();
+            this.button_import = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // button1
             // 
             this.button1.BackColor = System.Drawing.SystemColors.Control;
-            this.button1.Location = new System.Drawing.Point(464, 602);
+            this.button1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(177)));
+            this.button1.Location = new System.Drawing.Point(453, 599);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 23);
+            this.button1.Size = new System.Drawing.Size(86, 26);
             this.button1.TabIndex = 1;
             this.button1.Text = "start";
             this.button1.UseVisualStyleBackColor = false;
@@ -281,21 +284,21 @@
             this.label11.TabIndex = 25;
             this.label11.Text = "csv file:";
             // 
-            // button2
+            // button_kill
             // 
-            this.button2.Location = new System.Drawing.Point(464, 570);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(75, 23);
-            this.button2.TabIndex = 26;
-            this.button2.Text = "kill-all";
-            this.button2.UseVisualStyleBackColor = true;
-            this.button2.Click += new System.EventHandler(this.button_kill_Click);
+            this.button_kill.Location = new System.Drawing.Point(453, 531);
+            this.button_kill.Name = "button_kill";
+            this.button_kill.Size = new System.Drawing.Size(75, 23);
+            this.button_kill.TabIndex = 26;
+            this.button_kill.Text = "kill-all";
+            this.button_kill.UseVisualStyleBackColor = true;
+            this.button_kill.Click += new System.EventHandler(this.button_kill_Click);
             // 
             // button3
             // 
-            this.button3.Location = new System.Drawing.Point(15, 538);
+            this.button3.Location = new System.Drawing.Point(110, 538);
             this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(75, 23);
+            this.button3.Size = new System.Drawing.Size(70, 23);
             this.button3.TabIndex = 27;
             this.button3.Text = "open csv";
             this.button3.UseVisualStyleBackColor = true;
@@ -359,7 +362,7 @@
             // 
             // button_scatter
             // 
-            this.button_scatter.Location = new System.Drawing.Point(15, 570);
+            this.button_scatter.Location = new System.Drawing.Point(15, 538);
             this.button_scatter.Name = "button_scatter";
             this.button_scatter.Size = new System.Drawing.Size(75, 23);
             this.button_scatter.TabIndex = 34;
@@ -369,7 +372,7 @@
             // 
             // button_cactus
             // 
-            this.button_cactus.Location = new System.Drawing.Point(15, 602);
+            this.button_cactus.Location = new System.Drawing.Point(15, 570);
             this.button_cactus.Name = "button_cactus";
             this.button_cactus.Size = new System.Drawing.Size(75, 23);
             this.button_cactus.TabIndex = 35;
@@ -379,7 +382,7 @@
             // 
             // del_fails
             // 
-            this.del_fails.Location = new System.Drawing.Point(110, 539);
+            this.del_fails.Location = new System.Drawing.Point(110, 570);
             this.del_fails.Name = "del_fails";
             this.del_fails.Size = new System.Drawing.Size(70, 22);
             this.del_fails.TabIndex = 36;
@@ -387,11 +390,34 @@
             this.del_fails.UseVisualStyleBackColor = true;
             this.del_fails.Click += new System.EventHandler(this.del_fails_Click);
             // 
+            // checkBox_remote
+            // 
+            this.checkBox_remote.AutoSize = true;
+            this.checkBox_remote.Location = new System.Drawing.Point(455, 574);
+            this.checkBox_remote.Name = "checkBox_remote";
+            this.checkBox_remote.Size = new System.Drawing.Size(58, 17);
+            this.checkBox_remote.TabIndex = 37;
+            this.checkBox_remote.Text = "remote";
+            this.checkBox_remote.UseVisualStyleBackColor = true;
+            this.checkBox_remote.CheckedChanged += new System.EventHandler(this.checkBox_remote_CheckedChanged);
+            // 
+            // button_import
+            // 
+            this.button_import.Location = new System.Drawing.Point(110, 602);
+            this.button_import.Name = "button_import";
+            this.button_import.Size = new System.Drawing.Size(70, 23);
+            this.button_import.TabIndex = 38;
+            this.button_import.Text = "import";
+            this.button_import.UseVisualStyleBackColor = true;
+            this.button_import.Click += new System.EventHandler(this.button_import_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(556, 637);
+            this.Controls.Add(this.button_import);
+            this.Controls.Add(this.checkBox_remote);
             this.Controls.Add(this.del_fails);
             this.Controls.Add(this.button_cactus);
             this.Controls.Add(this.button_scatter);
@@ -401,7 +427,7 @@
             this.Controls.Add(this.label13);
             this.Controls.Add(this.checkedListBox1);
             this.Controls.Add(this.button3);
-            this.Controls.Add(this.button2);
+            this.Controls.Add(this.button_kill);
             this.Controls.Add(this.label11);
             this.Controls.Add(this.text_csv);
             this.Controls.Add(this.label12);
@@ -461,7 +487,7 @@
         private System.Windows.Forms.Label label12;
         private System.Windows.Forms.TextBox text_csv;
         private System.Windows.Forms.Label label11;
-        private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.Button button_kill;
         private System.Windows.Forms.Button button3;
         private System.Windows.Forms.CheckedListBox checkedListBox1;
         private System.Windows.Forms.Label label13;
@@ -471,6 +497,8 @@
         private System.Windows.Forms.Button button_scatter;
         private System.Windows.Forms.Button button_cactus;
         private System.Windows.Forms.Button del_fails;
+        private System.Windows.Forms.CheckBox checkBox_remote;
+        private System.Windows.Forms.Button button_import;
     }
 }
 
