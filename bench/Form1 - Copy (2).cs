@@ -38,9 +38,7 @@ namespace bench
         //HashSet<string> fails = new HashSet<string>();        
         bool hyperthreading = true;
         StreamWriter logfile = new System.IO.StreamWriter(@"C:\temp\log.txt");
-        string timestring = "totalTimeNoInitialCheck"; // "time"   -- for the scatter/cactus plots, we compare this field. 
         StreamWriter csvfile;
-        List<StreamWriter> outfiles;
         Hashtable csv4plot = new Hashtable();        
         string csvtext;
         Hashtable accum_results = new Hashtable();
@@ -289,7 +287,7 @@ namespace bench
                     }
 
                     
-                    float res;
+                    float res;// = Convert.ToSingle(parts[2]);
                     if (Single.TryParse(parts[2], out res))
                     {
                         if (!labels.Exists(x => x == tag)) labels.Add(tag);
@@ -310,8 +308,6 @@ namespace bench
                 Process p1 = (Process)entry.Key;
                 if (!p1.HasExited)  p1.WaitForExit();
             }
-            foreach (StreamWriter s in outfiles) s.Close();
-
         }
 
         void buildcsv()
@@ -343,7 +339,7 @@ namespace bench
                     ((System.IO.StreamWriter)csv4plot[normalize_string(trio.Item1)]).WriteLine(
                         trio.Item2 + "," + // full benchmark path
                         normalize_string(trio.Item1) + "," + // param
-                        l[labels.IndexOf(timestring)].ToString() + "," +
+                        l[labels.IndexOf("time")].ToString() + "," +
                         text_timeout.Text + "s");
                 }
                 catch (Exception ex) { listBox1.Items.Add("exception: " + ex.Message); }
@@ -379,7 +375,7 @@ namespace bench
             p.WaitForExit();
         }
          
-        Process run(string cmd, string args, string outfilename, int affinity = 0x007F)
+        Process run(string cmd, string args, string filename, int affinity = 0x007F)
         {
             Process p = new Process();
 
@@ -395,18 +391,14 @@ namespace bench
             p.StartInfo.CreateNoWindow = true;
 
             //process.MaxWorkingSet = new IntPtr(2000000000); //2Gb                
-            outfiles.Add(new StreamWriter(outfilename));
-            int idx = outfiles.Count - 1;
-            
-            p.OutputDataReceived += (s, e) => outfiles[idx].WriteLine(e.Data);
+
             try
-            {                
+            {
                 p.Start();
-                p.BeginOutputReadLine();
             }
             catch { MessageBox.Show("cannot start process" + p.StartInfo.FileName); throw; }
             
-            
+            //p.BeginOutputReadLine();
             p.ProcessorAffinity = (IntPtr)affinity;
             p.PriorityClass = ProcessPriorityClass.RealTime;
 
@@ -468,16 +460,16 @@ namespace bench
                                         run_remote("ssh", "ofers@tamnun.technion.ac.il \"cd hmuc;qsub -v bench=" + bench + ",arg='" + param_list[par].Text + "',argname=" + normalize_string(param_list[par].Text) + " hmuc.sh\"");
                                     }
                                     else
-                               //     try
+                                    try
                                     {
-                                        p[i] = run(text_exe.Text, param_list[par].Text + " " + fileName, outfile(fileName, param_list[par].Text), 1 << (i - 1));
+                                        p[i] = run("cmd", "/c " + text_exe.Text + " " + param_list[par].Text + " " + fileName + "> " + outfile(fileName, param_list[par].Text), fileName, 1 << (i - 1));
                                         List<float> l = new List<float>();
                                         processes[p[i]] = new Tuple<string, string, List<float>>(param_list[par].Text, fileName, l);
                                     }
-                                    //catch {
-                                    //        bg.ReportProgress(0, "failed");
-                                    //        return;
-                                    //    }
+                                    catch {
+                                            bg.ReportProgress(0, "failed");
+                                            return;
+                                        }
                                     ok = true;
                                     break;
                                 }
@@ -511,7 +503,7 @@ namespace bench
             bg.ReportProgress(0, "============================");
 
             bg.ReportProgress(1, time); //label_paralel_time.Text
-            try { bg.ReportProgress(2, accum_results[timestring].ToString()); }
+            try { bg.ReportProgress(2, accum_results["time"].ToString()); }
             catch { };  //label_total_time.Text}
             bg.ReportProgress(3, cnt.ToString()); // label_cnt.Text 
             bg.ReportProgress(5, failed.ToString());
@@ -605,8 +597,8 @@ namespace bench
                 return;
             }
 
-
-            outfiles = new List<StreamWriter>();
+                    
+            
             button1.Enabled = false;
             bg.WorkerReportsProgress = true;
             bg.DoWork += new System.ComponentModel.DoWorkEventHandler(backgroundWorker1_DoWork);

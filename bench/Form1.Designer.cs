@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.button1 = new System.Windows.Forms.Button();
             this.listBox1 = new System.Windows.Forms.ListBox();
             this.label1 = new System.Windows.Forms.Label();
@@ -65,6 +66,9 @@
             this.del_fails = new System.Windows.Forms.Button();
             this.checkBox_remote = new System.Windows.Forms.CheckBox();
             this.button_import = new System.Windows.Forms.Button();
+            this.button_del_allfail = new System.Windows.Forms.Button();
+            this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+            this.button2 = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // button1
@@ -206,6 +210,8 @@
             this.text_timeout.Name = "text_timeout";
             this.text_timeout.Size = new System.Drawing.Size(100, 20);
             this.text_timeout.TabIndex = 3;
+            this.toolTip1.SetToolTip(this.text_timeout, "Only used for local runs. Time-out for remote runs is determined in the .sh file " +
+        "on the server.");
             // 
             // text_minmem
             // 
@@ -382,11 +388,13 @@
             // 
             // del_fails
             // 
-            this.del_fails.Location = new System.Drawing.Point(110, 570);
+            this.del_fails.Location = new System.Drawing.Point(199, 539);
             this.del_fails.Name = "del_fails";
-            this.del_fails.Size = new System.Drawing.Size(70, 22);
+            this.del_fails.Size = new System.Drawing.Size(75, 22);
             this.del_fails.TabIndex = 36;
             this.del_fails.Text = "del Fails";
+            this.toolTip1.SetToolTip(this.del_fails, "Delete lines from the csv file, that correspond to a benchmark that was not solve" +
+        "d by ALL parameters. ");
             this.del_fails.UseVisualStyleBackColor = true;
             this.del_fails.Click += new System.EventHandler(this.del_fails_Click);
             // 
@@ -403,19 +411,47 @@
             // 
             // button_import
             // 
-            this.button_import.Location = new System.Drawing.Point(110, 602);
+            this.button_import.Location = new System.Drawing.Point(110, 570);
             this.button_import.Name = "button_import";
             this.button_import.Size = new System.Drawing.Size(70, 23);
             this.button_import.TabIndex = 38;
             this.button_import.Text = "import";
+            this.toolTip1.SetToolTip(this.button_import, "from .out files to csv file + plot files.  out files for remote are in the releas" +
+        "e/ directory. ");
             this.button_import.UseVisualStyleBackColor = true;
             this.button_import.Click += new System.EventHandler(this.button_import_Click);
+            // 
+            // button_del_allfail
+            // 
+            this.button_del_allfail.Location = new System.Drawing.Point(199, 569);
+            this.button_del_allfail.Name = "button_del_allfail";
+            this.button_del_allfail.Size = new System.Drawing.Size(75, 23);
+            this.button_del_allfail.TabIndex = 39;
+            this.button_del_allfail.Text = "del all-fail";
+            this.toolTip1.SetToolTip(this.button_del_allfail, "delete benchmark files for which all params fails according to the data in the cs" +
+        "v file. ");
+            this.button_del_allfail.UseVisualStyleBackColor = true;
+            this.button_del_allfail.Click += new System.EventHandler(this.button_del_allfail_Click);
+            // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(199, 601);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(75, 23);
+            this.button2.TabIndex = 40;
+            this.button2.Text = "del shorts";
+            this.toolTip1.SetToolTip(this.button2, "deleted from csv benchmarks that their longestcall is < 1 sec. in one of the para" +
+        "meters.");
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(556, 637);
+            this.Controls.Add(this.button2);
+            this.Controls.Add(this.button_del_allfail);
             this.Controls.Add(this.button_import);
             this.Controls.Add(this.checkBox_remote);
             this.Controls.Add(this.del_fails);
@@ -499,6 +535,9 @@
         private System.Windows.Forms.Button del_fails;
         private System.Windows.Forms.CheckBox checkBox_remote;
         private System.Windows.Forms.Button button_import;
+        private System.Windows.Forms.Button button_del_allfail;
+        private System.Windows.Forms.ToolTip toolTip1;
+        private System.Windows.Forms.Button button2;
     }
 }
 
