@@ -46,10 +46,8 @@
             this.label_cnt = new System.Windows.Forms.Label();
             this.text_timeout = new System.Windows.Forms.TextBox();
             this.text_minmem = new System.Windows.Forms.TextBox();
-            this.textBox3 = new System.Windows.Forms.TextBox();
             this.label8 = new System.Windows.Forms.Label();
             this.label9 = new System.Windows.Forms.Label();
-            this.label10 = new System.Windows.Forms.Label();
             this.label_fails = new System.Windows.Forms.Label();
             this.label12 = new System.Windows.Forms.Label();
             this.text_csv = new System.Windows.Forms.TextBox();
@@ -69,6 +67,8 @@
             this.button_del_allfail = new System.Windows.Forms.Button();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.button2 = new System.Windows.Forms.Button();
+            this.checkBox_out = new System.Windows.Forms.CheckBox();
+            this.label10 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // button1
@@ -220,14 +220,6 @@
             this.text_minmem.Size = new System.Drawing.Size(100, 20);
             this.text_minmem.TabIndex = 18;
             // 
-            // textBox3
-            // 
-            this.textBox3.Enabled = false;
-            this.textBox3.Location = new System.Drawing.Point(439, 314);
-            this.textBox3.Name = "textBox3";
-            this.textBox3.Size = new System.Drawing.Size(100, 20);
-            this.textBox3.TabIndex = 18;
-            // 
             // label8
             // 
             this.label8.AutoSize = true;
@@ -245,16 +237,6 @@
             this.label9.Size = new System.Drawing.Size(73, 13);
             this.label9.TabIndex = 20;
             this.label9.Text = "min-mem (MB)";
-            // 
-            // label10
-            // 
-            this.label10.AutoSize = true;
-            this.label10.Enabled = false;
-            this.label10.Location = new System.Drawing.Point(360, 316);
-            this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(76, 13);
-            this.label10.TabIndex = 21;
-            this.label10.Text = "max-mem (MB)";
             // 
             // label_fails
             // 
@@ -276,15 +258,15 @@
             // 
             // text_csv
             // 
-            this.text_csv.Location = new System.Drawing.Point(308, 288);
+            this.text_csv.Location = new System.Drawing.Point(401, 315);
             this.text_csv.Name = "text_csv";
-            this.text_csv.Size = new System.Drawing.Size(173, 20);
+            this.text_csv.Size = new System.Drawing.Size(138, 20);
             this.text_csv.TabIndex = 24;
             // 
             // label11
             // 
             this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(264, 291);
+            this.label11.Location = new System.Drawing.Point(352, 319);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(43, 13);
             this.label11.TabIndex = 25;
@@ -359,11 +341,12 @@
             this.checkBox_append.AutoSize = true;
             this.checkBox_append.Checked = true;
             this.checkBox_append.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox_append.Location = new System.Drawing.Point(496, 291);
+            this.checkBox_append.Location = new System.Drawing.Point(359, 292);
             this.checkBox_append.Name = "checkBox_append";
-            this.checkBox_append.Size = new System.Drawing.Size(62, 17);
+            this.checkBox_append.Size = new System.Drawing.Size(59, 17);
             this.checkBox_append.TabIndex = 33;
-            this.checkBox_append.Text = "append";
+            this.checkBox_append.Text = "csv file";
+            this.toolTip1.SetToolTip(this.checkBox_append, "Excludes benchmarks for which there is an entry in the csv file");
             this.checkBox_append.UseVisualStyleBackColor = true;
             // 
             // button_scatter
@@ -445,11 +428,33 @@
             this.button2.UseVisualStyleBackColor = true;
             this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
+            // checkBox_out
+            // 
+            this.checkBox_out.AutoSize = true;
+            this.checkBox_out.Location = new System.Drawing.Point(434, 292);
+            this.checkBox_out.Name = "checkBox_out";
+            this.checkBox_out.Size = new System.Drawing.Size(62, 17);
+            this.checkBox_out.TabIndex = 41;
+            this.checkBox_out.Text = "out files";
+            this.toolTip1.SetToolTip(this.checkBox_out, "Excludes benchmarks for which there is already an out file");
+            this.checkBox_out.UseVisualStyleBackColor = true;
+            // 
+            // label10
+            // 
+            this.label10.AutoSize = true;
+            this.label10.Location = new System.Drawing.Point(269, 292);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(77, 13);
+            this.label10.TabIndex = 42;
+            this.label10.Text = "Filter entries in:";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(556, 637);
+            this.ClientSize = new System.Drawing.Size(566, 637);
+            this.Controls.Add(this.label10);
+            this.Controls.Add(this.checkBox_out);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.button_del_allfail);
             this.Controls.Add(this.button_import);
@@ -468,10 +473,8 @@
             this.Controls.Add(this.text_csv);
             this.Controls.Add(this.label12);
             this.Controls.Add(this.label_fails);
-            this.Controls.Add(this.label10);
             this.Controls.Add(this.label9);
             this.Controls.Add(this.label8);
-            this.Controls.Add(this.textBox3);
             this.Controls.Add(this.text_minmem);
             this.Controls.Add(this.text_timeout);
             this.Controls.Add(this.label_cnt);
@@ -515,10 +518,8 @@
         private System.Windows.Forms.Label label_cnt;
         private System.Windows.Forms.TextBox text_timeout;
         private System.Windows.Forms.TextBox text_minmem;
-        private System.Windows.Forms.TextBox textBox3;
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.Label label9;
-        private System.Windows.Forms.Label label10;
         private System.Windows.Forms.Label label_fails;
         private System.Windows.Forms.Label label12;
         private System.Windows.Forms.TextBox text_csv;
@@ -538,6 +539,8 @@
         private System.Windows.Forms.Button button_del_allfail;
         private System.Windows.Forms.ToolTip toolTip1;
         private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.CheckBox checkBox_out;
+        private System.Windows.Forms.Label label10;
     }
 }
 

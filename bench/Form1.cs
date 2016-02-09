@@ -4,15 +4,11 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Collections;
 using System.IO;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Threading;
-using System.Web;
 
 
 
@@ -34,13 +30,11 @@ namespace bench
         int MinMem = 1000;  // in MB        
         int cores = 8;
         int[] active = new int[8]; // {3, 5, 7 }; //note that we push all other processes to 1,2  [core # begin at 1]. with hyperthreading=off use {2,3,4}
-        int failed = 0;
-        //HashSet<string> fails = new HashSet<string>();        
+        int failed = 0;        
         bool hyperthreading = true;
         StreamWriter logfile = new System.IO.StreamWriter(@"C:\temp\log.txt");
         string timestring = "totalTimeNoInitialCheck"; // "time"   -- for the scatter/cactus plots, we compare this field. 
-        StreamWriter csvfile;
-        List<StreamWriter> outfiles;
+        StreamWriter csvfile;        
         Hashtable csv4plot = new Hashtable();        
         string csvtext;
         Hashtable accum_results = new Hashtable();
@@ -149,7 +143,7 @@ namespace bench
 
             //text_filter.Text = "2dlx_ca_mc_ex_bp_f_new.gcnf";
             //text_filter.Text = "*.cnf";
-            text_filter.Text = "*.smt";
+            text_filter.Text = "neq004_size4.smt";
             //text_dir.Text = @"C:\temp\gcnf_test\belov\";
             //text_dir.Text = @"C:\temp\muc_test\SAT02\industrial\biere\cmpadd";
             //text_dir.Text = @"C:\temp\muc_test\marques-silva\hardware-verification";
@@ -189,13 +183,12 @@ namespace bench
         }
 
         void init_csv_file()
-        {
-            
+        {            
             csvfile = new System.IO.StreamWriter(text_csv.Text, checkBox_append.Checked);      //(@"C:\temp\res.csv");   
         }
 
         void readEntries()
-        {
+        {            
             StreamReader csvfile = new System.IO.StreamReader(text_csv.Text);      //(@"C:\temp\res.csv");
             string line, res;
             csvfile.ReadLine(); // header
@@ -285,6 +278,7 @@ namespace bench
                     if (tag == "Abort")
                     {
                         listBox1.Items.Add("* * * * * * * * * * * * *  Abort!");
+                        file.Close();
                         return true;
                     }
 
@@ -299,6 +293,7 @@ namespace bench
                     else listBox1.Items.Add("skipping non-numerical data: " + parts[2]);
                 }
             }
+            file.Close();
             return true;
         }
 
@@ -310,8 +305,6 @@ namespace bench
                 Process p1 = (Process)entry.Key;
                 if (!p1.HasExited)  p1.WaitForExit();
             }
-            foreach (StreamWriter s in outfiles) s.Close();
-
         }
 
         void buildcsv()
@@ -388,17 +381,14 @@ namespace bench
             p.StartInfo.Arguments = args;
 
             p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-            // p.OutputDataReceived += read_stdout;
-            
             p.StartInfo.UseShellExecute = false;
             p.StartInfo.RedirectStandardOutput = true;
             p.StartInfo.CreateNoWindow = true;
 
             //process.MaxWorkingSet = new IntPtr(2000000000); //2Gb                
-            outfiles.Add(new StreamWriter(outfilename));
-            int idx = outfiles.Count - 1;
             
-            p.OutputDataReceived += (s, e) => outfiles[idx].WriteLine(e.Data);
+            if (File.Exists(outfilename)) File.Delete(outfilename);
+            p.OutputDataReceived += (s, e) => File.AppendAllText(outfilename, e.Data + "\n"); 
             try
             {                
                 p.Start();
@@ -454,13 +444,14 @@ namespace bench
                                 if (i == 0) break;
                                 if (p[i] == null || p[i].HasExited)
                                 {
-                                    bg.ReportProgress(0, "running " + fileName + " on core " + i.ToString());
+                                    
 
                                     if (checkBox_remote.Checked)
                                     {
                                         string bench = Path.GetFileName(fileName);
                                         if (!copied)
                                         {
+                                            bg.ReportProgress(0, "running " + fileName + " remotely. ");
                                             File.Copy(fileName, bench, true); // copying benchmark to work dir. 
                                             run_remote("scp", bench + " ofers@tamnun.technion.ac.il:~/hmuc/test");
                                             File.Delete(bench);
@@ -470,9 +461,15 @@ namespace bench
                                     else
                                //     try
                                     {
-                                        p[i] = run(text_exe.Text, param_list[par].Text + " " + fileName, outfile(fileName, param_list[par].Text), 1 << (i - 1));
-                                        List<float> l = new List<float>();
-                                        processes[p[i]] = new Tuple<string, string, List<float>>(param_list[par].Text, fileName, l);
+                                        string outfilename = outfile(fileName, param_list[par].Text);
+                                        if (!checkBox_out.Checked || !File.Exists(outfilename) || (new FileInfo(outfilename)).Length == 0)
+                                        {
+                                            bg.ReportProgress(0, "running " + fileName + " on core " + i.ToString());
+                                            p[i] = run(text_exe.Text, param_list[par].Text + " " + fileName, outfilename, 1 << (i - 1));
+                                            List<float> l = new List<float>();
+                                            processes[p[i]] = new Tuple<string, string, List<float>>(param_list[par].Text, fileName, l);
+                                        }
+                                        else bg.ReportProgress(0, "skipping " + fileName + " due to existing out file.");
                                     }
                                     //catch {
                                     //        bg.ReportProgress(0, "failed");
@@ -574,6 +571,7 @@ namespace bench
             processes.Clear();
             accum_results.Clear();
             results.Clear();
+            
             int j = 0;
             foreach (int indexChecked in checkedListBox1.CheckedIndices)
             {
@@ -595,7 +593,7 @@ namespace bench
 
             try
             {
-                if (checkBox_append.Checked) readEntries();
+                if (checkBox_append.Checked && File.Exists(text_csv.Text)) readEntries();
                 else entries.Clear();
                 //init_csv_file();             
             }
@@ -604,9 +602,7 @@ namespace bench
                 MessageBox.Show("Cannot open the csv file!\n" + ex.ToString());
                 return;
             }
-
-
-            outfiles = new List<StreamWriter>();
+            
             button1.Enabled = false;
             bg.WorkerReportsProgress = true;
             bg.DoWork += new System.ComponentModel.DoWorkEventHandler(backgroundWorker1_DoWork);
@@ -651,8 +647,8 @@ namespace bench
                 bg.Abort();
                 bg.Dispose();
             }
-            if (csvfile != null) csvfile.Close();
-            
+            if (csvfile != null) csvfile.Close();                      
+
             Process[] localAll = Process.GetProcesses();
             foreach (Process p in localAll)
             {
@@ -861,7 +857,7 @@ namespace bench
             if (fileEntries.Length == 0) listBox1.Items.Add("empty file list\n");
             
             processes.Clear();
-            if (checkBox_append.Checked) readEntries();
+            if (checkBox_append.Checked && File.Exists(text_csv.Text)) readEntries();
             else entries.Clear();
             if (checkBox_remote.Checked) listBox1.Items.Add("Files will be imported to " + Directory.GetCurrentDirectory());
             for (int par = 0; par < param_list_size; ++par)  // for each parameter

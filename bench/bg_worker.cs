@@ -1,6 +1,5 @@
 ﻿// code from stackexchange. Allows to define a background worker that can be aborted. 
 
-using System;
 using System.ComponentModel;
 using System.Threading;
 
