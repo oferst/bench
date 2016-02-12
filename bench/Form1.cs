@@ -86,7 +86,12 @@ namespace bench
 
             param_list[0].Text = "-file";
             param_list[1].Text = "-rotate -file";
-            param_list[2].Text = "-rotate -fth 1 -file";
+            param_list[2].Text = "-eager -rotate -file";
+            //   param_list[2].Text = "-rotate -fth 1 -file";
+            //param_list[3].Text = "-rotate -fth 3 -file";
+            //param_list[4].Text = "-eager -rotate -fth 1 -file";
+            //param_list[5].Text = "-eager -rotate -fth 3 -file";
+
             /*param_list[0].Text = "-pf-mode=2";            
             param_list[1].Text = "-pf-mode=3";
             param_list[2].Text = "-pf-mode=4";
@@ -183,15 +188,29 @@ namespace bench
         }
 
         void init_csv_file()
-        {            
-            csvfile = new System.IO.StreamWriter(text_csv.Text, checkBox_append.Checked);      //(@"C:\temp\res.csv");   
+        {
+            try {
+                csvfile = new System.IO.StreamWriter(text_csv.Text, checkBox_append.Checked);      //(@"C:\temp\res.csv");   
+            }
+            catch
+            {
+                MessageBox.Show("seems that " + text_csv.Text + "is in use");
+            }
         }
 
         void readEntries()
         {            
             StreamReader csvfile = new System.IO.StreamReader(text_csv.Text);      //(@"C:\temp\res.csv");
             string line, res;
-            csvfile.ReadLine(); // header
+            try {
+                csvfile.ReadLine(); // header
+            }
+            catch
+            {
+                MessageBox.Show("seems that " + text_csv.Text + "is in use");
+                return;
+            }
+            
             int i;
             while ((line = csvfile.ReadLine()) != null)
             {
@@ -324,10 +343,7 @@ namespace bench
                 if (l.Count == 0)   // in case of timeout / mem-out / whatever
                 {
                     csvtext += (Convert.ToInt32(text_timeout.Text) * 10).ToString() + ","; //supposed to get here only on memout/fail (not time-out). We add 10 times the time-out to make sure it is noticeable and not taken as part of the average. 
-                    //fails.Add(trio.Item2);
-                    //try { csvtext += "-1"; }//Convert.ToInt32(text_timeout.Text); }
-                    //catch { }
-                }
+                 }
                 csvtext += "\n";
                 
                 try
@@ -348,7 +364,14 @@ namespace bench
                 csvfile.Write("param, dir, bench, " + csvheader);
                 csvfile.WriteLine();
             }
-            csvfile.Write(csvtext);
+            try
+            {
+                csvfile.Write(csvtext);
+            }
+            catch
+            {
+                MessageBox.Show("seems that " + text_csv.Text + "is in use"); return; 
+            }
             csvfile.Close();
             foreach (var key in csv4plot.Keys) ((System.IO.StreamWriter)csv4plot[key]).Close(); 
         }
@@ -562,6 +585,17 @@ namespace bench
 
         private void button_start_Click(object sender, EventArgs e)
         {
+            try {
+                StreamReader csvfile = new System.IO.StreamReader(text_csv.Text);
+                csvfile.Close();
+            }
+            catch
+            {
+                MessageBox.Show("seems that " + text_csv.Text + "is in use. Close it and try again.");
+                return;
+            }
+
+
             label_paralel_time.Text = "";
             label_total_time.Text = "";
             label_cnt.Text = "";
@@ -743,9 +777,15 @@ namespace bench
             HashSet<string> failed_all = new HashSet<string>();
             int cnt = 0;
             // finding failed benchmarks 
-            foreach (string line in File.ReadLines(fileName)) {
-                benchmarks[getfield(line, 3)] = getfield(line,2);
+            try
+            {
+                foreach (string line in File.ReadLines(fileName))
+                {
+                    benchmarks[getfield(line, 3)] = getfield(line, 2);
+                }
             }
+            catch { MessageBox.Show("seems that " + text_csv.Text + "is in use"); return; }
+
             foreach (string line in File.ReadLines(fileName))
             {
                 string time = getfield(line, 4);
@@ -786,19 +826,26 @@ namespace bench
             string fileName = text_csv.Text;
             HashSet<string> failed_short_once = new HashSet<string>();
             // finding benchmarks with short longestcall
-            foreach (string line in File.ReadLines(fileName))
-            {
-                string longesttime = getfield(line, 10);
-                double d;
-                bool isdouble = double.TryParse(longesttime, out d);
-                if (isdouble)
+            try {
+                foreach (string line in File.ReadLines(fileName))
                 {
-                    if (d < 1.0)
+                    string longesttime = getfield(line, 10);
+                    double d;
+                    bool isdouble = double.TryParse(longesttime, out d);
+                    if (isdouble)
                     {
-                        listBox1.Items.Add("short longesttime line: " + line);
-                        failed_short_once.Add(getfield(line, 3));
+                        if (d < 1.0)
+                        {
+                            listBox1.Items.Add("short longesttime line: " + line);
+                            failed_short_once.Add(getfield(line, 3));
+                        }
                     }
                 }
+            }
+            catch
+            {
+                MessageBox.Show("seems that " + text_csv.Text + "is in use");
+                return;
             }
 
             // keeping only benchmarks that take time. 
@@ -817,22 +864,25 @@ namespace bench
         private void del_fails_Click(object sender, EventArgs e)
         {            
             string fileName = text_csv.Text;
-            HashSet<string> failed_atleast_once = new HashSet<string>();        
+            HashSet<string> failed_atleast_once = new HashSet<string>();
             // finding failed benchmarks 
-            foreach (string line in File.ReadLines(fileName)) 
-            {
-                string time = getfield(line, 4);
-                double d;
-                bool isdouble = double.TryParse(time, out d);
-                if (isdouble)
+            try {
+                foreach (string line in File.ReadLines(fileName))
                 {
-                    if (d > Convert.ToInt32(text_timeout.Text) + 1)
+                    string time = getfield(line, 4);
+                    double d;
+                    bool isdouble = double.TryParse(time, out d);
+                    if (isdouble)
                     {
-                        listBox1.Items.Add("failed line: " + line);
-                        failed_atleast_once.Add(getfield(line, 3));
+                        if (d > Convert.ToInt32(text_timeout.Text) + 1)
+                        {
+                            listBox1.Items.Add("failed line: " + line);
+                            failed_atleast_once.Add(getfield(line, 3));
+                        }
                     }
-                }                
+                }
             }
+            catch { MessageBox.Show("seems that " + text_csv.Text + "is in use"); return; }
             
             // keeping only benchmarks that are not failed by any parameter combination. 
             var linesToKeep = File.ReadLines(fileName).Where(l => (!failed_atleast_once.Contains(getfield(l, 3)) || getfield(l, 1) == "param"));   // second item so it includes the header.         
