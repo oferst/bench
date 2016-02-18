@@ -69,13 +69,15 @@
             this.button2 = new System.Windows.Forms.Button();
             this.checkBox_out = new System.Windows.Forms.CheckBox();
             this.label10 = new System.Windows.Forms.Label();
+            this.checkBox_emptyOut = new System.Windows.Forms.CheckBox();
+            this.checkBox_skipTO = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // button1
             // 
             this.button1.BackColor = System.Drawing.SystemColors.Control;
             this.button1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(177)));
-            this.button1.Location = new System.Drawing.Point(453, 599);
+            this.button1.Location = new System.Drawing.Point(453, 627);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(86, 26);
             this.button1.TabIndex = 1;
@@ -96,7 +98,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(12, 493);
+            this.label1.Location = new System.Drawing.Point(12, 521);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(69, 13);
             this.label1.TabIndex = 4;
@@ -105,7 +107,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(10, 347);
+            this.label2.Location = new System.Drawing.Point(10, 375);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(44, 13);
             this.label2.TabIndex = 5;
@@ -114,7 +116,7 @@
             // label_paralel_time
             // 
             this.label_paralel_time.AutoSize = true;
-            this.label_paralel_time.Location = new System.Drawing.Point(92, 494);
+            this.label_paralel_time.Location = new System.Drawing.Point(92, 522);
             this.label_paralel_time.Name = "label_paralel_time";
             this.label_paralel_time.Size = new System.Drawing.Size(16, 13);
             this.label_paralel_time.TabIndex = 6;
@@ -171,7 +173,7 @@
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(163, 492);
+            this.label7.Location = new System.Drawing.Point(163, 520);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(34, 13);
             this.label7.TabIndex = 13;
@@ -180,7 +182,7 @@
             // label_total_time
             // 
             this.label_total_time.AutoSize = true;
-            this.label_total_time.Location = new System.Drawing.Point(211, 492);
+            this.label_total_time.Location = new System.Drawing.Point(211, 520);
             this.label_total_time.Name = "label_total_time";
             this.label_total_time.Size = new System.Drawing.Size(16, 13);
             this.label_total_time.TabIndex = 14;
@@ -189,7 +191,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(276, 493);
+            this.label3.Location = new System.Drawing.Point(276, 521);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(53, 13);
             this.label3.TabIndex = 15;
@@ -198,7 +200,7 @@
             // label_cnt
             // 
             this.label_cnt.AutoSize = true;
-            this.label_cnt.Location = new System.Drawing.Point(330, 494);
+            this.label_cnt.Location = new System.Drawing.Point(330, 522);
             this.label_cnt.Name = "label_cnt";
             this.label_cnt.Size = new System.Drawing.Size(16, 13);
             this.label_cnt.TabIndex = 16;
@@ -206,7 +208,7 @@
             // 
             // text_timeout
             // 
-            this.text_timeout.Location = new System.Drawing.Point(60, 316);
+            this.text_timeout.Location = new System.Drawing.Point(60, 344);
             this.text_timeout.Name = "text_timeout";
             this.text_timeout.Size = new System.Drawing.Size(100, 20);
             this.text_timeout.TabIndex = 3;
@@ -215,7 +217,7 @@
             // 
             // text_minmem
             // 
-            this.text_minmem.Location = new System.Drawing.Point(245, 315);
+            this.text_minmem.Location = new System.Drawing.Point(245, 343);
             this.text_minmem.Name = "text_minmem";
             this.text_minmem.Size = new System.Drawing.Size(100, 20);
             this.text_minmem.TabIndex = 18;
@@ -223,7 +225,7 @@
             // label8
             // 
             this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(2, 318);
+            this.label8.Location = new System.Drawing.Point(2, 346);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(55, 13);
             this.label8.TabIndex = 19;
@@ -232,7 +234,7 @@
             // label9
             // 
             this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(167, 318);
+            this.label9.Location = new System.Drawing.Point(167, 346);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(73, 13);
             this.label9.TabIndex = 20;
@@ -241,7 +243,7 @@
             // label_fails
             // 
             this.label_fails.AutoSize = true;
-            this.label_fails.Location = new System.Drawing.Point(420, 494);
+            this.label_fails.Location = new System.Drawing.Point(420, 522);
             this.label_fails.Name = "label_fails";
             this.label_fails.Size = new System.Drawing.Size(16, 13);
             this.label_fails.TabIndex = 22;
@@ -250,7 +252,7 @@
             // label12
             // 
             this.label12.AutoSize = true;
-            this.label12.Location = new System.Drawing.Point(380, 494);
+            this.label12.Location = new System.Drawing.Point(380, 522);
             this.label12.Name = "label12";
             this.label12.Size = new System.Drawing.Size(38, 13);
             this.label12.TabIndex = 23;
@@ -258,7 +260,7 @@
             // 
             // text_csv
             // 
-            this.text_csv.Location = new System.Drawing.Point(401, 315);
+            this.text_csv.Location = new System.Drawing.Point(401, 343);
             this.text_csv.Name = "text_csv";
             this.text_csv.Size = new System.Drawing.Size(138, 20);
             this.text_csv.TabIndex = 24;
@@ -266,7 +268,7 @@
             // label11
             // 
             this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(352, 319);
+            this.label11.Location = new System.Drawing.Point(352, 347);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(43, 13);
             this.label11.TabIndex = 25;
@@ -274,7 +276,7 @@
             // 
             // button_kill
             // 
-            this.button_kill.Location = new System.Drawing.Point(453, 531);
+            this.button_kill.Location = new System.Drawing.Point(453, 559);
             this.button_kill.Name = "button_kill";
             this.button_kill.Size = new System.Drawing.Size(75, 23);
             this.button_kill.TabIndex = 26;
@@ -284,7 +286,7 @@
             // 
             // button3
             // 
-            this.button3.Location = new System.Drawing.Point(110, 538);
+            this.button3.Location = new System.Drawing.Point(110, 566);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(70, 23);
             this.button3.TabIndex = 27;
@@ -303,7 +305,7 @@
             "C6",
             "C7",
             "C8"});
-            this.checkedListBox1.Location = new System.Drawing.Point(401, 531);
+            this.checkedListBox1.Location = new System.Drawing.Point(401, 559);
             this.checkedListBox1.Name = "checkedListBox1";
             this.checkedListBox1.Size = new System.Drawing.Size(46, 94);
             this.checkedListBox1.TabIndex = 29;
@@ -311,7 +313,7 @@
             // label13
             // 
             this.label13.AutoSize = true;
-            this.label13.Location = new System.Drawing.Point(353, 531);
+            this.label13.Location = new System.Drawing.Point(353, 559);
             this.label13.Name = "label13";
             this.label13.Size = new System.Drawing.Size(37, 13);
             this.label13.TabIndex = 30;
@@ -331,7 +333,7 @@
             // 
             this.panel1.AutoScroll = true;
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panel1.Location = new System.Drawing.Point(15, 366);
+            this.panel1.Location = new System.Drawing.Point(15, 394);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(522, 123);
             this.panel1.TabIndex = 32;
@@ -341,7 +343,7 @@
             this.checkBox_append.AutoSize = true;
             this.checkBox_append.Checked = true;
             this.checkBox_append.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox_append.Location = new System.Drawing.Point(359, 292);
+            this.checkBox_append.Location = new System.Drawing.Point(140, 320);
             this.checkBox_append.Name = "checkBox_append";
             this.checkBox_append.Size = new System.Drawing.Size(59, 17);
             this.checkBox_append.TabIndex = 33;
@@ -351,7 +353,7 @@
             // 
             // button_scatter
             // 
-            this.button_scatter.Location = new System.Drawing.Point(15, 538);
+            this.button_scatter.Location = new System.Drawing.Point(15, 566);
             this.button_scatter.Name = "button_scatter";
             this.button_scatter.Size = new System.Drawing.Size(75, 23);
             this.button_scatter.TabIndex = 34;
@@ -361,7 +363,7 @@
             // 
             // button_cactus
             // 
-            this.button_cactus.Location = new System.Drawing.Point(15, 570);
+            this.button_cactus.Location = new System.Drawing.Point(15, 598);
             this.button_cactus.Name = "button_cactus";
             this.button_cactus.Size = new System.Drawing.Size(75, 23);
             this.button_cactus.TabIndex = 35;
@@ -371,7 +373,7 @@
             // 
             // del_fails
             // 
-            this.del_fails.Location = new System.Drawing.Point(199, 539);
+            this.del_fails.Location = new System.Drawing.Point(199, 567);
             this.del_fails.Name = "del_fails";
             this.del_fails.Size = new System.Drawing.Size(75, 22);
             this.del_fails.TabIndex = 36;
@@ -384,7 +386,7 @@
             // checkBox_remote
             // 
             this.checkBox_remote.AutoSize = true;
-            this.checkBox_remote.Location = new System.Drawing.Point(455, 574);
+            this.checkBox_remote.Location = new System.Drawing.Point(455, 602);
             this.checkBox_remote.Name = "checkBox_remote";
             this.checkBox_remote.Size = new System.Drawing.Size(58, 17);
             this.checkBox_remote.TabIndex = 37;
@@ -394,7 +396,7 @@
             // 
             // button_import
             // 
-            this.button_import.Location = new System.Drawing.Point(110, 570);
+            this.button_import.Location = new System.Drawing.Point(110, 598);
             this.button_import.Name = "button_import";
             this.button_import.Size = new System.Drawing.Size(70, 23);
             this.button_import.TabIndex = 38;
@@ -406,7 +408,7 @@
             // 
             // button_del_allfail
             // 
-            this.button_del_allfail.Location = new System.Drawing.Point(199, 569);
+            this.button_del_allfail.Location = new System.Drawing.Point(199, 597);
             this.button_del_allfail.Name = "button_del_allfail";
             this.button_del_allfail.Size = new System.Drawing.Size(75, 23);
             this.button_del_allfail.TabIndex = 39;
@@ -418,7 +420,7 @@
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(199, 601);
+            this.button2.Location = new System.Drawing.Point(199, 629);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(75, 23);
             this.button2.TabIndex = 40;
@@ -431,28 +433,55 @@
             // checkBox_out
             // 
             this.checkBox_out.AutoSize = true;
-            this.checkBox_out.Location = new System.Drawing.Point(434, 292);
+            this.checkBox_out.Location = new System.Drawing.Point(205, 320);
             this.checkBox_out.Name = "checkBox_out";
             this.checkBox_out.Size = new System.Drawing.Size(62, 17);
             this.checkBox_out.TabIndex = 41;
             this.checkBox_out.Text = "out files";
             this.toolTip1.SetToolTip(this.checkBox_out, "Excludes benchmarks for which there is already an out file");
             this.checkBox_out.UseVisualStyleBackColor = true;
+            this.checkBox_out.CheckedChanged += new System.EventHandler(this.checkBox_out_CheckedChanged);
             // 
             // label10
             // 
             this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(269, 292);
+            this.label10.Location = new System.Drawing.Point(57, 320);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(77, 13);
             this.label10.TabIndex = 42;
             this.label10.Text = "Filter entries in:";
             // 
+            // checkBox_emptyOut
+            // 
+            this.checkBox_emptyOut.AutoSize = true;
+            this.checkBox_emptyOut.Location = new System.Drawing.Point(279, 320);
+            this.checkBox_emptyOut.Name = "checkBox_emptyOut";
+            this.checkBox_emptyOut.Size = new System.Drawing.Size(99, 17);
+            this.checkBox_emptyOut.TabIndex = 43;
+            this.checkBox_emptyOut.Text = "rerun empty out";
+            this.toolTip1.SetToolTip(this.checkBox_emptyOut, "ignores empty out files");
+            this.checkBox_emptyOut.UseVisualStyleBackColor = true;
+            // 
+            // checkBox_skipTO
+            // 
+            this.checkBox_skipTO.AutoSize = true;
+            this.checkBox_skipTO.Checked = true;
+            this.checkBox_skipTO.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBox_skipTO.Location = new System.Drawing.Point(279, 292);
+            this.checkBox_skipTO.Name = "checkBox_skipTO";
+            this.checkBox_skipTO.Size = new System.Drawing.Size(93, 17);
+            this.checkBox_skipTO.TabIndex = 44;
+            this.checkBox_skipTO.Text = "Skip long runs";
+            this.toolTip1.SetToolTip(this.checkBox_skipTO, "Once a benchmark fails with some config. it will not be attempted again");
+            this.checkBox_skipTO.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(566, 637);
+            this.ClientSize = new System.Drawing.Size(590, 668);
+            this.Controls.Add(this.checkBox_skipTO);
+            this.Controls.Add(this.checkBox_emptyOut);
             this.Controls.Add(this.label10);
             this.Controls.Add(this.checkBox_out);
             this.Controls.Add(this.button2);
@@ -541,6 +570,8 @@
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.CheckBox checkBox_out;
         private System.Windows.Forms.Label label10;
+        private System.Windows.Forms.CheckBox checkBox_emptyOut;
+        private System.Windows.Forms.CheckBox checkBox_skipTO;
     }
 }
 

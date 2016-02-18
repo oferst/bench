@@ -19,6 +19,7 @@ namespace bench
     {
 
         Hashtable processes = new Hashtable();  // from process to <args, benchmark, list of results>
+        List<string> failed_benchmarks;
         List<System.Threading.Timer> timers = new List<System.Threading.Timer>();
         List<string> labels = new List<string>();
         static int param_list_size = 16;
@@ -32,7 +33,7 @@ namespace bench
         int[] active = new int[8]; // {3, 5, 7 }; //note that we push all other processes to 1,2  [core # begin at 1]. with hyperthreading=off use {2,3,4}
         int failed = 0;        
         bool hyperthreading = true;
-        StreamWriter logfile = new System.IO.StreamWriter(@"C:\temp\log.txt");
+        StreamWriter logfile = new StreamWriter(@"C:\temp\log.txt");
         string timestring = "totalTimeNoInitialCheck"; // "time"   -- for the scatter/cactus plots, we compare this field. 
         StreamWriter csvfile;        
         Hashtable csv4plot = new Hashtable();        
@@ -52,6 +53,7 @@ namespace bench
             radioset2.Location = new Point(30, 0);
             radioset1.Size = new Size(20, param_list_size * 25);
             radioset2.Size = new Size(20, param_list_size * 25);
+            failed_benchmarks = new List<string>();
 
             for (int i = 0; i < param_list_size; ++i)
             {
@@ -82,11 +84,13 @@ namespace bench
 
             checkBox_remote.Checked = false;
             checkBox_rec.Checked = true;
-
+            checkBox_emptyOut.Enabled = checkBox_out.Checked;
 
             param_list[0].Text = "-file";
             param_list[1].Text = "-rotate -file";
-            param_list[2].Text = "-eager -rotate -file";
+            param_list[2].Text = "-rotate -boundRot -file";
+            param_list[3].Text = "-rotate -rotatet 5 -file";
+            param_list[4].Text = "-rotate -rotatet 7 -file";
             //   param_list[2].Text = "-rotate -fth 1 -file";
             //param_list[3].Text = "-rotate -fth 3 -file";
             //param_list[4].Text = "-eager -rotate -fth 1 -file";
@@ -148,7 +152,7 @@ namespace bench
 
             //text_filter.Text = "2dlx_ca_mc_ex_bp_f_new.gcnf";
             //text_filter.Text = "*.cnf";
-            text_filter.Text = "neq004_size4.smt";
+            text_filter.Text = "f*.smt";
             //text_dir.Text = @"C:\temp\gcnf_test\belov\";
             //text_dir.Text = @"C:\temp\muc_test\SAT02\industrial\biere\cmpadd";
             //text_dir.Text = @"C:\temp\muc_test\marques-silva\hardware-verification";
@@ -159,7 +163,7 @@ namespace bench
             //text_dir.Text = @"C:\temp\muc_test\SAT11\application";
             //text_dir.Text = @"C:\temp\muc_test\SAT02\industrial_smtlib";
             //text_dir.Text = @"C:\temp\muc_test\SAT11\mus\marques-silva\hardware-verification";
-            text_dir.Text = @"C:\temp\smtmuc\benchmarks";
+            text_dir.Text = @"C:\temp\smtmuc\benchmarks\qf_lia";
             //text_dir.Text = @"C:\temp\muc_test\SAT11\mus\marques-silva\bmc-default";
             //text_dir.Text = @"C:\temp\muc_test\SAT02\sat-2002-beta";
             //text_exe.Text = "\"C:\\Users\\ofers\\Documents\\Visual Studio 2012\\Projects\\hmuc\\x64\\Release\\hmuc.exe\" ";
@@ -168,7 +172,7 @@ namespace bench
           //  text_exe.Text = @"C:\Users\Ofer\Documents\Visual Studio 2012\Projects\hmuc\x64\Release\hmuc.exe";
           //text_exe.Text = "\"C:\\Users\\ofers\\Documents\\Visual Studio 2012\\Projects\\hmuc\\x64\\Release\\hmuc.exe\"";
             text_minmem.Text = MinMem.ToString();
-            text_timeout.Text = "900";
+            text_timeout.Text = "600";
             //text_csv.Text = @"c:\temp\res_force.csv";
             text_csv.Text = @"c:\temp\smtmuc\res.csv";
         }
@@ -190,7 +194,7 @@ namespace bench
         void init_csv_file()
         {
             try {
-                csvfile = new System.IO.StreamWriter(text_csv.Text, checkBox_append.Checked);      //(@"C:\temp\res.csv");   
+                csvfile = new StreamWriter(text_csv.Text, checkBox_append.Checked);      //(@"C:\temp\res.csv");   
             }
             catch
             {
@@ -200,7 +204,7 @@ namespace bench
 
         void readEntries()
         {            
-            StreamReader csvfile = new System.IO.StreamReader(text_csv.Text);      //(@"C:\temp\res.csv");
+            StreamReader csvfile = new StreamReader(text_csv.Text);      //(@"C:\temp\res.csv");
             string line, res;
             try {
                 csvfile.ReadLine(); // header
@@ -233,7 +237,8 @@ namespace bench
             {
                 bg.ReportProgress(0, "timeout: process killed: " + p.StartInfo.Arguments);
                 Tuple<string, string, List<float>> data = ((Tuple<string, string, List<float>>)processes[p]);
-                List<float> l = (List<float>)data.Item3;
+                failed_benchmarks.Add(data.Item2);
+                List<float> l = data.Item3;
                 l.Add(Convert.ToInt32(text_timeout.Text) + 1); // +1 for debugging                
                 p.Kill();
             }            
@@ -326,7 +331,7 @@ namespace bench
             }
         }
 
-        void buildcsv()
+        void buildcsv(bool Addheader)
         {
             string csvheader = "";
             create_plot_files();
@@ -337,19 +342,23 @@ namespace bench
                 
                 List<float> l = (List<float>)trio.Item3;
                 csvtext += getid(trio.Item1, trio.Item2) + ","; // benchmark
-
-                for (int i = 0; i < l.Count; ++i)
-                    csvtext += l[i].ToString() + ",";
-                if (l.Count == 0)   // in case of timeout / mem-out / whatever
+                if (l.Count > 0)
                 {
-                    csvtext += (Convert.ToInt32(text_timeout.Text) * 10).ToString() + ","; //supposed to get here only on memout/fail (not time-out). We add 10 times the time-out to make sure it is noticeable and not taken as part of the average. 
+                    csvtext += ","; // for the 'fail' column
+                    for (int i = 0; i < l.Count; ++i)
+                        csvtext += l[i].ToString() + ",";
+                }
+                else   // in case of timeout / mem-out / whatever
+                {
+                    csvtext += "1,";
+                 //   csvtext += (Convert.ToInt32(text_timeout.Text) * 10).ToString() + ","; //supposed to get here only on memout/fail (not time-out). We add 10 times the time-out to make sure it is noticeable and not taken as part of the average. 
                  }
                 csvtext += "\n";
                 
                 try
                 {
                     if (l.Count > 0)  // if it is 0, it implies that it was a fail (typically T.O.).
-                    ((System.IO.StreamWriter)csv4plot[normalize_string(trio.Item1)]).WriteLine(
+                    ((StreamWriter)csv4plot[normalize_string(trio.Item1)]).WriteLine(
                         trio.Item2 + "," + // full benchmark path
                         normalize_string(trio.Item1) + "," + // param
                         l[labels.IndexOf(timestring)].ToString() + "," +
@@ -359,9 +368,9 @@ namespace bench
             }
             foreach (string lbl in labels) csvheader += lbl + ",";
             
-            if (!checkBox_append.Checked)
+            if (Addheader)
             {
-                csvfile.Write("param, dir, bench, " + csvheader);
+                csvfile.Write("param, dir, bench, fail," + csvheader);
                 csvfile.WriteLine();
             }
             try
@@ -370,10 +379,10 @@ namespace bench
             }
             catch
             {
-                MessageBox.Show("seems that " + text_csv.Text + "is in use"); return; 
+                MessageBox.Show("seems that " + text_csv.Text + "is in use"); return;
             }
             csvfile.Close();
-            foreach (var key in csv4plot.Keys) ((System.IO.StreamWriter)csv4plot[key]).Close(); 
+            foreach (var key in csv4plot.Keys) ((StreamWriter)csv4plot[key]).Close();
         }
 
         void run_remote(string cmd, string args) // for unix commands. Synchronous. 
@@ -454,6 +463,11 @@ namespace bench
                 foreach (FileInfo fileinfo in fileEntries)  // for each benchmark file
                 {
                     string fileName = fileinfo.FullName;
+                    if (checkBox_skipTO.Checked && failed_benchmarks.Contains(fileName))
+                    {
+                        bg.ReportProgress(0,"Skipping " + fileName + "; it timed-out with a previos configuration.");
+                        continue;
+                    }
                     string id = getid(param_list[par].Text, fileName);
                     if (entries.Contains(id)) continue;
                     if (++bench_cnt == bench_bound) break;
@@ -485,7 +499,7 @@ namespace bench
                                //     try
                                     {
                                         string outfilename = outfile(fileName, param_list[par].Text);
-                                        if (!checkBox_out.Checked || !File.Exists(outfilename) || (new FileInfo(outfilename)).Length == 0)
+                                        if (!checkBox_out.Checked || !File.Exists(outfilename) || (checkBox_emptyOut.Checked && (new FileInfo(outfilename)).Length <= 10))
                                         {
                                             bg.ReportProgress(0, "running " + fileName + " on core " + i.ToString());
                                             p[i] = run(text_exe.Text, param_list[par].Text + " " + fileName, outfilename, 1 << (i - 1));
@@ -571,8 +585,8 @@ namespace bench
                     {
                         string param = normalize_string(param_list[par].Text);
                         if (param == "<>") continue;
-                        csv4plot[param] = new System.IO.StreamWriter(graphDir + param + ".csv");
-                        ((System.IO.StreamWriter)csv4plot[param]).WriteLine("Benchmark,command,usertime,timeout");
+                        csv4plot[param] = new StreamWriter(graphDir + param + ".csv");
+                        ((StreamWriter)csv4plot[param]).WriteLine("Benchmark,command,usertime,timeout");
                     }
             }
             catch (Exception ex)
@@ -586,8 +600,11 @@ namespace bench
         private void button_start_Click(object sender, EventArgs e)
         {
             try {
-                StreamReader csvfile = new System.IO.StreamReader(text_csv.Text);
+            if (File.Exists(text_csv.Text))
+            {
+                StreamReader csvfile = new StreamReader(text_csv.Text);
                 csvfile.Close();
+            }
             }
             catch
             {
@@ -897,7 +914,7 @@ namespace bench
         }
 
         void import_out_to_csv()
-        {
+        {           
             int in_csv = 0, file_exists = 0, file_not_exist = 0;
             string benchmarksDir = text_dir.Text,
             searchPattern = text_filter.Text;
@@ -949,7 +966,8 @@ namespace bench
                     }
                 }
             }
-            
+
+            bool Addheader = !checkBox_append.Checked || !File.Exists(text_csv.Text);
             try
             {
                 init_csv_file();
@@ -963,7 +981,7 @@ namespace bench
             listBox1.Items.Add(file_exists.ToString() + " benchmark results imported from out files.");
             listBox1.Items.Add(file_not_exist.ToString() + " outfile missing.");
             
-            buildcsv();
+            buildcsv(Addheader);
         }
 
         private void button_import_Click(object sender, EventArgs e)  // import out files from remote server, and process them to generate the csv + plot files. 
@@ -979,7 +997,12 @@ namespace bench
         private void button2_Click(object sender, EventArgs e)
         {
             del_short_calls();
-        } 
+        }
+
+        private void checkBox_out_CheckedChanged(object sender, EventArgs e)
+        {
+            checkBox_emptyOut.Enabled = checkBox_out.Checked;
+        }
     }
 }
 
