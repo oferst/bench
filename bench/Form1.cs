@@ -11,7 +11,6 @@ using System.Diagnostics;
 using System.Threading;
 
 
-
 namespace bench
 {
     // todo: timeout doesn't kill the actual process, only the cmd process. 
@@ -33,8 +32,7 @@ namespace bench
         int[] active = new int[8]; // {3, 5, 7 }; //note that we push all other processes to 1,2  [core # begin at 1]. with hyperthreading=off use {2,3,4}
         int failed = 0;        
         bool hyperthreading = true;
-        StreamWriter logfile = new StreamWriter(@"C:\temp\log.txt");
-        string timestring = "totalTimeNoInitialCheck"; // "time"   -- for the scatter/cactus plots, we compare this field. 
+        StreamWriter logfile = new StreamWriter(@"C:\temp\log.txt");        
         StreamWriter csvfile;        
         Hashtable csv4plot = new Hashtable();        
         string csvtext;
@@ -88,9 +86,10 @@ namespace bench
 
             param_list[0].Text = "-file";
             param_list[1].Text = "-rotate -file";
-            param_list[2].Text = "-rotate -boundRot -file";
+            /*param_list[2].Text = "-rotate -boundRot -file";
             param_list[3].Text = "-rotate -rotatet 5 -file";
             param_list[4].Text = "-rotate -rotatet 7 -file";
+            */
             //   param_list[2].Text = "-rotate -fth 1 -file";
             //param_list[3].Text = "-rotate -fth 3 -file";
             //param_list[4].Text = "-eager -rotate -fth 1 -file";
@@ -152,7 +151,7 @@ namespace bench
 
             //text_filter.Text = "2dlx_ca_mc_ex_bp_f_new.gcnf";
             //text_filter.Text = "*.cnf";
-            text_filter.Text = "f*.smt";
+            text_filter.Text = "*.smt";
             //text_dir.Text = @"C:\temp\gcnf_test\belov\";
             //text_dir.Text = @"C:\temp\muc_test\SAT02\industrial\biere\cmpadd";
             //text_dir.Text = @"C:\temp\muc_test\marques-silva\hardware-verification";
@@ -163,11 +162,11 @@ namespace bench
             //text_dir.Text = @"C:\temp\muc_test\SAT11\application";
             //text_dir.Text = @"C:\temp\muc_test\SAT02\industrial_smtlib";
             //text_dir.Text = @"C:\temp\muc_test\SAT11\mus\marques-silva\hardware-verification";
-            text_dir.Text = @"C:\temp\smtmuc\benchmarks\qf_lia";
+            text_dir.Text = @"C:\temp\smtmuc\benchmarks\";
             //text_dir.Text = @"C:\temp\muc_test\SAT11\mus\marques-silva\bmc-default";
             //text_dir.Text = @"C:\temp\muc_test\SAT02\sat-2002-beta";
             //text_exe.Text = "\"C:\\Users\\ofers\\Documents\\Visual Studio 2012\\Projects\\hmuc\\x64\\Release\\hmuc.exe\" ";
-            text_exe.Text = @"C:\temp\smtmuc\smt_muc.exe";
+            text_exe.Text = @"C:\Users\ofers\Documents\Visual Studio 2015\Projects\HSmtMuc\Release\HsmtMuc.exe";
 
           //  text_exe.Text = @"C:\Users\Ofer\Documents\Visual Studio 2012\Projects\hmuc\x64\Release\hmuc.exe";
           //text_exe.Text = "\"C:\\Users\\ofers\\Documents\\Visual Studio 2012\\Projects\\hmuc\\x64\\Release\\hmuc.exe\"";
@@ -175,13 +174,14 @@ namespace bench
             text_timeout.Text = "600";
             //text_csv.Text = @"c:\temp\res_force.csv";
             text_csv.Text = @"c:\temp\smtmuc\res.csv";
+            textBox_timefield.Text = "totalTimeNoInitialCheck";
         }
 
         #region utils
 
         string normalize_string(string s)
         {
-            return s.Replace("=","").Replace(" ", "").Replace("-","").Replace("_",""); // to make param a legal file name
+            return s.Replace("=","").Replace(" ", "").Replace("-","").Replace("_","").Replace("@",""); // to make param a legal file name
         }
 
         string getid(string param, string filename)
@@ -203,10 +203,11 @@ namespace bench
         }
 
         void readEntries()
-        {            
-            StreamReader csvfile = new StreamReader(text_csv.Text);      //(@"C:\temp\res.csv");
+        {       
             string line, res;
+            StreamReader csvfile;
             try {
+                csvfile = new StreamReader(text_csv.Text);      //(@"C:\temp\res.csv");
                 csvfile.ReadLine(); // header
             }
             catch
@@ -224,8 +225,9 @@ namespace bench
                 }
                 System.Diagnostics.Debug.Assert(i >= 0);
                 res = line.Substring(0,i);
-                if (line.IndexOf(',', i + 1) > i + 1) entries.Add(res);  // in case we have after file name ",," it means that time was not recorded; 
-                else listBox1.Items.Add("remove line: " + line);
+                entries.Add(res);
+                //if (line.IndexOf(',', i + 1) > i + 1) entries.Add(res);  // in case we have after file name ",," it means that time was not recorded; 
+                //else listBox1.Items.Add("remove line: " + line);
             }
             csvfile.Close();
         }
@@ -361,7 +363,7 @@ namespace bench
                     ((StreamWriter)csv4plot[normalize_string(trio.Item1)]).WriteLine(
                         trio.Item2 + "," + // full benchmark path
                         normalize_string(trio.Item1) + "," + // param
-                        l[labels.IndexOf(timestring)].ToString() + "," +
+                        l[labels.IndexOf(textBox_timefield.Text)].ToString() + "," +
                         text_timeout.Text + "s");
                 }
                 catch (Exception ex) { listBox1.Items.Add("exception: " + ex.Message); }
@@ -385,12 +387,24 @@ namespace bench
             foreach (var key in csv4plot.Keys) ((StreamWriter)csv4plot[key]).Close();
         }
 
+        string remove_label(string args)
+        {
+            string str = args; 
+            int s = args.IndexOf('@');
+            if (s >= 0)
+            {
+                int l = args.IndexOf(' ', s);
+                str = args.Remove(s, l - s);
+            }
+            return str;
+        }
+
         void run_remote(string cmd, string args) // for unix commands. Synchronous. 
         {
             Process p = new Process();         
 
             p.StartInfo.FileName = cmd;
-            p.StartInfo.Arguments = args;
+            p.StartInfo.Arguments = remove_label(args);
             p.StartInfo.UseShellExecute = false;
             p.StartInfo.RedirectStandardOutput = false;
             p.StartInfo.CreateNoWindow = true;            
@@ -403,14 +417,14 @@ namespace bench
             catch { MessageBox.Show("cannot start process" + p.StartInfo.FileName); throw; }
             p.WaitForExit();
         }
-         
+
         Process run(string cmd, string args, string outfilename, int affinity = 0x007F)
         {
             Process p = new Process();
 
             
             p.StartInfo.FileName = cmd;
-            p.StartInfo.Arguments = args;
+            p.StartInfo.Arguments = remove_label(args);
 
             p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
             p.StartInfo.UseShellExecute = false;
@@ -545,7 +559,7 @@ namespace bench
             bg.ReportProgress(0, "============================");
 
             bg.ReportProgress(1, time); //label_paralel_time.Text
-            try { bg.ReportProgress(2, accum_results[timestring].ToString()); }
+            try { bg.ReportProgress(2, accum_results[textBox_timefield.Text].ToString()); }
             catch { };  //label_total_time.Text}
             bg.ReportProgress(3, cnt.ToString()); // label_cnt.Text 
             bg.ReportProgress(5, failed.ToString());
@@ -745,7 +759,7 @@ namespace bench
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.FileName = "run-scatter.bat";
             string f1 = normalize_string(param_list[param1].Text), f2 = normalize_string(param_list[param2].Text);
-            startInfo.Arguments =  String.Compare(f1, f2) < 0 ? f1 + " " + f2 : f2 + " " + f1; // apparently make_graph treats them alphabetically, so we need to give them alphabetically to know what pdf is eventually generated. 
+            startInfo.Arguments = string.Compare(f1, f2) < 0 ? f1 + " " + f2 : f2 + " " + f1; // apparently make_graph treats them alphabetically, so we need to give them alphabetically to know what pdf is eventually generated. 
             startInfo.WorkingDirectory = graphDir;
             p.StartInfo = startInfo;
             p.Start();
@@ -789,6 +803,8 @@ namespace bench
 
         private void del_Allfail_benchmark()
         {
+            //MessageBox.Show("Sure", "Some Title", MessageBoxButtons.YesNo);
+            if (MessageBox.Show("This operation erases files. continue ? ", "confirm deletion", MessageBoxButtons.YesNo) == DialogResult.No) return;
             Hashtable benchmarks = new Hashtable();
             string fileName = text_csv.Text;
             HashSet<string> failed_all = new HashSet<string>();
@@ -823,7 +839,7 @@ namespace bench
                 listBox1.Items.Add("deleting All-failed benchmark " + path);
                 failed_all.Add(key);
                 cnt++;
-                try { File.Delete(path); }
+                try { File.Delete(path);}
                 catch { }
             }
             listBox1.Items.Add("Deleted benchmarks: " + cnt);
@@ -1002,6 +1018,17 @@ namespace bench
         private void checkBox_out_CheckedChanged(object sender, EventArgs e)
         {
             checkBox_emptyOut.Enabled = checkBox_out.Checked;
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            var dialog = new FolderBrowserDialog();            
+            dialog.SelectedPath = @text_dir.Text;
+            DialogResult result = dialog.ShowDialog();
+            if (result == DialogResult.OK)
+            {
+                text_dir.Text = dialog.SelectedPath;
+            }
         }
     }
 }

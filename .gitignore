@@ -4012,3 +4012,5 @@ bench/obj/Release/WindowsFormsApplication1.Properties.Resources.resources
 bench/obj/Release/bench.Form1.resources
 bench/obj/Release/bench.csproj.FileListAbsolute.txt
 bench/Form1 - Copy.cs
+bench/bin/Release/hmuc_res
+bench/bin/Release/temp.cnf

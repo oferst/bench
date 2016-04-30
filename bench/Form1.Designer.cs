@@ -68,9 +68,11 @@
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.button2 = new System.Windows.Forms.Button();
             this.checkBox_out = new System.Windows.Forms.CheckBox();
-            this.label10 = new System.Windows.Forms.Label();
             this.checkBox_emptyOut = new System.Windows.Forms.CheckBox();
             this.checkBox_skipTO = new System.Windows.Forms.CheckBox();
+            this.textBox_timefield = new System.Windows.Forms.TextBox();
+            this.label10 = new System.Windows.Forms.Label();
+            this.button4 = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // button1
@@ -133,7 +135,7 @@
             // 
             this.text_dir.Location = new System.Drawing.Point(60, 263);
             this.text_dir.Name = "text_dir";
-            this.text_dir.Size = new System.Drawing.Size(421, 20);
+            this.text_dir.Size = new System.Drawing.Size(387, 20);
             this.text_dir.TabIndex = 8;
             // 
             // label4
@@ -286,7 +288,7 @@
             // 
             // button3
             // 
-            this.button3.Location = new System.Drawing.Point(110, 566);
+            this.button3.Location = new System.Drawing.Point(165, 560);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(70, 23);
             this.button3.TabIndex = 27;
@@ -313,7 +315,7 @@
             // label13
             // 
             this.label13.AutoSize = true;
-            this.label13.Location = new System.Drawing.Point(353, 559);
+            this.label13.Location = new System.Drawing.Point(398, 543);
             this.label13.Name = "label13";
             this.label13.Size = new System.Drawing.Size(37, 13);
             this.label13.TabIndex = 30;
@@ -353,7 +355,7 @@
             // 
             // button_scatter
             // 
-            this.button_scatter.Location = new System.Drawing.Point(15, 566);
+            this.button_scatter.Location = new System.Drawing.Point(15, 560);
             this.button_scatter.Name = "button_scatter";
             this.button_scatter.Size = new System.Drawing.Size(75, 23);
             this.button_scatter.TabIndex = 34;
@@ -363,7 +365,7 @@
             // 
             // button_cactus
             // 
-            this.button_cactus.Location = new System.Drawing.Point(15, 598);
+            this.button_cactus.Location = new System.Drawing.Point(15, 592);
             this.button_cactus.Name = "button_cactus";
             this.button_cactus.Size = new System.Drawing.Size(75, 23);
             this.button_cactus.TabIndex = 35;
@@ -373,11 +375,11 @@
             // 
             // del_fails
             // 
-            this.del_fails.Location = new System.Drawing.Point(199, 567);
+            this.del_fails.Location = new System.Drawing.Point(254, 561);
             this.del_fails.Name = "del_fails";
-            this.del_fails.Size = new System.Drawing.Size(75, 22);
+            this.del_fails.Size = new System.Drawing.Size(118, 22);
             this.del_fails.TabIndex = 36;
-            this.del_fails.Text = "del Fails";
+            this.del_fails.Text = "del Fails from csv";
             this.toolTip1.SetToolTip(this.del_fails, "Delete lines from the csv file, that correspond to a benchmark that was not solve" +
         "d by ALL parameters. ");
             this.del_fails.UseVisualStyleBackColor = true;
@@ -396,7 +398,7 @@
             // 
             // button_import
             // 
-            this.button_import.Location = new System.Drawing.Point(110, 598);
+            this.button_import.Location = new System.Drawing.Point(165, 592);
             this.button_import.Name = "button_import";
             this.button_import.Size = new System.Drawing.Size(70, 23);
             this.button_import.TabIndex = 38;
@@ -408,11 +410,11 @@
             // 
             // button_del_allfail
             // 
-            this.button_del_allfail.Location = new System.Drawing.Point(199, 597);
+            this.button_del_allfail.Location = new System.Drawing.Point(254, 630);
             this.button_del_allfail.Name = "button_del_allfail";
-            this.button_del_allfail.Size = new System.Drawing.Size(75, 23);
+            this.button_del_allfail.Size = new System.Drawing.Size(118, 23);
             this.button_del_allfail.TabIndex = 39;
-            this.button_del_allfail.Text = "del all-fail";
+            this.button_del_allfail.Text = "del all-fail bench-s";
             this.toolTip1.SetToolTip(this.button_del_allfail, "delete benchmark files for which all params fails according to the data in the cs" +
         "v file. ");
             this.button_del_allfail.UseVisualStyleBackColor = true;
@@ -420,11 +422,11 @@
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(199, 629);
+            this.button2.Location = new System.Drawing.Point(254, 592);
             this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(75, 23);
+            this.button2.Size = new System.Drawing.Size(118, 23);
             this.button2.TabIndex = 40;
-            this.button2.Text = "del shorts";
+            this.button2.Text = "del shorts from csv";
             this.toolTip1.SetToolTip(this.button2, "deleted from csv benchmarks that their longestcall is < 1 sec. in one of the para" +
         "meters.");
             this.button2.UseVisualStyleBackColor = true;
@@ -441,15 +443,6 @@
             this.toolTip1.SetToolTip(this.checkBox_out, "Excludes benchmarks for which there is already an out file");
             this.checkBox_out.UseVisualStyleBackColor = true;
             this.checkBox_out.CheckedChanged += new System.EventHandler(this.checkBox_out_CheckedChanged);
-            // 
-            // label10
-            // 
-            this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(57, 320);
-            this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(77, 13);
-            this.label10.TabIndex = 42;
-            this.label10.Text = "Filter entries in:";
             // 
             // checkBox_emptyOut
             // 
@@ -475,11 +468,40 @@
             this.toolTip1.SetToolTip(this.checkBox_skipTO, "Once a benchmark fails with some config. it will not be attempted again");
             this.checkBox_skipTO.UseVisualStyleBackColor = true;
             // 
+            // textBox_timefield
+            // 
+            this.textBox_timefield.Location = new System.Drawing.Point(15, 630);
+            this.textBox_timefield.Name = "textBox_timefield";
+            this.textBox_timefield.Size = new System.Drawing.Size(133, 20);
+            this.textBox_timefield.TabIndex = 45;
+            this.toolTip1.SetToolTip(this.textBox_timefield, "name of field for plots");
+            // 
+            // label10
+            // 
+            this.label10.AutoSize = true;
+            this.label10.Location = new System.Drawing.Point(57, 320);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(77, 13);
+            this.label10.TabIndex = 42;
+            this.label10.Text = "Filter entries in:";
+            // 
+            // button4
+            // 
+            this.button4.Location = new System.Drawing.Point(455, 259);
+            this.button4.Name = "button4";
+            this.button4.Size = new System.Drawing.Size(32, 27);
+            this.button4.TabIndex = 46;
+            this.button4.Text = "...";
+            this.button4.UseVisualStyleBackColor = true;
+            this.button4.Click += new System.EventHandler(this.button4_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(590, 668);
+            this.Controls.Add(this.button4);
+            this.Controls.Add(this.textBox_timefield);
             this.Controls.Add(this.checkBox_skipTO);
             this.Controls.Add(this.checkBox_emptyOut);
             this.Controls.Add(this.label10);
@@ -572,6 +594,8 @@
         private System.Windows.Forms.Label label10;
         private System.Windows.Forms.CheckBox checkBox_emptyOut;
         private System.Windows.Forms.CheckBox checkBox_skipTO;
+        private System.Windows.Forms.TextBox textBox_timefield;
+        private System.Windows.Forms.Button button4;
     }
 }
 
