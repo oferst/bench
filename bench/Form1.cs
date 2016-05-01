@@ -84,8 +84,8 @@ namespace bench
             checkBox_rec.Checked = true;
             checkBox_emptyOut.Enabled = checkBox_out.Checked;
 
-            param_list[0].Text = "-file";
-            param_list[1].Text = "-rotate -file";
+            param_list[0].Text = "@exp1 -file";
+            //param_list[1].Text = "-rotate -file";
             /*param_list[2].Text = "-rotate -boundRot -file";
             param_list[3].Text = "-rotate -rotatet 5 -file";
             param_list[4].Text = "-rotate -rotatet 7 -file";
@@ -173,7 +173,7 @@ namespace bench
             text_minmem.Text = MinMem.ToString();
             text_timeout.Text = "600";
             //text_csv.Text = @"c:\temp\res_force.csv";
-            text_csv.Text = @"c:\temp\smtmuc\res.csv";
+            text_csv.Text = @"c:\temp\smtmuc\res_cimatti.csv";
             textBox_timefield.Text = "totalTimeNoInitialCheck";
         }
 
@@ -223,7 +223,7 @@ namespace bench
                 for (int j = 0; j < 3; ++j) {
                     i = line.IndexOf(',', i+1);
                 }
-                System.Diagnostics.Debug.Assert(i >= 0);
+                Debug.Assert(i >= 0);
                 res = line.Substring(0,i);
                 entries.Add(res);
                 //if (line.IndexOf(',', i + 1) > i + 1) entries.Add(res);  // in case we have after file name ",," it means that time was not recorded; 
@@ -231,6 +231,50 @@ namespace bench
             }
             csvfile.Close();
         }
+
+
+        /// <summary>
+        /// Temporary, for creating dir with files only in this list
+        /// </summary>
+        void readfileEntries()
+        {
+            string line;
+            StreamReader csvfile;
+            try
+            {
+                csvfile = new StreamReader(@"C:\temp\smtmuc\benchmarks\list.csv");      //(@"C:\temp\res.csv");                
+            }
+            catch
+            {
+                MessageBox.Show("seems that " + text_csv.Text + "is in use");
+                return;
+            }
+                        
+            while ((line = csvfile.ReadLine()) != null)
+            {                
+                entries.Add(line);             
+            }
+            csvfile.Close();
+        }
+
+        /// <summary>
+        /// Temporary, for erasing files not in a list. To activate, add a button ... 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        void erase_files(object sender, EventArgs e)
+        {
+            readfileEntries();
+            var fileEntries = new DirectoryInfo(@"C:\temp\smtmuc\benchmarks").GetFiles("*.smt", SearchOption.AllDirectories);
+            foreach (FileInfo fileinfo in fileEntries)  // for each benchmark file
+            {
+                string fileName = fileinfo.Name;
+                if (entries.Contains(fileName)) continue;
+
+                File.Delete(fileinfo.FullName);
+            }
+        }
+
 
         void kill_process(Object stateinfo)
         {
@@ -898,27 +942,23 @@ namespace bench
         {            
             string fileName = text_csv.Text;
             HashSet<string> failed_atleast_once = new HashSet<string>();
+            bool header = true;
             // finding failed benchmarks 
             try {
                 foreach (string line in File.ReadLines(fileName))
                 {
-                    string time = getfield(line, 4);
-                    double d;
-                    bool isdouble = double.TryParse(time, out d);
-                    if (isdouble)
-                    {
-                        if (d > Convert.ToInt32(text_timeout.Text) + 1)
-                        {
-                            listBox1.Items.Add("failed line: " + line);
-                            failed_atleast_once.Add(getfield(line, 3));
-                        }
-                    }
+                    if (header) { header = false; continue; }
+                    string failed = getfield(line, 4);
+                    if (failed.Length == 0) continue;
+                    Debug.Assert(failed == "1");
+                    listBox1.Items.Add("failed line: " + line);
+                    failed_atleast_once.Add(Path.Combine(getfield(line, 2), getfield(line, 3)));
                 }
             }
             catch { MessageBox.Show("seems that " + text_csv.Text + "is in use"); return; }
             
             // keeping only benchmarks that are not failed by any parameter combination. 
-            var linesToKeep = File.ReadLines(fileName).Where(l => (!failed_atleast_once.Contains(getfield(l, 3)) || getfield(l, 1) == "param"));   // second item so it includes the header.         
+            var linesToKeep = File.ReadLines(fileName).Where(l => (!failed_atleast_once.Contains(Path.Combine(getfield(l, 2), getfield(l, 3))) || getfield(l, 1) == "param"));   // second item so it includes the header.         
             
             var tempFile = Path.GetTempFileName();
 
@@ -1030,6 +1070,7 @@ namespace bench
                 text_dir.Text = dialog.SelectedPath;
             }
         }
+        
     }
 }
 

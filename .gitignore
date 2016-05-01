@@ -4014,3 +4014,5 @@ bench/obj/Release/bench.csproj.FileListAbsolute.txt
 bench/Form1 - Copy.cs
 bench/bin/Release/hmuc_res
 bench/bin/Release/temp.cnf
+bench/bin/Debug/hmuc_res
+bench/bin/Debug/temp.cnf
