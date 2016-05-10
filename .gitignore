@@ -4016,3 +4016,7 @@ bench/bin/Release/hmuc_res
 bench/bin/Release/temp.cnf
 bench/bin/Debug/hmuc_res
 bench/bin/Debug/temp.cnf
+bench/bin/Debug/history.txt
+bench/obj/Debug/bench.filter.resources
+bench/bin/Release/history.txt
+history.txt

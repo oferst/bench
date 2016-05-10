@@ -1,6 +1,6 @@
 ﻿namespace bench
 {
-    partial class Form1
+    partial class filter
     {
         /// <summary>
         /// Required designer variable.
@@ -34,11 +34,8 @@
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.label_paralel_time = new System.Windows.Forms.Label();
-            this.text_filter = new System.Windows.Forms.TextBox();
-            this.text_dir = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
-            this.text_exe = new System.Windows.Forms.TextBox();
             this.label6 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
             this.label_total_time = new System.Windows.Forms.Label();
@@ -50,7 +47,6 @@
             this.label9 = new System.Windows.Forms.Label();
             this.label_fails = new System.Windows.Forms.Label();
             this.label12 = new System.Windows.Forms.Label();
-            this.text_csv = new System.Windows.Forms.TextBox();
             this.label11 = new System.Windows.Forms.Label();
             this.button_kill = new System.Windows.Forms.Button();
             this.button3 = new System.Windows.Forms.Button();
@@ -73,6 +69,10 @@
             this.textBox_timefield = new System.Windows.Forms.TextBox();
             this.label10 = new System.Windows.Forms.Label();
             this.button4 = new System.Windows.Forms.Button();
+            this.exe = new System.Windows.Forms.ComboBox();
+            this.dir = new System.Windows.Forms.ComboBox();
+            this.filter_str = new System.Windows.Forms.ComboBox();
+            this.csv = new System.Windows.Forms.ComboBox();
             this.SuspendLayout();
             // 
             // button1
@@ -124,20 +124,6 @@
             this.label_paralel_time.TabIndex = 6;
             this.label_paralel_time.Text = "...";
             // 
-            // text_filter
-            // 
-            this.text_filter.Location = new System.Drawing.Point(60, 289);
-            this.text_filter.Name = "text_filter";
-            this.text_filter.Size = new System.Drawing.Size(196, 20);
-            this.text_filter.TabIndex = 2;
-            // 
-            // text_dir
-            // 
-            this.text_dir.Location = new System.Drawing.Point(60, 263);
-            this.text_dir.Name = "text_dir";
-            this.text_dir.Size = new System.Drawing.Size(387, 20);
-            this.text_dir.TabIndex = 8;
-            // 
             // label4
             // 
             this.label4.AutoSize = true;
@@ -155,13 +141,6 @@
             this.label5.Size = new System.Drawing.Size(47, 13);
             this.label5.TabIndex = 10;
             this.label5.Text = "directory";
-            // 
-            // text_exe
-            // 
-            this.text_exe.Location = new System.Drawing.Point(60, 237);
-            this.text_exe.Name = "text_exe";
-            this.text_exe.Size = new System.Drawing.Size(479, 20);
-            this.text_exe.TabIndex = 11;
             // 
             // label6
             // 
@@ -259,13 +238,6 @@
             this.label12.Size = new System.Drawing.Size(38, 13);
             this.label12.TabIndex = 23;
             this.label12.Text = "# fails:";
-            // 
-            // text_csv
-            // 
-            this.text_csv.Location = new System.Drawing.Point(401, 343);
-            this.text_csv.Name = "text_csv";
-            this.text_csv.Size = new System.Drawing.Size(138, 20);
-            this.text_csv.TabIndex = 24;
             // 
             // label11
             // 
@@ -427,8 +399,8 @@
             this.button2.Size = new System.Drawing.Size(118, 23);
             this.button2.TabIndex = 40;
             this.button2.Text = "del shorts from csv";
-            this.toolTip1.SetToolTip(this.button2, "deleted from csv benchmarks that their longestcall is < 1 sec. in one of the para" +
-        "meters.");
+            this.toolTip1.SetToolTip(this.button2, "delete from csv benchmarks that their runtime is < 1 sec. in at least one of the " +
+        "parameters.");
             this.button2.UseVisualStyleBackColor = true;
             this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
@@ -495,11 +467,53 @@
             this.button4.UseVisualStyleBackColor = true;
             this.button4.Click += new System.EventHandler(this.button4_Click);
             // 
-            // Form1
+            // exe
+            // 
+            this.exe.FormattingEnabled = true;
+            this.exe.Location = new System.Drawing.Point(60, 236);
+            this.exe.Name = "exe";
+            this.exe.Size = new System.Drawing.Size(477, 21);
+            this.exe.TabIndex = 48;
+            this.exe.SelectionChangeCommitted += new System.EventHandler(this.exe_SelectedIndexChanged);
+            this.exe.Leave += new System.EventHandler(this.comboBox_Leave);
+            // 
+            // dir
+            // 
+            this.dir.FormattingEnabled = true;
+            this.dir.Location = new System.Drawing.Point(60, 264);
+            this.dir.Name = "dir";
+            this.dir.Size = new System.Drawing.Size(379, 21);
+            this.dir.TabIndex = 49;
+            this.dir.SelectionChangeCommitted += new System.EventHandler(this.exe_SelectedIndexChanged);
+            this.dir.Leave += new System.EventHandler(this.comboBox_Leave);
+            // 
+            // filter_str
+            // 
+            this.filter_str.FormattingEnabled = true;
+            this.filter_str.Location = new System.Drawing.Point(61, 290);
+            this.filter_str.Name = "filter_str";
+            this.filter_str.Size = new System.Drawing.Size(207, 21);
+            this.filter_str.TabIndex = 50;
+            this.filter_str.SelectionChangeCommitted += new System.EventHandler(this.exe_SelectedIndexChanged);
+            // 
+            // csv
+            // 
+            this.csv.FormattingEnabled = true;
+            this.csv.Location = new System.Drawing.Point(412, 344);
+            this.csv.Name = "csv";
+            this.csv.Size = new System.Drawing.Size(127, 21);
+            this.csv.TabIndex = 51;
+            this.csv.SelectionChangeCommitted += new System.EventHandler(this.exe_SelectedIndexChanged);
+            // 
+            // filter
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(590, 668);
+            this.Controls.Add(this.csv);
+            this.Controls.Add(this.filter_str);
+            this.Controls.Add(this.dir);
+            this.Controls.Add(this.exe);
             this.Controls.Add(this.button4);
             this.Controls.Add(this.textBox_timefield);
             this.Controls.Add(this.checkBox_skipTO);
@@ -521,7 +535,6 @@
             this.Controls.Add(this.button3);
             this.Controls.Add(this.button_kill);
             this.Controls.Add(this.label11);
-            this.Controls.Add(this.text_csv);
             this.Controls.Add(this.label12);
             this.Controls.Add(this.label_fails);
             this.Controls.Add(this.label9);
@@ -533,18 +546,16 @@
             this.Controls.Add(this.label_total_time);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.label6);
-            this.Controls.Add(this.text_exe);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.label4);
-            this.Controls.Add(this.text_dir);
-            this.Controls.Add(this.text_filter);
             this.Controls.Add(this.label_paralel_time);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.listBox1);
             this.Controls.Add(this.button1);
-            this.Name = "Form1";
+            this.Name = "filter";
             this.Text = "Form1";
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Form1_FormClosed);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -557,11 +568,8 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label_paralel_time;
-        private System.Windows.Forms.TextBox text_filter;
-        private System.Windows.Forms.TextBox text_dir;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label label5;
-        private System.Windows.Forms.TextBox text_exe;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Label label_total_time;
@@ -573,7 +581,6 @@
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.Label label_fails;
         private System.Windows.Forms.Label label12;
-        private System.Windows.Forms.TextBox text_csv;
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.Button button_kill;
         private System.Windows.Forms.Button button3;
@@ -596,6 +603,10 @@
         private System.Windows.Forms.CheckBox checkBox_skipTO;
         private System.Windows.Forms.TextBox textBox_timefield;
         private System.Windows.Forms.Button button4;
+        private System.Windows.Forms.ComboBox exe;
+        private System.Windows.Forms.ComboBox dir;
+        private System.Windows.Forms.ComboBox filter_str;
+        private System.Windows.Forms.ComboBox csv;
     }
 }
 
