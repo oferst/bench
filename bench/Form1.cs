@@ -41,7 +41,7 @@ namespace bench
         Hashtable results = new Hashtable();
         AbortableBackgroundWorker bg;
         HashSet<string> entries = new HashSet<string>();
-        enum fields { exe,dir,filter_str,csv, param, misc};
+        enum fields { exe,dir,filter_str,csv, param, param_groups, misc};
         Dictionary<fields, List<string>> history;
         int bench_bound = 500;
         bool write_history_file = false;
@@ -57,8 +57,7 @@ namespace bench
             radioset1.Size = new Size(20, param_list_size * 25);
             radioset2.Size = new Size(20, param_list_size * 25);
             failed_benchmarks = new List<string>();
-
-            read_history(history_file);
+                        
 
             for (int i = 0; i < param_list_size; ++i)
             {
@@ -66,7 +65,7 @@ namespace bench
                 //param_list[i].Location = new System.Drawing.Point(60, 345 + i * 30);
                 param_list[i].Location = new System.Drawing.Point(60,  i * 25);
                 param_list[i].Size = new System.Drawing.Size(429, 20);
-                param_list[i].Text = "<>";
+                //param_list[i].Text = "<>";
                 panel1.Controls.Add(param_list[i]);
 
                 scatter1[i] = new RadioButton();
@@ -91,7 +90,7 @@ namespace bench
             checkBox_rec.Checked = true;
             checkBox_emptyOut.Enabled = checkBox_out.Checked;
 
-            param_list[0].Text = "-file";
+            //param_list[0].Text = "-file";
             /*param_list[1].Text = "-hlmuc -rotate -file";            
             param_list[2].Text = "-hlmuc -rotate -rotatet 5 -file";
             param_list[3].Text = "-hlmuc -rotate -rotatet 7 -file";
@@ -182,6 +181,7 @@ namespace bench
             //csv.Text = @"c:\temp\res_force.csv";
             //csv.Text = @"c:\temp\smtmuc\res_cimatti.csv";
             textBox_timefield.Text = "totalTimeNoInitialCheck";
+            read_history(history_file);
         }
 
         #region history
@@ -205,7 +205,7 @@ namespace bench
                 {
                     string key = line.Substring(3);
                     try { fieldValue = (fields)Enum.Parse(typeof(fields), key); }
-                    catch { MessageBox.Show(key + " is not a valid field name in file " + history_file); return; }
+                    catch { MessageBox.Show(key + " is not a valid field name in file " + history_file + ". Aborting."); return; }
                     history[fieldValue] = new List<string>();
                     continue;
                 }
@@ -213,26 +213,25 @@ namespace bench
             }
             foreach (fields field in Enum.GetValues(typeof(fields)))
             {
-                if (history.Keys.Contains<fields>(field))
+                if (history.Keys.Contains(field))
                 {
                     BindingSource bs = new BindingSource();
                     bs.DataSource = history[field];
-                    switch(field)
+                    switch (field)
                     {
                         case fields.exe: exe.DataSource = bs; break;
                         case fields.dir: dir.DataSource = bs; break;
                         case fields.filter_str: filter_str.DataSource = bs; break;
                         case fields.csv: csv.DataSource = bs; break;
-                            
-                        //case fields.filter: 
+                        case fields.param_groups: param_groups.DataSource = bs; break;                    
                     }
-                    
-                }
+                }                
             }
         }
 
         void write_history()
-        {
+        {  
+            // rewriting history
             StreamWriter file = new StreamWriter(history_file);            
             foreach (fields field in Enum.GetValues(typeof(fields))) {
                 
@@ -245,7 +244,8 @@ namespace bench
                     }
                     file.WriteLine();
                 }
-            }
+            }            
+
             file.Close();
         }
 
@@ -268,11 +268,12 @@ namespace bench
         void init_csv_file()
         {
             try {
-                csvfile = new StreamWriter(csv.Text, checkBox_append.Checked);      //(@"C:\temp\res.csv");   
+                csvfile = new StreamWriter(csv.Text, checkBox_append.Checked);
             }
-            catch
+            catch 
             {
-                MessageBox.Show("seems that " + csv.Text + "is in use");
+                MessageBox.Show("Cannot open " + csv.Text);
+                throw ;
             }
         }
 
@@ -408,8 +409,9 @@ namespace bench
             }
         } */
 
-        bool read_out_file(Process p, string filename)
+        bool read_out_file(Process p, string filename, bool first)
         {
+            if (first) listBox1.Items.Add("reading labels from " + filename);
             StreamReader file =   new StreamReader(filename);
             string line;
             while ((line = file.ReadLine()) != null)            
@@ -430,7 +432,14 @@ namespace bench
                     float res;
                     if (Single.TryParse(parts[2], out res))
                     {
-                        if (!labels.Exists(x => x == tag)) labels.Add(tag);
+                        if (first) { Debug.Assert(!labels.Exists(x => x == tag)); labels.Add(tag); }
+                        else {
+                            if (!labels.Exists(x => x == tag))
+                            {
+                                listBox1.Items.Add("label " + tag + " in file " + filename + " did not appear in the first file. Aborting");
+                                throw(new Exception());
+                            }
+                        }
                         Tuple<string, string, List<float>> data = ((Tuple<string, string, List<float>>)processes[p]);
                         data.Item3.Add(res);
                     }
@@ -460,7 +469,7 @@ namespace bench
                 Tuple<string, string, List<float>> trio = entry.Value as Tuple<string, string, List<float>>;
                 Process p1 = (Process)entry.Key;
                 
-                List<float> l = (List<float>)trio.Item3;
+                List<float> l = trio.Item3;
                 csvtext += getid(trio.Item1, trio.Item2) + ","; // benchmark
                 if (l.Count > 0)
                 {
@@ -478,11 +487,16 @@ namespace bench
                 try
                 {
                     if (l.Count > 0)  // if it is 0, it implies that it was a fail (typically T.O.).
-                    ((StreamWriter)csv4plot[normalize_string(trio.Item1)]).WriteLine(
-                        trio.Item2 + "," + // full benchmark path
-                        normalize_string(trio.Item1) + "," + // param
-                        l[labels.IndexOf(textBox_timefield.Text)].ToString() + "," +
-                        text_timeout.Text + "s");
+                    {
+                        int time_col = labels.IndexOf(textBox_timefield.Text);
+                        if (time_col < 0) { listBox1.Items.Add(trio.Item2 + ": " + textBox_timefield.Text + " is not a column in the out file. Will not add data to statistics."); }
+                        else
+                            ((StreamWriter)csv4plot[normalize_string(trio.Item1)]).WriteLine(
+                            trio.Item2 + "," + // full benchmark path
+                            normalize_string(trio.Item1) + "," + // param
+                            l[time_col].ToString() + "," +
+                            text_timeout.Text + "s");
+                    }
                 }
                 catch (Exception ex) { listBox1.Items.Add("exception: " + ex.Message); }
             }
@@ -624,8 +638,7 @@ namespace bench
                                         }
                                         run_remote("ssh", "ofers@tamnun.technion.ac.il \"cd hmuc;qsub -v bench=" + bench + ",arg='" + param_list[par].Text + "',argname=" + normalize_string(param_list[par].Text) + " hmuc.sh\"");
                                     }
-                                    else
-                               //     try
+                                    else                               
                                     {
                                         string outfilename = outfile(fileName, param_list[par].Text);
                                         if (!checkBox_out.Checked || !File.Exists(outfilename) || (checkBox_emptyOut.Checked && (new FileInfo(outfilename)).Length <= 10))
@@ -637,10 +650,7 @@ namespace bench
                                         }
                                         else bg.ReportProgress(0, "skipping " + fileName + " due to existing out file.");
                                     }
-                                    //catch {
-                                    //        bg.ReportProgress(0, "failed");
-                                    //        return;
-                                    //    }
+                                   
                                     ok = true;
                                     break;
                                 }
@@ -1080,6 +1090,7 @@ namespace bench
             if (checkBox_append.Checked && File.Exists(csv.Text)) readEntries();
             else entries.Clear();
             if (checkBox_remote.Checked) listBox1.Items.Add("Files will be imported to " + Directory.GetCurrentDirectory());
+            bool first = true;
             for (int par = 0; par < param_list_size; ++par)  // for each parameter
             {
                 if (param_list[par].Text == "<>") continue;
@@ -1105,12 +1116,18 @@ namespace bench
                         Process p = new Process(); // we are only using this process as a carrier of the information from the file, so we can use the buildcsv function. 
                         List<float> l = new List<float>();
                         processes[p] = new Tuple<string, string, List<float>>(param_list[par].Text, fileName, l);
-                        if (!read_out_file(p, outfileName)) { 
-                            listBox1.Items.Add(fileName + " is SAT. Deleting."); 
-                            File.Delete(fileName);
-                            processes.Remove(p);
+                        try
+                        {
+                            if (!read_out_file(p, outfileName, first))
+                            {
+                                listBox1.Items.Add(fileName + " is SAT. Deleting.");
+                                File.Delete(fileName);
+                                processes.Remove(p);
+                            }
                         }
+                        catch { return; } // we get here if there is inconsistencies in the labels
                         file_exists++;
+                        first = false;
                     }
                     else
                     {
@@ -1126,8 +1143,7 @@ namespace bench
                 init_csv_file();
             }
             catch (Exception ex)
-            {
-                MessageBox.Show("Cannot open the csv file!\n" + ex.ToString());
+            {                
                 return;
             }
             listBox1.Items.Add(in_csv.ToString() + " benchmarks already in the csv file.");
@@ -1181,7 +1197,7 @@ namespace bench
             }
         }
 
-        private void exe_SelectedIndexChanged(object sender, EventArgs e)
+        private void combo_SelectedIndexChanged(object sender, EventArgs e)
         {
             string element = ((ComboBox)sender).SelectedItem.ToString();
             fields fieldValue = (fields)Enum.Parse(typeof(fields), ((ComboBox)sender).Name);
@@ -1190,8 +1206,56 @@ namespace bench
             write_history_file = true;
         }
 
+        private void param_groups_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            string[] param = param_groups.Items[((ComboBox)sender).SelectedIndex].ToString().Split(',');
+            int i = 0;
+            foreach (string st in param)
+            {
+                param_list[i].Text = st;
+                ++i;
+                if (i >= param_list_size) break;
+            }
+            for (;i < param_list_size; ++i)
+            {
+                param_list[i].Text = "<>";
+            }
+        }
+
+        private void editHistoryFileToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Process p = new Process();
+            p.StartInfo.FileName = "notepad";
+            p.StartInfo.Arguments = history_file;
+            p.Start();
+        }
+
+        private void refreshMenusToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            read_history(history_file);
+        }
+
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
+            // here we update the history file if needed. 
+            
+            // computing current param_group according to the text in param_list
+            string param_set = "";
+            bool first = true;
+            for (int i = 0; i < param_list_size; ++i)
+            {
+                if (param_list[i].Text != "<>")
+                {
+                    if (!first) param_set += ",";                    
+                    param_set += param_list[i].Text;
+                    first = false;
+                }
+            }
+            if (!history[fields.param_groups].Contains(param_set))
+            {
+                history[fields.param_groups].Insert(0, param_set);
+                write_history_file = true;
+            }
             if (write_history_file) write_history();
         }
     }
