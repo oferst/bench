@@ -41,7 +41,7 @@ namespace bench
         Hashtable results = new Hashtable();
         AbortableBackgroundWorker bg;
         HashSet<string> entries = new HashSet<string>();
-        enum fields { exe,dir,filter_str,csv, param, param_groups, misc};
+        enum fields { exe,dir,filter_str,csv, param, param_groups,stat_field, misc};
         Dictionary<fields, List<string>> history;
         int bench_bound = 500;
         bool write_history_file = false;
@@ -63,18 +63,18 @@ namespace bench
             {
                 param_list[i] = new TextBox();
                 //param_list[i].Location = new System.Drawing.Point(60, 345 + i * 30);
-                param_list[i].Location = new System.Drawing.Point(60,  i * 25);
-                param_list[i].Size = new System.Drawing.Size(429, 20);
+                param_list[i].Location = new Point(60,  i * 25);
+                param_list[i].Size = new Size(429, 20);
                 //param_list[i].Text = "<>";
                 panel1.Controls.Add(param_list[i]);
 
                 scatter1[i] = new RadioButton();
                 
-                scatter1[i].Location = new System.Drawing.Point(0, i * 25);
+                scatter1[i].Location = new Point(0, i * 25);
                 radioset1.Controls.Add(scatter1[i]);
                 scatter2[i] = new RadioButton();
             
-                scatter2[i].Location = new System.Drawing.Point(0, i * 25);
+                scatter2[i].Location = new Point(0, i * 25);
                 radioset2.Controls.Add(scatter2[i]);
             }
             scatter1[0].Checked = scatter2[1].Checked = true; 
@@ -90,97 +90,8 @@ namespace bench
             checkBox_rec.Checked = true;
             checkBox_emptyOut.Enabled = checkBox_out.Checked;
 
-            //param_list[0].Text = "-file";
-            /*param_list[1].Text = "-hlmuc -rotate -file";            
-            param_list[2].Text = "-hlmuc -rotate -rotatet 5 -file";
-            param_list[3].Text = "-hlmuc -rotate -rotatet 7 -file";
-            param_list[4].Text = "-hlmuc -rotate -boundRot -file";
-            */
-            //   param_list[2].Text = "-rotate -fth 1 -file";
-            //param_list[3].Text = "-rotate -fth 3 -file";
-            //param_list[4].Text = "-eager -rotate -fth 1 -file";
-            //param_list[5].Text = "-eager -rotate -fth 3 -file";
-
-            /*param_list[0].Text = "-pf-mode=2";            
-            param_list[1].Text = "-pf-mode=3";
-            param_list[2].Text = "-pf-mode=4";
-            param_list[3].Text = "-pf-mode=2 -pf_force";
-            param_list[4].Text = "-pf-mode=3 -pf_force";
-            param_list[5].Text = "-pf-mode=4 -pf_force";
-            */
-            //            param_list[3].Text = "-pf-mode=3 -no-always_prove";
-            /*            param_list[0].Text = "-pf-mode=2 -no-always_prove -pf_force";
-                        param_list[1].Text = "-pf-mode=2 -no-always_prove";
-                        param_list[2].Text = "-pf-mode=2 -pf_force";
-                        param_list[3].Text = "-pf-mode=2";
-                        param_list[4].Text = "-pf-mode=3 -no-always_prove -pf_force";
-                        param_list[5].Text = "-pf-mode=3 -no-always_prove";
-                        param_list[6].Text = "-pf-mode=3 -pf_force";
-                        param_list[7].Text = "-pf-mode=3";
-                        param_list[8].Text = "-pf-mode=4 -no-always_prove -pf_force";
-                        param_list[9].Text = "-pf-mode=4 -no-always_prove";
-                        param_list[10].Text = "-pf-mode=4 -pf_force";
-                        param_list[11].Text = "-pf-mode=4";
-                        param_list[12].Text = "-pf-mode=2 -no-always_prove -pf_force -pf_unsatopt";
-                        param_list[13].Text = "-pf-mode=2 -no-always_prove -pf_unsatopt";
-                        param_list[14].Text = "-pf-mode=2 -pf_force -pf_unsatopt";
-                        param_list[15].Text = "-pf-mode=2 -pf_unsatopt";
-              */          //param_list[4].Text = "-pf-mode=2 -no-always_prove -pf_unsatopt ";
-                          //          param_list[5].Text = "-pf-mode=3 -no-always_prove -pf_unsatopt ";
-                          /*          param_list[5].Text = "-pf-mode=2 -pf_z_budget=80";
-                                      param_list[6].Text = "-pf-mode=2 -pf_z_budget=120";
-
-                                      param_list[7].Text = "-pf-mode=3 -pf_z_budget=80";
-                                      param_list[8].Text = "-pf-mode=3 -pf_z_budget=120";
-                                      param_list[9].Text = "-pf-mode=3 -pf_z_budget=160";
-
-                                      param_list[10].Text = "-pf-mode=4 -pf_z_budget=80";
-                                      param_list[11].Text = "-pf-mode=4 -pf_z_budget=120";
-
-                                      param_list[12].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=5";
-                                      param_list[13].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=10";
-                            */
-                          /*
-                          param_list[5].Text="-pf-mode=3 -pf_reset_z_budget -pf_z_budget=20";
-                          param_list[6].Text="-pf-mode=3 -pf_reset_z_budget -pf_z_budget=40";
-                          param_list[7].Text="-pf-mode=3 -pf_reset_z_budget -pf_z_budget=80";
-                          param_list[8].Text="-pf-mode=3 -pf_z_budget=20";
-                          param_list[9].Text="-pf-mode=3 -pf_z_budget=40";
-                          param_list[0].Text="-pf-mode=2 -pf_z_budget=20"; 
-                          param_list[1].Text="-pf-mode=2 -pf_z_budget=40";
-                          param_list[2].Text="-pf-mode=4 -pf_z_budget=20"; 
-                          param_list[3].Text="-pf-mode=4 -pf_z_budget=40";
-                          param_list[4].Text = "-pf-mode=4 -pf_z_budget=80 -pf-delay=15";
-                            */
-
-
-
-            //text_filter.Text = "2dlx_ca_mc_ex_bp_f_new.gcnf";
-            //text_filter.Text = "*.cnf";
-            //text_filter.Text = "*.smt";
-            //text_dir.Text = @"C:\temp\gcnf_test\belov\";
-            //text_dir.Text = @"C:\temp\muc_test\SAT02\industrial\biere\cmpadd";
-            //text_dir.Text = @"C:\temp\muc_test\marques-silva\hardware-verification";
-            //text_dir.Text = @"C:\temp\muc_test\SAT11\mus\";
-            //text_dir.Text = @"C:\temp\small";
-            //text_dir.Text = @"C:\temp\muc_test\small";
-            //text_dir.Text = @"C:\temp\muc_test\SAT11\mus_satcomp09-main-track-selected";
-            //text_dir.Text = @"C:\temp\muc_test\SAT11\application";
-            //text_dir.Text = @"C:\temp\muc_test\SAT02\industrial_smtlib";
-            //text_dir.Text = @"C:\temp\muc_test\SAT11\mus\marques-silva\hardware-verification";
-            //text_dir.Text = @"C:\temp\smtmuc\benchmarks\";
-            //text_dir.Text = @"C:\temp\muc_test\SAT11\mus\marques-silva\bmc-default";
-            //text_dir.Text = @"C:\temp\muc_test\SAT02\sat-2002-beta";
-            //text_exe.Text = "\"C:\\Users\\ofers\\Documents\\Visual Studio 2012\\Projects\\hmuc\\x64\\Release\\hmuc.exe\" ";
-            //text_exe.Text = @"C:\Users\ofers\Documents\Visual Studio 2015\Projects\HSmtMuc\Release\HsmtMuc.exe";
-
-          //  text_exe.Text = @"C:\Users\Ofer\Documents\Visual Studio 2012\Projects\hmuc\x64\Release\hmuc.exe";
-          //text_exe.Text = "\"C:\\Users\\ofers\\Documents\\Visual Studio 2012\\Projects\\hmuc\\x64\\Release\\hmuc.exe\"";
             text_minmem.Text = MinMem.ToString();
-            text_timeout.Text = "600";
-            //csv.Text = @"c:\temp\res_force.csv";
-            //csv.Text = @"c:\temp\smtmuc\res_cimatti.csv";
-            textBox_timefield.Text = "totalTimeNoInitialCheck";
+            text_timeout.Text = "600";          
             read_history(history_file);
         }
 
@@ -223,7 +134,8 @@ namespace bench
                         case fields.dir: dir.DataSource = bs; break;
                         case fields.filter_str: filter_str.DataSource = bs; break;
                         case fields.csv: csv.DataSource = bs; break;
-                        case fields.param_groups: param_groups.DataSource = bs; break;                    
+                        case fields.param_groups: param_groups.DataSource = bs; break;
+                        case fields.stat_field: stat_field.DataSource = bs; break;
                     }
                 }                
             }
@@ -359,6 +271,8 @@ namespace bench
                 bg.ReportProgress(0, "timeout: process killed: " + p.StartInfo.Arguments);
                 Tuple<string, string, List<float>> data = ((Tuple<string, string, List<float>>)processes[p]);
                 failed_benchmarks.Add(data.Item2);
+                failed++;
+                label_fails.Text = failed.ToString();
                 List<float> l = data.Item3;
                 l.Add(Convert.ToInt32(text_timeout.Text) + 1); // +1 for debugging                
                 p.Kill();
@@ -463,6 +377,7 @@ namespace bench
         void buildcsv(bool Addheader)
         {
             string csvheader = "";
+            int cnt_wrong_label = 0;
             create_plot_files();
             foreach (DictionaryEntry entry in processes)
             {
@@ -488,8 +403,9 @@ namespace bench
                 {
                     if (l.Count > 0)  // if it is 0, it implies that it was a fail (typically T.O.).
                     {
-                        int time_col = labels.IndexOf(textBox_timefield.Text);
-                        if (time_col < 0) { listBox1.Items.Add(trio.Item2 + ": " + textBox_timefield.Text + " is not a column in the out file. Will not add data to statistics."); }
+                        int time_col = labels.IndexOf(stat_field.Text);
+                        
+                        if (time_col < 0) { cnt_wrong_label++; }
                         else
                             ((StreamWriter)csv4plot[normalize_string(trio.Item1)]).WriteLine(
                             trio.Item2 + "," + // full benchmark path
@@ -500,6 +416,7 @@ namespace bench
                 }
                 catch (Exception ex) { listBox1.Items.Add("exception: " + ex.Message); }
             }
+            if (cnt_wrong_label > 0) listBox1.Items.Add("Warning: " + stat_field.Text + " is not a column in " + cnt_wrong_label + " out files. Will not add data to statistics.");
             foreach (string lbl in labels) csvheader += lbl + ",";
             
             if (Addheader)
@@ -600,8 +517,7 @@ namespace bench
                 bg.ReportProgress(0, "- - - - - " + param_list[par].Text + "- - - - - ");
                 failed = 0;
                 results.Clear();
-                accum_results.Clear();
-                cnt ++;
+                accum_results.Clear();                
                 bench_cnt = 0;
                 foreach (FileInfo fileinfo in fileEntries)  // for each benchmark file
                 {
@@ -614,7 +530,7 @@ namespace bench
                     string id = getid(param_list[par].Text, fileName);
                     if (entries.Contains(id)) continue;
                     if (++bench_cnt == bench_bound) break;
-                    ok = false;
+                    ok = false;                    
                     do
                     {
                         Int64 AvailableMem = PerformanceInfo.GetPhysicalAvailableMemoryInMiB();
@@ -632,6 +548,8 @@ namespace bench
                                         if (!copied)
                                         {
                                             bg.ReportProgress(0, "running " + fileName + " remotely. ");
+                                            cnt++;
+                                            bg.ReportProgress(3, cnt.ToString()); // label_cnt.Text 
                                             File.Copy(fileName, bench, true); // copying benchmark to work dir. 
                                             run_remote("scp", bench + " ofers@tamnun.technion.ac.il:~/hmuc/test");
                                             File.Delete(bench);
@@ -644,6 +562,8 @@ namespace bench
                                         if (!checkBox_out.Checked || !File.Exists(outfilename) || (checkBox_emptyOut.Checked && (new FileInfo(outfilename)).Length <= 10))
                                         {
                                             bg.ReportProgress(0, "running " + fileName + " on core " + i.ToString());
+                                            cnt++;
+                                            bg.ReportProgress(3, cnt.ToString()); // label_cnt.Text 
                                             p[i] = run(exe.Text, param_list[par].Text + " " + fileName, outfilename, 1 << (i - 1));
                                             List<float> l = new List<float>();
                                             processes[p[i]] = new Tuple<string, string, List<float>>(param_list[par].Text, fileName, l);
@@ -660,7 +580,7 @@ namespace bench
                         if (!ok)
                         {
                             //bg.ReportProgress(0, ".");
-                            System.Threading.Thread.Sleep(5000);// 5 seconds wait                        
+                            Thread.Sleep(5000);// 5 seconds wait                        
                         }
                     } while (!ok);
                 }
@@ -683,10 +603,7 @@ namespace bench
             bg.ReportProgress(0, "parallel time = " + time);
             bg.ReportProgress(0, "============================");
 
-            bg.ReportProgress(1, time); //label_paralel_time.Text
-            try { bg.ReportProgress(2, accum_results[textBox_timefield.Text].ToString()); }
-            catch { };  //label_total_time.Text}
-            bg.ReportProgress(3, cnt.ToString()); // label_cnt.Text 
+            bg.ReportProgress(1, time); //label_paralel_time.Text            
             bg.ReportProgress(5, failed.ToString());
             
             bg.ReportProgress(6, ""); // import_out_to_csv                      
@@ -700,8 +617,7 @@ namespace bench
             {
                 case -1: Log(log, false); break;
                 case 0: Log(log); break;
-                case 1: label_paralel_time.Text = log; break;
-                case 2: label_total_time.Text = log; break;
+                case 1: label_paralel_time.Text = log; break;                
                 case 3: label_cnt.Text = log; break;
                 case 4: button1.Enabled = true; break;
                 case 5: label_fails.Text = log; break;
@@ -751,8 +667,7 @@ namespace bench
             }
 
 
-            label_paralel_time.Text = "";
-            label_total_time.Text = "";
+            label_paralel_time.Text = "";            
             label_cnt.Text = "";
             label_fails.Text = "";
             csvtext = "";
@@ -990,7 +905,7 @@ namespace bench
             string fileName = csv.Text;
             HashSet<string> failed_short_once = new HashSet<string>();
             bool header = true;
-            int timeFieldLocation = labels.IndexOf(textBox_timefield.Text);
+            int timeFieldLocation = labels.IndexOf(stat_field.Text);
             
             // finding benchmarks with short longestcall
             try {
@@ -999,10 +914,10 @@ namespace bench
                     if (header)
                     {
                         List<string> labels  = new List<string>(line.Split(new char[] {',' }));
-                        timeFieldLocation = labels.IndexOf(textBox_timefield.Text);
+                        timeFieldLocation = labels.IndexOf(stat_field.Text);
                         if (timeFieldLocation == -1)
                         {
-                            MessageBox.Show("cannot find field " + textBox_timefield.Text + " in header of " + fileName);
+                            MessageBox.Show("cannot find field " + stat_field.Text + " in header of " + fileName);
                             return;
                         }
                         timeFieldLocation++; // because indexOf is 0-based

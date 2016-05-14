@@ -37,8 +37,6 @@
             this.label4 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
-            this.label7 = new System.Windows.Forms.Label();
-            this.label_total_time = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.label_cnt = new System.Windows.Forms.Label();
             this.text_timeout = new System.Windows.Forms.TextBox();
@@ -63,7 +61,6 @@
             this.checkBox_out = new System.Windows.Forms.CheckBox();
             this.checkBox_emptyOut = new System.Windows.Forms.CheckBox();
             this.checkBox_skipTO = new System.Windows.Forms.CheckBox();
-            this.textBox_timefield = new System.Windows.Forms.TextBox();
             this.label10 = new System.Windows.Forms.Label();
             this.button4 = new System.Windows.Forms.Button();
             this.exe = new System.Windows.Forms.ComboBox();
@@ -80,6 +77,8 @@
             this.editHistoryFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.refreshMenusToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.label7 = new System.Windows.Forms.Label();
+            this.stat_field = new System.Windows.Forms.ComboBox();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -158,24 +157,6 @@
             this.label6.Size = new System.Drawing.Size(24, 13);
             this.label6.TabIndex = 12;
             this.label6.Text = "exe";
-            // 
-            // label7
-            // 
-            this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(163, 523);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(34, 13);
-            this.label7.TabIndex = 13;
-            this.label7.Text = "Total:";
-            // 
-            // label_total_time
-            // 
-            this.label_total_time.AutoSize = true;
-            this.label_total_time.Location = new System.Drawing.Point(211, 523);
-            this.label_total_time.Name = "label_total_time";
-            this.label_total_time.Size = new System.Drawing.Size(16, 13);
-            this.label_total_time.TabIndex = 14;
-            this.label_total_time.Text = "...";
             // 
             // label3
             // 
@@ -268,7 +249,7 @@
             // 
             // button3
             // 
-            this.button3.Location = new System.Drawing.Point(165, 560);
+            this.button3.Location = new System.Drawing.Point(279, 559);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(70, 23);
             this.button3.TabIndex = 27;
@@ -366,7 +347,7 @@
             // 
             // button_import
             // 
-            this.button_import.Location = new System.Drawing.Point(165, 592);
+            this.button_import.Location = new System.Drawing.Point(279, 591);
             this.button_import.Name = "button_import";
             this.button_import.Size = new System.Drawing.Size(70, 23);
             this.button_import.TabIndex = 38;
@@ -411,14 +392,6 @@
             this.checkBox_skipTO.Text = "Skip long runs";
             this.toolTip1.SetToolTip(this.checkBox_skipTO, "Once a benchmark fails with some config. it will not be attempted again");
             this.checkBox_skipTO.UseVisualStyleBackColor = true;
-            // 
-            // textBox_timefield
-            // 
-            this.textBox_timefield.Location = new System.Drawing.Point(15, 630);
-            this.textBox_timefield.Name = "textBox_timefield";
-            this.textBox_timefield.Size = new System.Drawing.Size(133, 20);
-            this.textBox_timefield.TabIndex = 45;
-            this.toolTip1.SetToolTip(this.textBox_timefield, "name of field for plots");
             // 
             // label10
             // 
@@ -515,7 +488,7 @@
             this.deleteShortsFromCsvToolStripMenuItem,
             this.deleteAllfailBenchmarksToolStripMenuItem});
             this.cleanupToolStripMenuItem1.Name = "cleanupToolStripMenuItem1";
-            this.cleanupToolStripMenuItem1.Size = new System.Drawing.Size(152, 22);
+            this.cleanupToolStripMenuItem1.Size = new System.Drawing.Size(131, 22);
             this.cleanupToolStripMenuItem1.Text = "Cleanup";
             // 
             // toolStripMenuItem1
@@ -548,7 +521,7 @@
             this.editToolStripMenuItem,
             this.refreshMenusToolStripMenuItem});
             this.editHistoryFileToolStripMenuItem.Name = "editHistoryFileToolStripMenuItem";
-            this.editHistoryFileToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.editHistoryFileToolStripMenuItem.Size = new System.Drawing.Size(131, 22);
             this.editHistoryFileToolStripMenuItem.Text = "History file";
             // 
             // editToolStripMenuItem
@@ -565,18 +538,38 @@
             this.refreshMenusToolStripMenuItem.Text = "Refresh menus";
             this.refreshMenusToolStripMenuItem.Click += new System.EventHandler(this.refreshMenusToolStripMenuItem_Click);
             // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(13, 622);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(84, 13);
+            this.label7.TabIndex = 54;
+            this.label7.Text = "Do stat. for field:";
+            // 
+            // stat_field
+            // 
+            this.stat_field.FormattingEnabled = true;
+            this.stat_field.Location = new System.Drawing.Point(17, 643);
+            this.stat_field.Name = "stat_field";
+            this.stat_field.Size = new System.Drawing.Size(112, 21);
+            this.stat_field.TabIndex = 55;
+            this.stat_field.SelectionChangeCommitted += new System.EventHandler(this.combo_SelectedIndexChanged);
+            this.stat_field.Leave += new System.EventHandler(this.comboBox_Leave);
+            // 
             // filter
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(590, 668);
+            this.Controls.Add(this.stat_field);
+            this.Controls.Add(this.label7);
             this.Controls.Add(this.param_groups);
             this.Controls.Add(this.csv);
             this.Controls.Add(this.filter_str);
             this.Controls.Add(this.dir);
             this.Controls.Add(this.exe);
             this.Controls.Add(this.button4);
-            this.Controls.Add(this.textBox_timefield);
             this.Controls.Add(this.checkBox_skipTO);
             this.Controls.Add(this.checkBox_emptyOut);
             this.Controls.Add(this.label10);
@@ -601,8 +594,6 @@
             this.Controls.Add(this.text_timeout);
             this.Controls.Add(this.label_cnt);
             this.Controls.Add(this.label3);
-            this.Controls.Add(this.label_total_time);
-            this.Controls.Add(this.label7);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.label4);
@@ -633,8 +624,6 @@
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Label label6;
-        private System.Windows.Forms.Label label7;
-        private System.Windows.Forms.Label label_total_time;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label_cnt;
         private System.Windows.Forms.TextBox text_timeout;
@@ -660,7 +649,6 @@
         private System.Windows.Forms.Label label10;
         private System.Windows.Forms.CheckBox checkBox_emptyOut;
         private System.Windows.Forms.CheckBox checkBox_skipTO;
-        private System.Windows.Forms.TextBox textBox_timefield;
         private System.Windows.Forms.Button button4;
         private System.Windows.Forms.ComboBox exe;
         private System.Windows.Forms.ComboBox dir;
@@ -676,6 +664,8 @@
         private System.Windows.Forms.ToolStripMenuItem editHistoryFileToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem editToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem refreshMenusToolStripMenuItem;
+        private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.ComboBox stat_field;
     }
 }
 

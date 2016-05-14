@@ -4020,3 +4020,4 @@ bench/bin/Debug/history.txt
 bench/obj/Debug/bench.filter.resources
 bench/bin/Release/history.txt
 history.txt
+bench/obj/Release/bench.filter.resources
