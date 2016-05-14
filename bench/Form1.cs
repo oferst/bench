@@ -29,7 +29,7 @@ namespace bench
         RadioButton[] scatter2 = new RadioButton[param_list_size];
         int timeout = Timeout.Infinite;
         int MinMem = 1000;  // in MB        
-        int cores = 8;
+        int cores = Environment.ProcessorCount;
         int[] active = new int[8]; // {3, 5, 7 }; //note that we push all other processes to 1,2  [core # begin at 1]. with hyperthreading=off use {2,3,4}
         int failed = 0;        
         bool hyperthreading = true;
@@ -64,8 +64,7 @@ namespace bench
                 param_list[i] = new TextBox();
                 //param_list[i].Location = new System.Drawing.Point(60, 345 + i * 30);
                 param_list[i].Location = new Point(60,  i * 25);
-                param_list[i].Size = new Size(429, 20);
-                //param_list[i].Text = "<>";
+                param_list[i].Size = new Size(429, 20);     
                 panel1.Controls.Add(param_list[i]);
 
                 scatter1[i] = new RadioButton();
@@ -80,13 +79,7 @@ namespace bench
             scatter1[0].Checked = scatter2[1].Checked = true; 
             panel1.Controls.Add(radioset1);
             panel1.Controls.Add(radioset2);
-            
-            // active cores: 
-/*            checkedListBox1.SetItemCheckState(0, CheckState.Checked);
-            checkedListBox1.SetItemCheckState(2, CheckState.Checked);
-            checkedListBox1.SetItemCheckState(4, CheckState.Checked);
-            */
-
+                        
             checkBox_remote.Checked = false; 
             checkBox_rec.Checked = true;
             checkBox_emptyOut.Enabled = checkBox_out.Checked;
@@ -143,7 +136,7 @@ namespace bench
                                 foreach (string st in corelist)
                                 {
                                     int c;
-                                    if (int.TryParse(st,out c) == false || c <= 2 || c > cores) MessageBox.Show("field cores in history file contains bad core indices") ;
+                                    if (int.TryParse(st,out c) == false || c <= 2 || c > cores) MessageBox.Show("field core_list in history file contains bad core indices (2 < i < " + cores + "). First 2 are saved for other processes.") ;
                                     else checkedListBox1.SetItemCheckState(c - 3, CheckState.Checked);
                                 }                                
                                 break;
