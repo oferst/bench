@@ -41,7 +41,7 @@ namespace bench
         Hashtable results = new Hashtable();
         AbortableBackgroundWorker bg;
         HashSet<string> entries = new HashSet<string>();
-        enum fields { exe,dir,filter_str,csv, param, param_groups,stat_field, misc};
+        enum fields { exe,dir,filter_str,csv, param, param_groups,stat_field, core_list, misc};
         Dictionary<fields, List<string>> history;
         int bench_bound = 500;
         bool write_history_file = false;
@@ -82,9 +82,10 @@ namespace bench
             panel1.Controls.Add(radioset2);
             
             // active cores: 
-            checkedListBox1.SetItemCheckState(0, CheckState.Checked);
+/*            checkedListBox1.SetItemCheckState(0, CheckState.Checked);
             checkedListBox1.SetItemCheckState(2, CheckState.Checked);
             checkedListBox1.SetItemCheckState(4, CheckState.Checked);
+            */
 
             checkBox_remote.Checked = false; 
             checkBox_rec.Checked = true;
@@ -136,6 +137,17 @@ namespace bench
                         case fields.csv: csv.DataSource = bs; break;
                         case fields.param_groups: param_groups.DataSource = bs; break;
                         case fields.stat_field: stat_field.DataSource = bs; break;
+                        case fields.core_list:
+                            {
+                                string[] corelist = (history[fields.core_list][0]).Split(',');
+                                foreach (string st in corelist)
+                                {
+                                    int c;
+                                    if (int.TryParse(st,out c) == false || c <= 2 || c > cores) MessageBox.Show("field cores in history file contains bad core indices") ;
+                                    else checkedListBox1.SetItemCheckState(c - 3, CheckState.Checked);
+                                }                                
+                                break;
+                            }
                     }
                 }                
             }
@@ -1091,11 +1103,12 @@ namespace bench
         private void button4_Click(object sender, EventArgs e)
         {
             var dialog = new FolderBrowserDialog();            
-            dialog.SelectedPath = @dir.Text;
+            dialog.SelectedPath = @dir.Text;            
             DialogResult result = dialog.ShowDialog();
             if (result == DialogResult.OK)
             {
                 dir.Text = dialog.SelectedPath;
+                ActiveControl = dir;
             }
         }
 
@@ -1171,6 +1184,20 @@ namespace bench
                 history[fields.param_groups].Insert(0, param_set);
                 write_history_file = true;
             }
+            string active_cores_str = "";
+            first = true;
+            foreach (int indexChecked in checkedListBox1.CheckedIndices)
+            {
+                if (!first) active_cores_str += ",";
+                active_cores_str += (indexChecked + 3).ToString();
+                first = false;
+            }
+            if (active_cores_str != history[fields.core_list][0])
+            {
+                history[fields.core_list][0] = active_cores_str;
+                write_history_file = true;
+            }
+            
             if (write_history_file) write_history();
         }
     }
