@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Configuration;
 using System.Data;
 using System.Drawing;
 using System.Linq;
@@ -22,8 +23,9 @@ namespace bench
         List<System.Threading.Timer> timers = new List<System.Threading.Timer>();
         List<string> labels = new List<string>();
         static int param_list_size = 16;
-        string history_file = Path.Combine(Application.StartupPath, "history.txt");
-        string graphDir = @"c:\temp\cpbm-0.5\";        
+        string history_file = Path.Combine(Application.StartupPath,ConfigurationManager.AppSettings["history_filename"]);//"history.txt"
+        string graphDir = ConfigurationManager.AppSettings["cpbm"]; //@"c:\temp\cpbm-0.5\";        
+
         TextBox[] param_list = new TextBox[param_list_size];
         RadioButton[] scatter1 = new RadioButton[param_list_size];
         RadioButton[] scatter2 = new RadioButton[param_list_size];
@@ -33,7 +35,9 @@ namespace bench
         int[] active = new int[8]; // {3, 5, 7 }; //note that we push all other processes to 1,2  [core # begin at 1]. with hyperthreading=off use {2,3,4}
         int failed = 0;        
         bool hyperthreading = true;
-        StreamWriter logfile = new StreamWriter(@"C:\temp\log.txt");        
+        StreamWriter logfile = new StreamWriter(ConfigurationManager.AppSettings["log"]); // @"C:\temp\log.txt");        
+        string stat_tag = ConfigurationManager.AppSettings["stat_tag"]; // ###
+        string abort_tag = ConfigurationManager.AppSettings["abort_tag"];
         StreamWriter csvfile;        
         Hashtable csv4plot = new Hashtable();        
         string csvtext;
@@ -46,7 +50,7 @@ namespace bench
         int bench_bound = 500;
         bool write_history_file = false;
         string benchmarksDir, searchPattern;
-
+    
         public filter()
         {
             InitializeComponent();
@@ -57,6 +61,8 @@ namespace bench
             radioset1.Size = new Size(20, param_list_size * 25);
             radioset2.Size = new Size(20, param_list_size * 25);
             failed_benchmarks = new List<string>();
+            for (int i = 3; i <= cores; ++i)
+                checkedListBox1.Items.Add((object)("c" + i.ToString()));
                         
 
             for (int i = 0; i < param_list_size; ++i)
@@ -335,12 +341,12 @@ namespace bench
             string line;
             while ((line = file.ReadLine()) != null)            
             {                
-                if (line.Length >= 4 && line.Substring(0, 3) == "###")
+                if (line.Length >= 4 && line.Substring(0, 3) == stat_tag)
                 {
                     var parts = line.Split(new char[] { ' ' });
                     string tag = parts[1];
                     if (tag == "SAT") return false;
-                    if (tag == "Abort")
+                    if (tag == abort_tag)
                     {
                         listBox1.Items.Add("* * * * * * * * * * * * *  Abort!");
                         file.Close();
@@ -512,7 +518,12 @@ namespace bench
             
             var fileEntries = new DirectoryInfo(benchmarksDir).GetFiles(searchPattern, checkBox_rec.Checked ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
             if (fileEntries.Length == 0) bg.ReportProgress(0, "empty file list\n");
-
+            string remote_user = "", remote_bench_path ="";
+            if (checkBox_remote.Checked)
+            {
+                remote_user = ConfigurationManager.AppSettings["remote_user"] + "@" + ConfigurationManager.AppSettings["remote_domain"];
+                remote_bench_path = remote_user + ":" + ConfigurationManager.AppSettings["remote_bench_dir"];
+            }
             Stopwatch stopwatch = Stopwatch.StartNew();
             bool ok = false;
             bool copied = true; // !! temporary. because on remote we have all the files there anyway
@@ -545,8 +556,6 @@ namespace bench
                                 if (i == 0) break;
                                 if (p[i] == null || p[i].HasExited)
                                 {
-                                    
-
                                     if (checkBox_remote.Checked)
                                     {
                                         string bench = Path.GetFileName(fileName);
@@ -556,10 +565,11 @@ namespace bench
                                             cnt++;
                                             bg.ReportProgress(3, cnt.ToString()); // label_cnt.Text 
                                             File.Copy(fileName, bench, true); // copying benchmark to work dir. 
-                                            run_remote("scp", bench + " ofers@tamnun.technion.ac.il:~/hmuc/test");
+                                            
+                                            run_remote("scp", bench + " " + remote_bench_path);//" ofers@tamnun.technion.ac.il:~/hmuc/test");
                                             File.Delete(bench);
                                         }
-                                        run_remote("ssh", "ofers@tamnun.technion.ac.il \"cd hmuc;qsub -v bench=" + bench + ",arg='" + param_list[par].Text + "',argname=" + normalize_string(param_list[par].Text) + " hmuc.sh\"");
+                                        run_remote("ssh", remote_user + " \"cd " + ConfigurationManager.AppSettings["remote_app_dir"] + ";qsub -v bench=" + bench + ",arg='" + param_list[par].Text + "',argname=" + normalize_string(param_list[par].Text) + " " + ConfigurationManager.AppSettings["remote_script"] + "\""); // "ofers@tamnun.technion.ac.il \"cd hmuc;qsub -v bench=" + bench + ",arg='" + param_list[par].Text + "',argname=" + normalize_string(param_list[par].Text) + " hmuc.sh\"");
                                     }
                                     else                               
                                     {
@@ -675,6 +685,7 @@ namespace bench
             label_paralel_time.Text = "";            
             label_cnt.Text = "";
             label_fails.Text = "";
+            labels.Clear();
             csvtext = "";
             bg = new AbortableBackgroundWorker();
             processes.Clear();
@@ -804,6 +815,7 @@ namespace bench
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.FileName = "run-scatter.bat";
             string f1 = normalize_string(param_list[param1].Text), f2 = normalize_string(param_list[param2].Text);            
+            if (f1 == "<>" || f2 == "<>") { MessageBox.Show("Param cannot be `<>'"); return; }
             startInfo.Arguments = string.Compare(f1, f2) < 0 ? f1 + " " + f2 : f2 + " " + f1; // apparently make_graph treats them alphabetically, so we need to give them alphabetically to know what pdf is eventually generated. 
             startInfo.WorkingDirectory = graphDir;
             string fullName1 = Path.Combine(graphDir, f1 + ".csv"), fullName2 = Path.Combine(graphDir, f2 + ".csv");
