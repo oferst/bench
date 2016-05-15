@@ -79,6 +79,7 @@
             this.refreshMenusToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.label7 = new System.Windows.Forms.Label();
             this.stat_field = new System.Windows.Forms.ComboBox();
+            this.configToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -469,7 +470,8 @@
             // 
             this.cleanupToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.cleanupToolStripMenuItem1,
-            this.editHistoryFileToolStripMenuItem});
+            this.editHistoryFileToolStripMenuItem,
+            this.configToolStripMenuItem});
             this.cleanupToolStripMenuItem.Name = "cleanupToolStripMenuItem";
             this.cleanupToolStripMenuItem.Size = new System.Drawing.Size(59, 20);
             this.cleanupToolStripMenuItem.Text = "Actions";
@@ -481,7 +483,7 @@
             this.deleteShortsFromCsvToolStripMenuItem,
             this.deleteAllfailBenchmarksToolStripMenuItem});
             this.cleanupToolStripMenuItem1.Name = "cleanupToolStripMenuItem1";
-            this.cleanupToolStripMenuItem1.Size = new System.Drawing.Size(131, 22);
+            this.cleanupToolStripMenuItem1.Size = new System.Drawing.Size(152, 22);
             this.cleanupToolStripMenuItem1.Text = "Cleanup";
             // 
             // toolStripMenuItem1
@@ -514,7 +516,7 @@
             this.editToolStripMenuItem,
             this.refreshMenusToolStripMenuItem});
             this.editHistoryFileToolStripMenuItem.Name = "editHistoryFileToolStripMenuItem";
-            this.editHistoryFileToolStripMenuItem.Size = new System.Drawing.Size(131, 22);
+            this.editHistoryFileToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.editHistoryFileToolStripMenuItem.Text = "History file";
             // 
             // editToolStripMenuItem
@@ -549,6 +551,13 @@
             this.stat_field.TabIndex = 55;
             this.stat_field.SelectionChangeCommitted += new System.EventHandler(this.combo_SelectedIndexChanged);
             this.stat_field.Leave += new System.EventHandler(this.comboBox_Leave);
+            // 
+            // configToolStripMenuItem
+            // 
+            this.configToolStripMenuItem.Name = "configToolStripMenuItem";
+            this.configToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
+            this.configToolStripMenuItem.Text = "Advanced Config.";
+            this.configToolStripMenuItem.Click += new System.EventHandler(this.configToolStripMenuItem_Click);
             // 
             // filter
             // 
@@ -659,6 +668,7 @@
         private System.Windows.Forms.ToolStripMenuItem refreshMenusToolStripMenuItem;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.ComboBox stat_field;
+        private System.Windows.Forms.ToolStripMenuItem configToolStripMenuItem;
     }
 }
 

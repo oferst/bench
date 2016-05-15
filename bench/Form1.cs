@@ -25,6 +25,9 @@ namespace bench
         static int param_list_size = 16;
         string history_file = Path.Combine(Application.StartupPath,ConfigurationManager.AppSettings["history_filename"]);//"history.txt"
         string graphDir = ConfigurationManager.AppSettings["cpbm"]; //@"c:\temp\cpbm-0.5\";        
+        StreamWriter logfile = new StreamWriter(ConfigurationManager.AppSettings["log"]); // @"C:\temp\log.txt");        
+        string stat_tag = ConfigurationManager.AppSettings["stat_tag"]; // ###
+        string abort_tag = ConfigurationManager.AppSettings["abort_tag"];
 
         TextBox[] param_list = new TextBox[param_list_size];
         RadioButton[] scatter1 = new RadioButton[param_list_size];
@@ -35,9 +38,7 @@ namespace bench
         int[] active = new int[8]; // {3, 5, 7 }; //note that we push all other processes to 1,2  [core # begin at 1]. with hyperthreading=off use {2,3,4}
         int failed = 0;        
         bool hyperthreading = true;
-        StreamWriter logfile = new StreamWriter(ConfigurationManager.AppSettings["log"]); // @"C:\temp\log.txt");        
-        string stat_tag = ConfigurationManager.AppSettings["stat_tag"]; // ###
-        string abort_tag = ConfigurationManager.AppSettings["abort_tag"];
+        
         StreamWriter csvfile;        
         Hashtable csv4plot = new Hashtable();        
         string csvtext;
@@ -549,7 +550,7 @@ namespace bench
                     ok = false;                    
                     do
                     {
-                        Int64 AvailableMem = PerformanceInfo.GetPhysicalAvailableMemoryInMiB();
+                        long AvailableMem = PerformanceInfo.GetPhysicalAvailableMemoryInMiB();
                         if (AvailableMem > MinMem)
                             foreach (int i in active)
                             {
@@ -1168,6 +1169,14 @@ namespace bench
             read_history(history_file);
         }
 
+        private void configToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Process p = new Process();
+            p.StartInfo.FileName = "notepad";
+            p.StartInfo.Arguments = "bench.exe.config";
+            p.Start();
+        }
+
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
             // here we update the history file if needed. 
@@ -1197,12 +1206,19 @@ namespace bench
                 active_cores_str += (indexChecked + 3).ToString();
                 first = false;
             }
-            if (active_cores_str != history[fields.core_list][0])
+            if (!history.Keys.Contains(fields.core_list))
+            {
+                history[fields.core_list] = new List<string>();
+                history[fields.core_list].Add(active_cores_str);
+                write_history_file = true;
+            }
+            else
+                if (active_cores_str != history[fields.core_list][0])
             {
                 history[fields.core_list][0] = active_cores_str;
                 write_history_file = true;
             }
-            
+
             if (write_history_file) write_history();
         }
     }
