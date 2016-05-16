@@ -46,7 +46,7 @@
             this.label11 = new System.Windows.Forms.Label();
             this.button_kill = new System.Windows.Forms.Button();
             this.button3 = new System.Windows.Forms.Button();
-            this.checkedListBox1 = new System.Windows.Forms.CheckedListBox();
+            this.checkedListBox_cores = new System.Windows.Forms.CheckedListBox();
             this.label13 = new System.Windows.Forms.Label();
             this.checkBox_rec = new System.Windows.Forms.CheckBox();
             this.panel1 = new System.Windows.Forms.Panel();
@@ -80,6 +80,7 @@
             this.stat_field = new System.Windows.Forms.ComboBox();
             this.timeout = new System.Windows.Forms.ComboBox();
             this.min_mem = new System.Windows.Forms.ComboBox();
+            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -242,14 +243,14 @@
             this.button3.UseVisualStyleBackColor = true;
             this.button3.Click += new System.EventHandler(this.button_csv_Click);
             // 
-            // checkedListBox1
+            // checkedListBox_cores
             // 
-            this.checkedListBox1.CheckOnClick = true;
-            this.checkedListBox1.FormattingEnabled = true;
-            this.checkedListBox1.Location = new System.Drawing.Point(401, 559);
-            this.checkedListBox1.Name = "checkedListBox1";
-            this.checkedListBox1.Size = new System.Drawing.Size(46, 94);
-            this.checkedListBox1.TabIndex = 29;
+            this.checkedListBox_cores.CheckOnClick = true;
+            this.checkedListBox_cores.FormattingEnabled = true;
+            this.checkedListBox_cores.Location = new System.Drawing.Point(401, 559);
+            this.checkedListBox_cores.Name = "checkedListBox_cores";
+            this.checkedListBox_cores.Size = new System.Drawing.Size(46, 94);
+            this.checkedListBox_cores.TabIndex = 29;
             // 
             // label13
             // 
@@ -465,6 +466,7 @@
             this.cleanupToolStripMenuItem1.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripMenuItem1,
             this.deleteShortsFromCsvToolStripMenuItem,
+            this.toolStripSeparator1,
             this.deleteAllfailBenchmarksToolStripMenuItem});
             this.cleanupToolStripMenuItem1.Name = "cleanupToolStripMenuItem1";
             this.cleanupToolStripMenuItem1.Size = new System.Drawing.Size(169, 22);
@@ -493,8 +495,8 @@
             this.deleteAllfailBenchmarksToolStripMenuItem.Name = "deleteAllfailBenchmarksToolStripMenuItem";
             this.deleteAllfailBenchmarksToolStripMenuItem.Size = new System.Drawing.Size(211, 22);
             this.deleteAllfailBenchmarksToolStripMenuItem.Text = "Delete all-fail benchmarks";
-            this.deleteAllfailBenchmarksToolStripMenuItem.ToolTipText = "delete benchmark files for which all params fails according to the data in the cs" +
-    "v files";
+            this.deleteAllfailBenchmarksToolStripMenuItem.ToolTipText = "delete *benchmark files* for which all params fails according to the data in the " +
+    "csv files";
             this.deleteAllfailBenchmarksToolStripMenuItem.Click += new System.EventHandler(this.button_del_allfail_Click);
             // 
             // editHistoryFileToolStripMenuItem
@@ -525,6 +527,7 @@
             this.configToolStripMenuItem.Name = "configToolStripMenuItem";
             this.configToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
             this.configToolStripMenuItem.Text = "Advanced Config.";
+            this.configToolStripMenuItem.ToolTipText = "Requires restart after change.";
             this.configToolStripMenuItem.Click += new System.EventHandler(this.configToolStripMenuItem_Click);
             // 
             // label7
@@ -566,6 +569,11 @@
             this.min_mem.SelectionChangeCommitted += new System.EventHandler(this.combo_SelectedIndexChanged);
             this.min_mem.Leave += new System.EventHandler(this.comboBox_Leave);
             // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(208, 6);
+            // 
             // filter
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -593,7 +601,7 @@
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.checkBox_rec);
             this.Controls.Add(this.label13);
-            this.Controls.Add(this.checkedListBox1);
+            this.Controls.Add(this.checkedListBox_cores);
             this.Controls.Add(this.button3);
             this.Controls.Add(this.button_kill);
             this.Controls.Add(this.label11);
@@ -642,7 +650,7 @@
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.Button button_kill;
         private System.Windows.Forms.Button button3;
-        private System.Windows.Forms.CheckedListBox checkedListBox1;
+        private System.Windows.Forms.CheckedListBox checkedListBox_cores;
         private System.Windows.Forms.Label label13;
         private System.Windows.Forms.CheckBox checkBox_rec;
         private System.Windows.Forms.Panel panel1;
@@ -676,6 +684,7 @@
         private System.Windows.Forms.ToolStripMenuItem configToolStripMenuItem;
         private System.Windows.Forms.ComboBox timeout;
         private System.Windows.Forms.ComboBox min_mem;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
     }
 }
 

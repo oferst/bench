@@ -23,16 +23,16 @@ namespace bench
         StreamWriter logfile = new StreamWriter(ConfigurationManager.AppSettings["log"]); // @"C:\temp\log.txt");        
         string stat_tag = ConfigurationManager.AppSettings["stat_tag"]; // ###
         string abort_tag = ConfigurationManager.AppSettings["abort_tag"];
+        bool hyperthreading = ConfigurationManager.AppSettings["hyperthreading"] == "true";
+        static int param_list_size = int.Parse(ConfigurationManager.AppSettings["param_list_size"]);
 
         // more configurations:   
-        int timeout_val = Timeout.Infinite;
-        int MinMem_val = 0;  // in MB   
-        static int param_list_size = 16;
-        int bench_bound = 500;
+        int timeout_val = Timeout.Infinite; // will be read from history file
+        int MinMem_val = 0;  // in MB. Will be read from history file        
         int cores = Environment.ProcessorCount;
         int[] active = new int[8]; // {3, 5, 7 }; //note that we push all other processes to 1,2  [core # begin at 1]. with hyperthreading=off use {2,3,4}
         int failed = 0;
-        bool hyperthreading = true;
+        
         enum fields { exe, dir, filter_str, csv, param, param_groups, stat_field, core_list, timeout, min_mem, misc }; // elements maintained in the history file
 
         // declarations:
@@ -64,7 +64,7 @@ namespace bench
             radioset2.Size = new Size(20, param_list_size * 25);
             failed_benchmarks = new List<string>();
             for (int i = 3; i <= cores; ++i)  // cores 1,2 are preserved for other processes. 
-                checkedListBox1.Items.Add("c" + i.ToString());                        
+                checkedListBox_cores.Items.Add("c" + i.ToString());                        
 
             for (int i = 0; i < param_list_size; ++i)
             {
@@ -94,8 +94,7 @@ namespace bench
 
         #region history
         void read_history(string history_file)
-        {
-            history = new Dictionary<fields, List<string>>();
+        {            
             string[] lines;
             try {
                 lines = File.ReadAllLines(history_file);
@@ -106,6 +105,9 @@ namespace bench
                 return;
             }
             fields fieldValue = fields.misc;
+
+            // reading history file
+            history = new Dictionary<fields, List<string>>();
             foreach (string line in lines)
             {
                 if (line.Length == 0) continue;
@@ -119,36 +121,32 @@ namespace bench
                 }
                 history[fieldValue].Add(line);
             }
-            foreach (fields field in Enum.GetValues(typeof(fields)))
+
+            // associating history with the combo-s
+            foreach (Control C in Controls)
             {
-                if (history.Keys.Contains(field))
+                if (C.GetType() == typeof(ComboBox))
                 {
-                    BindingSource bs = new BindingSource();
-                    bs.DataSource = history[field];
-                    switch (field)
+                    try
                     {
-                        case fields.exe: exe.DataSource = bs; break;
-                        case fields.dir: dir.DataSource = bs; break;
-                        case fields.filter_str: filter_str.DataSource = bs; break;
-                        case fields.csv: csv.DataSource = bs; break;
-                        case fields.timeout: timeout.DataSource = bs; break;
-                        case fields.min_mem: min_mem.DataSource = bs; break;
-                        case fields.param_groups: param_groups.DataSource = bs; break;
-                        case fields.stat_field: stat_field.DataSource = bs; break;
-                        case fields.core_list:
-                            {
-                                string[] corelist = (history[fields.core_list][0]).Split(',');
-                                foreach (string st in corelist)
-                                {
-                                    int c;
-                                    if (int.TryParse(st,out c) == false || c <= 2 || c > cores) MessageBox.Show("field core_list in history file contains bad core indices (2 < i < " + cores + "). First 2 are saved for other processes.") ;
-                                    else checkedListBox1.SetItemCheckState(c - 3, CheckState.Checked);
-                                }                                
-                                break;
-                            }
+                        fields field = (fields)Enum.Parse(typeof(fields), C.Name); // name of combo must be identical to the item in the enum list. 
+                        BindingSource bs = new BindingSource();
+                        bs.DataSource = history[field];
+                        ((ComboBox)C).DataSource = bs;
                     }
-                }                
+                    catch
+                    { }   // could be missing entry in the history file, so we let it go through. 
+                }
             }
+
+            // updating core list
+            string[] corelist = (history[fields.core_list][0]).Split(',');
+            foreach (string st in corelist)
+            {
+                int c;
+                if (int.TryParse(st, out c) == false || c <= 2 || c > cores) MessageBox.Show("field core_list in history file contains bad core indices (2 < i < " + cores + "). First 2 are saved for other processes.");
+                else checkedListBox_cores.SetItemCheckState(c - 3, CheckState.Checked);
+            }            
         }
 
         void write_history()
@@ -157,7 +155,7 @@ namespace bench
             StreamWriter file = new StreamWriter(history_file);            
             foreach (fields field in Enum.GetValues(typeof(fields))) {
                 
-                if (history.Keys.Contains<fields>(field))
+                if (history.Keys.Contains(field))
                 {
                     file.WriteLine("-- " + field.ToString());
                     foreach (string line in history[field])
@@ -511,7 +509,7 @@ namespace bench
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {            
-            int cnt = 0, bench_cnt = 0;
+            int cnt = 0;
             Process[] p = new Process[cores + 1];
             
             var fileEntries = new DirectoryInfo(benchmarksDir).GetFiles(searchPattern, checkBox_rec.Checked ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
@@ -531,8 +529,7 @@ namespace bench
                 bg.ReportProgress(0, "- - - - - " + param_list[par].Text + "- - - - - ");
                 failed = 0;
                 results.Clear();
-                accum_results.Clear();                
-                bench_cnt = 0;
+                accum_results.Clear();                                
                 foreach (FileInfo fileinfo in fileEntries)  // for each benchmark file
                 {
                     string fileName = fileinfo.FullName;
@@ -542,8 +539,7 @@ namespace bench
                         continue;
                     }
                     string id = getid(param_list[par].Text, fileName);
-                    if (entries.Contains(id)) continue;
-                    if (++bench_cnt == bench_bound) break;
+                    if (entries.Contains(id)) continue;                    
                     ok = false;                    
                     do
                     {
@@ -642,7 +638,6 @@ namespace bench
 
         #region GUI
 
-
         void create_plot_files()
         {
             try
@@ -662,7 +657,6 @@ namespace bench
                 return;
             }
         }
-
 
         private void button_start_Click(object sender, EventArgs e)
         {
@@ -691,7 +685,7 @@ namespace bench
             results.Clear();
             
             int j = 0;
-            foreach (int indexChecked in checkedListBox1.CheckedIndices)
+            foreach (int indexChecked in checkedListBox_cores.CheckedIndices)
             {
                 active[j++] = indexChecked + 3;
             }
@@ -844,7 +838,7 @@ namespace bench
 
         private void checkBox_remote_CheckedChanged(object sender, EventArgs e)
         {
-            button_kill.Enabled = checkedListBox1.Enabled = !(((CheckBox)sender).Checked);
+            button_kill.Enabled = checkedListBox_cores.Enabled = !(((CheckBox)sender).Checked);
         }
 
         // Gets field # idx in a comma-separated line
@@ -858,7 +852,6 @@ namespace bench
             string res = line.Substring(i+1, line.IndexOf(',', i + 1)-i-1);
             return res;
         }
-
 
         private void del_Allfail_benchmark()
         {
@@ -911,8 +904,7 @@ namespace bench
             File.Delete(fileName);
             File.Move(tempFile, fileName);           
         }
-        
-
+  
         private void del_short_calls()
         {
             string fileName = csv.Text;
@@ -966,8 +958,6 @@ namespace bench
             File.Delete(fileName);
             File.Move(tempFile, fileName);
         }
-
-
         
         private void button_del_fails_Click(object sender, EventArgs e)
         {            
@@ -999,7 +989,7 @@ namespace bench
 
             File.Delete(fileName);
             File.Move(tempFile, fileName);
-            string msg = "Kept " + (linesToKeep.Count()) + "lines out of " +  cnt + "lines.";
+            string msg = "Kept " + (linesToKeep.Count()) + " lines out of " +  cnt;
             listBox1.Items.Add(msg);
 
         }
@@ -1008,8 +998,7 @@ namespace bench
         {           
             int in_csv = 0, file_exists = 0, file_not_exist = 0;
             string benchmarksDir = dir.Text,
-            searchPattern = filter_str.Text;
-            int bench_cnt = 0;
+            searchPattern = filter_str.Text;            
             listBox1.Items.Add("--- Importing ---");
             var fileEntries = new DirectoryInfo(benchmarksDir).GetFiles(searchPattern, checkBox_rec.Checked ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
             if (fileEntries.Length == 0) listBox1.Items.Add("empty file list\n");
@@ -1021,14 +1010,12 @@ namespace bench
             bool first = true;
             for (int par = 0; par < param_list_size; ++par)  // for each parameter
             {
-                if (param_list[par].Text == "<>") continue;
-                bench_cnt = 0;
+                if (param_list[par].Text == "<>") continue;                
                 foreach (FileInfo fileinfo in fileEntries)  // for each benchmark file
                 {
                     string fileName = fileinfo.FullName;                    
                     string id = getid(param_list[par].Text, fileName);
-                    if (entries.Contains(id)) { in_csv++; continue; }
-                    if (++bench_cnt == bench_bound) break;
+                    if (entries.Contains(id)) { in_csv++; continue; }                    
                     string outfileName = "";
                     if (checkBox_remote.Checked)
                     {
@@ -1195,7 +1182,7 @@ namespace bench
             }
             string active_cores_str = "";
             first = true;
-            foreach (int indexChecked in checkedListBox1.CheckedIndices)
+            foreach (int indexChecked in checkedListBox_cores.CheckedIndices)
             {
                 if (!first) active_cores_str += ",";
                 active_cores_str += (indexChecked + 3).ToString();
