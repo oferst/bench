@@ -39,8 +39,6 @@
             this.label6 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.label_cnt = new System.Windows.Forms.Label();
-            this.text_timeout = new System.Windows.Forms.TextBox();
-            this.text_minmem = new System.Windows.Forms.TextBox();
             this.label8 = new System.Windows.Forms.Label();
             this.label9 = new System.Windows.Forms.Label();
             this.label_fails = new System.Windows.Forms.Label();
@@ -77,9 +75,11 @@
             this.editHistoryFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.refreshMenusToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.configToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.label7 = new System.Windows.Forms.Label();
             this.stat_field = new System.Windows.Forms.ComboBox();
-            this.configToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.timeout = new System.Windows.Forms.ComboBox();
+            this.min_mem = new System.Windows.Forms.ComboBox();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -176,22 +176,6 @@
             this.label_cnt.Size = new System.Drawing.Size(16, 13);
             this.label_cnt.TabIndex = 16;
             this.label_cnt.Text = "...";
-            // 
-            // text_timeout
-            // 
-            this.text_timeout.Location = new System.Drawing.Point(60, 344);
-            this.text_timeout.Name = "text_timeout";
-            this.text_timeout.Size = new System.Drawing.Size(100, 20);
-            this.text_timeout.TabIndex = 3;
-            this.toolTip1.SetToolTip(this.text_timeout, "Only used for local runs. Time-out for remote runs is determined in the .sh file " +
-        "on the server.");
-            // 
-            // text_minmem
-            // 
-            this.text_minmem.Location = new System.Drawing.Point(245, 343);
-            this.text_minmem.Name = "text_minmem";
-            this.text_minmem.Size = new System.Drawing.Size(100, 20);
-            this.text_minmem.TabIndex = 18;
             // 
             // label8
             // 
@@ -483,7 +467,7 @@
             this.deleteShortsFromCsvToolStripMenuItem,
             this.deleteAllfailBenchmarksToolStripMenuItem});
             this.cleanupToolStripMenuItem1.Name = "cleanupToolStripMenuItem1";
-            this.cleanupToolStripMenuItem1.Size = new System.Drawing.Size(152, 22);
+            this.cleanupToolStripMenuItem1.Size = new System.Drawing.Size(169, 22);
             this.cleanupToolStripMenuItem1.Text = "Cleanup";
             // 
             // toolStripMenuItem1
@@ -493,6 +477,7 @@
             this.toolStripMenuItem1.Text = "Delete fails from csv";
             this.toolStripMenuItem1.ToolTipText = "Delete lines from the csv file, that correspond to a benchmark that was not solve" +
     "d by ALL parameters.";
+            this.toolStripMenuItem1.Click += new System.EventHandler(this.button_del_fails_Click);
             // 
             // deleteShortsFromCsvToolStripMenuItem
             // 
@@ -501,6 +486,7 @@
             this.deleteShortsFromCsvToolStripMenuItem.Text = "Delete shorts from csv";
             this.deleteShortsFromCsvToolStripMenuItem.ToolTipText = "Delete from csv benchmarks that their runtime is < 1 sec. in at least one of the " +
     "parameters";
+            this.deleteShortsFromCsvToolStripMenuItem.Click += new System.EventHandler(this.button_del_shorts_click);
             // 
             // deleteAllfailBenchmarksToolStripMenuItem
             // 
@@ -509,6 +495,7 @@
             this.deleteAllfailBenchmarksToolStripMenuItem.Text = "Delete all-fail benchmarks";
             this.deleteAllfailBenchmarksToolStripMenuItem.ToolTipText = "delete benchmark files for which all params fails according to the data in the cs" +
     "v files";
+            this.deleteAllfailBenchmarksToolStripMenuItem.Click += new System.EventHandler(this.button_del_allfail_Click);
             // 
             // editHistoryFileToolStripMenuItem
             // 
@@ -516,7 +503,7 @@
             this.editToolStripMenuItem,
             this.refreshMenusToolStripMenuItem});
             this.editHistoryFileToolStripMenuItem.Name = "editHistoryFileToolStripMenuItem";
-            this.editHistoryFileToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.editHistoryFileToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
             this.editHistoryFileToolStripMenuItem.Text = "History file";
             // 
             // editToolStripMenuItem
@@ -533,6 +520,13 @@
             this.refreshMenusToolStripMenuItem.Text = "Refresh menus";
             this.refreshMenusToolStripMenuItem.Click += new System.EventHandler(this.refreshMenusToolStripMenuItem_Click);
             // 
+            // configToolStripMenuItem
+            // 
+            this.configToolStripMenuItem.Name = "configToolStripMenuItem";
+            this.configToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
+            this.configToolStripMenuItem.Text = "Advanced Config.";
+            this.configToolStripMenuItem.Click += new System.EventHandler(this.configToolStripMenuItem_Click);
+            // 
             // label7
             // 
             this.label7.AutoSize = true;
@@ -547,23 +541,38 @@
             this.stat_field.FormattingEnabled = true;
             this.stat_field.Location = new System.Drawing.Point(17, 643);
             this.stat_field.Name = "stat_field";
-            this.stat_field.Size = new System.Drawing.Size(112, 21);
+            this.stat_field.Size = new System.Drawing.Size(143, 21);
             this.stat_field.TabIndex = 55;
             this.stat_field.SelectionChangeCommitted += new System.EventHandler(this.combo_SelectedIndexChanged);
             this.stat_field.Leave += new System.EventHandler(this.comboBox_Leave);
             // 
-            // configToolStripMenuItem
+            // timeout
             // 
-            this.configToolStripMenuItem.Name = "configToolStripMenuItem";
-            this.configToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
-            this.configToolStripMenuItem.Text = "Advanced Config.";
-            this.configToolStripMenuItem.Click += new System.EventHandler(this.configToolStripMenuItem_Click);
+            this.timeout.FormattingEnabled = true;
+            this.timeout.Location = new System.Drawing.Point(59, 345);
+            this.timeout.Name = "timeout";
+            this.timeout.Size = new System.Drawing.Size(97, 21);
+            this.timeout.TabIndex = 56;
+            this.timeout.SelectionChangeCommitted += new System.EventHandler(this.combo_SelectedIndexChanged);
+            this.timeout.Leave += new System.EventHandler(this.comboBox_Leave);
+            // 
+            // min_mem
+            // 
+            this.min_mem.FormattingEnabled = true;
+            this.min_mem.Location = new System.Drawing.Point(251, 346);
+            this.min_mem.Name = "min_mem";
+            this.min_mem.Size = new System.Drawing.Size(122, 21);
+            this.min_mem.TabIndex = 57;
+            this.min_mem.SelectionChangeCommitted += new System.EventHandler(this.combo_SelectedIndexChanged);
+            this.min_mem.Leave += new System.EventHandler(this.comboBox_Leave);
             // 
             // filter
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(590, 668);
+            this.Controls.Add(this.min_mem);
+            this.Controls.Add(this.timeout);
             this.Controls.Add(this.stat_field);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.param_groups);
@@ -592,8 +601,6 @@
             this.Controls.Add(this.label_fails);
             this.Controls.Add(this.label9);
             this.Controls.Add(this.label8);
-            this.Controls.Add(this.text_minmem);
-            this.Controls.Add(this.text_timeout);
             this.Controls.Add(this.label_cnt);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.label6);
@@ -628,8 +635,6 @@
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label_cnt;
-        private System.Windows.Forms.TextBox text_timeout;
-        private System.Windows.Forms.TextBox text_minmem;
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.Label label_fails;
@@ -669,6 +674,8 @@
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.ComboBox stat_field;
         private System.Windows.Forms.ToolStripMenuItem configToolStripMenuItem;
+        private System.Windows.Forms.ComboBox timeout;
+        private System.Windows.Forms.ComboBox min_mem;
     }
 }
 

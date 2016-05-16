@@ -17,40 +17,41 @@ namespace bench
     // todo: timeout doesn't kill the actual process, only the cmd process. 
     public partial class filter : Form
     {
-
-        Hashtable processes = new Hashtable();  // from process to <args, benchmark, list of results>
-        List<string> failed_benchmarks;
-        List<System.Threading.Timer> timers = new List<System.Threading.Timer>();
-        List<string> labels = new List<string>();
-        static int param_list_size = 16;
+        // reading from config  file: 
         string history_file = Path.Combine(Application.StartupPath,ConfigurationManager.AppSettings["history_filename"]);//"history.txt"
         string graphDir = ConfigurationManager.AppSettings["cpbm"]; //@"c:\temp\cpbm-0.5\";        
         StreamWriter logfile = new StreamWriter(ConfigurationManager.AppSettings["log"]); // @"C:\temp\log.txt");        
         string stat_tag = ConfigurationManager.AppSettings["stat_tag"]; // ###
         string abort_tag = ConfigurationManager.AppSettings["abort_tag"];
 
+        // more configurations:   
+        int timeout_val = Timeout.Infinite;
+        int MinMem_val = 0;  // in MB   
+        static int param_list_size = 16;
+        int bench_bound = 500;
+        int cores = Environment.ProcessorCount;
+        int[] active = new int[8]; // {3, 5, 7 }; //note that we push all other processes to 1,2  [core # begin at 1]. with hyperthreading=off use {2,3,4}
+        int failed = 0;
+        bool hyperthreading = true;
+        enum fields { exe, dir, filter_str, csv, param, param_groups, stat_field, core_list, timeout, min_mem, misc }; // elements maintained in the history file
+
+        // declarations:
+        Hashtable processes = new Hashtable();  // from process to <args, benchmark, list of results>
+        List<string> failed_benchmarks;
+        List<System.Threading.Timer> timers = new List<System.Threading.Timer>();
+        List<string> labels = new List<string>();        
         TextBox[] param_list = new TextBox[param_list_size];
         RadioButton[] scatter1 = new RadioButton[param_list_size];
         RadioButton[] scatter2 = new RadioButton[param_list_size];
-        int timeout = Timeout.Infinite;
-        int MinMem = 1000;  // in MB        
-        int cores = Environment.ProcessorCount;
-        int[] active = new int[8]; // {3, 5, 7 }; //note that we push all other processes to 1,2  [core # begin at 1]. with hyperthreading=off use {2,3,4}
-        int failed = 0;        
-        bool hyperthreading = true;
-        
         StreamWriter csvfile;        
-        Hashtable csv4plot = new Hashtable();        
-        string csvtext;
+        Hashtable csv4plot = new Hashtable();                
         Hashtable accum_results = new Hashtable();
         Hashtable results = new Hashtable();
         AbortableBackgroundWorker bg;
-        HashSet<string> entries = new HashSet<string>();
-        enum fields { exe,dir,filter_str,csv, param, param_groups,stat_field, core_list, misc};
-        Dictionary<fields, List<string>> history;
-        int bench_bound = 500;
+        HashSet<string> entries = new HashSet<string>();        
+        Dictionary<fields, List<string>> history;        
         bool write_history_file = false;
-        string benchmarksDir, searchPattern;
+        string benchmarksDir, searchPattern, csvtext;
     
         public filter()
         {
@@ -62,24 +63,21 @@ namespace bench
             radioset1.Size = new Size(20, param_list_size * 25);
             radioset2.Size = new Size(20, param_list_size * 25);
             failed_benchmarks = new List<string>();
-            for (int i = 3; i <= cores; ++i)
-                checkedListBox1.Items.Add((object)("c" + i.ToString()));
-                        
+            for (int i = 3; i <= cores; ++i)  // cores 1,2 are preserved for other processes. 
+                checkedListBox1.Items.Add("c" + i.ToString());                        
 
             for (int i = 0; i < param_list_size; ++i)
             {
-                param_list[i] = new TextBox();
-                //param_list[i].Location = new System.Drawing.Point(60, 345 + i * 30);
+                param_list[i] = new TextBox();                
                 param_list[i].Location = new Point(60,  i * 25);
                 param_list[i].Size = new Size(429, 20);     
                 panel1.Controls.Add(param_list[i]);
 
-                scatter1[i] = new RadioButton();
-                
+                scatter1[i] = new RadioButton();                
                 scatter1[i].Location = new Point(0, i * 25);
                 radioset1.Controls.Add(scatter1[i]);
-                scatter2[i] = new RadioButton();
-            
+
+                scatter2[i] = new RadioButton();            
                 scatter2[i].Location = new Point(0, i * 25);
                 radioset2.Controls.Add(scatter2[i]);
             }
@@ -90,9 +88,7 @@ namespace bench
             checkBox_remote.Checked = false; 
             checkBox_rec.Checked = true;
             checkBox_emptyOut.Enabled = checkBox_out.Checked;
-
-            text_minmem.Text = MinMem.ToString();
-            text_timeout.Text = "600";          
+            
             read_history(history_file);
         }
 
@@ -106,7 +102,7 @@ namespace bench
             }
             catch
             {
-                MessageBox.Show(history_file + " not found");
+                MessageBox.Show(history_file + " not found. You may use history_default.txt as a template, or fill the fields manually. They will be recorded in the history file for future use.");                
                 return;
             }
             fields fieldValue = fields.misc;
@@ -135,6 +131,8 @@ namespace bench
                         case fields.dir: dir.DataSource = bs; break;
                         case fields.filter_str: filter_str.DataSource = bs; break;
                         case fields.csv: csv.DataSource = bs; break;
+                        case fields.timeout: timeout.DataSource = bs; break;
+                        case fields.min_mem: min_mem.DataSource = bs; break;
                         case fields.param_groups: param_groups.DataSource = bs; break;
                         case fields.stat_field: stat_field.DataSource = bs; break;
                         case fields.core_list:
@@ -286,7 +284,7 @@ namespace bench
                 failed++;
                 label_fails.Text = failed.ToString();
                 List<float> l = data.Item3;
-                l.Add(Convert.ToInt32(text_timeout.Text) + 1); // +1 for debugging                
+                l.Add(Convert.ToInt32(timeout.Text) + 1); // +1 for debugging                
                 p.Kill();
             }            
         }
@@ -406,8 +404,7 @@ namespace bench
                 }
                 else   // in case of timeout / mem-out / whatever
                 {
-                    csvtext += "1,";
-                 //   csvtext += (Convert.ToInt32(text_timeout.Text) * 10).ToString() + ","; //supposed to get here only on memout/fail (not time-out). We add 10 times the time-out to make sure it is noticeable and not taken as part of the average. 
+                    csvtext += "1,";                 
                  }
                 csvtext += "\n";
                 
@@ -423,7 +420,7 @@ namespace bench
                             trio.Item2 + "," + // full benchmark path
                             normalize_string(trio.Item1) + "," + // param
                             l[time_col].ToString() + "," +
-                            text_timeout.Text + "s");
+                            timeout.Text + "s");
                     }
                 }
                 catch (Exception ex) { listBox1.Items.Add("exception: " + ex.Message); }
@@ -507,7 +504,7 @@ namespace bench
             p.ProcessorAffinity = (IntPtr)affinity;
             p.PriorityClass = ProcessPriorityClass.RealTime;
 
-            var timer = new System.Threading.Timer(kill_process, p, timeout, Timeout.Infinite);
+            var timer = new System.Threading.Timer(kill_process, p, timeout_val, Timeout.Infinite);
             timers.Add(timer); // needed ?
             return p;
         }
@@ -551,7 +548,7 @@ namespace bench
                     do
                     {
                         long AvailableMem = PerformanceInfo.GetPhysicalAvailableMemoryInMiB();
-                        if (AvailableMem > MinMem)
+                        if (AvailableMem > MinMem_val)
                             foreach (int i in active)
                             {
                                 if (i == 0) break;
@@ -700,17 +697,15 @@ namespace bench
             }
             try  // in case the field contains non-numeral.
             {
-                int x = Convert.ToInt32(text_timeout.Text);
-                timeout = x * 1000; // need milliseconds.
+                timeout_val = 1000 * Convert.ToInt32(timeout.Text); // need milliseconds.                 
             }
-            catch { timeout = Timeout.Infinite; }
+            catch { timeout_val = Timeout.Infinite; }
 
             try  // in case the field contains non-numeral.
             {
-                int x = Convert.ToInt32(text_minmem.Text);
-                MinMem = x;
+                MinMem_val = Convert.ToInt32(timeout.Text);                 
             }
-            catch { MinMem = 0; }
+            catch { MinMem_val = 0; }
 
             try
             {
@@ -890,7 +885,7 @@ namespace bench
                 bool isdouble = double.TryParse(time, out d);
                 if (isdouble)
                 {
-                    if (d <= Convert.ToInt32(text_timeout.Text) + 1)
+                    if (d <= Convert.ToInt32(timeout.Text) + 1)
                     {
                         benchmarks.Remove(getfield(line, 3));
                     }
@@ -974,7 +969,7 @@ namespace bench
 
 
         
-        private void del_fails_Click(object sender, EventArgs e)
+        private void button_del_fails_Click(object sender, EventArgs e)
         {            
             string fileName = csv.Text;
             HashSet<string> failed_atleast_once = new HashSet<string>();
@@ -1096,7 +1091,7 @@ namespace bench
             del_Allfail_benchmark();
         }
 
-        private void button2_Click(object sender, EventArgs e)
+        private void button_del_shorts_click(object sender, EventArgs e)
         {
             del_short_calls();
         }
