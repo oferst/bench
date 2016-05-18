@@ -10,21 +10,27 @@ using System.Collections;
 using System.IO;
 using System.Diagnostics;
 using System.Threading;
+using System.Management;
 
 
 namespace bench
 {
+
+    
+    
+    
+    
     // todo: timeout doesn't kill the actual process, only the cmd process. 
     public partial class filter : Form
     {
         // reading from config  file: 
-        string history_file = Path.Combine(Application.StartupPath,ConfigurationManager.AppSettings["history_filename"]);//"history.txt"
-        string graphDir = ConfigurationManager.AppSettings["cpbm"]; //@"c:\temp\cpbm-0.5\";        
-        StreamWriter logfile = new StreamWriter(ConfigurationManager.AppSettings["log"]); // @"C:\temp\log.txt");        
-        string stat_tag = ConfigurationManager.AppSettings["stat_tag"]; // ###
-        string abort_tag = ConfigurationManager.AppSettings["abort_tag"];
-        bool hyperthreading = ConfigurationManager.AppSettings["hyperthreading"] == "true";
-        static int param_list_size = int.Parse(ConfigurationManager.AppSettings["param_list_size"]);
+        string history_file = Path.Combine(Application.StartupPath, System.Configuration.ConfigurationManager.AppSettings["history_filename"]);//"history.txt"
+        string graphDir = System.Configuration.ConfigurationManager.AppSettings["cpbm"]; //@"c:\temp\cpbm-0.5\";        
+        StreamWriter logfile = new StreamWriter(System.Configuration.ConfigurationManager.AppSettings["log"]); // @"C:\temp\log.txt");        
+        string stat_tag = System.Configuration.ConfigurationManager.AppSettings["stat_tag"]; // ###
+        string abort_tag = System.Configuration.ConfigurationManager.AppSettings["abort_tag"];
+        bool hyperthreading = System.Configuration.ConfigurationManager.AppSettings["hyperthreading"] == "true";
+        static int param_list_size = int.Parse(System.Configuration.ConfigurationManager.AppSettings["param_list_size"]);
 
         // more configurations:   
         int timeout_val = Timeout.Infinite; // will be read from history file
@@ -52,7 +58,8 @@ namespace bench
         Dictionary<fields, List<string>> history;        
         bool write_history_file = false;
         string benchmarksDir, searchPattern, csvtext;
-    
+        List<int> kill_list = new List<int>();
+
         public filter()
         {
             InitializeComponent();
@@ -270,20 +277,49 @@ namespace bench
             }
         }
 
+        private void build_process_tree(int pid)
+        {
+            kill_list.Add(pid);
+            ManagementObjectSearcher searcher = new ManagementObjectSearcher
+               ("Select * From Win32_Process Where ParentProcessID=" + pid);
+            ManagementObjectCollection moc = searcher.Get();
+            foreach (ManagementObject mo in moc)
+            {
+                build_process_tree(Convert.ToInt32(mo["ProcessID"]));
+            }
+        }
+
+        private void KillProcessAndChildren(int pid)
+        {
+            build_process_tree(pid);
+            foreach (int p in kill_list)  // killing them top-down (first parent, then child). The order matters in situations where killing first the child makes the parent think that it terminated and wrote something accordingly. 
+            {
+                try
+                {
+                    Process proc = Process.GetProcessById(p);
+                    bg.ReportProgress(0, "killing process " + proc.ProcessName);
+                    proc.Kill();
+                }
+                catch { } // in case the process is already dead.
+            }
+    }
 
         void kill_process(Object stateinfo)
         {
-            Process p = (Process)stateinfo;
+            Process p = (Process)stateinfo;         
             if (!p.HasExited)
             {
                 bg.ReportProgress(0, "timeout: process killed: " + p.StartInfo.Arguments);
+                
+                // updating time field
                 Tuple<string, string, List<float>> data = ((Tuple<string, string, List<float>>)processes[p]);
                 failed_benchmarks.Add(data.Item2);
                 failed++;
                 label_fails.Text = failed.ToString();
                 List<float> l = data.Item3;
                 l.Add(Convert.ToInt32(timeout.Text) + 1); // +1 for debugging                
-                p.Kill();
+
+                KillProcessAndChildren(p.Id);
             }            
         }
 
@@ -746,19 +782,19 @@ namespace bench
         {
             int ind1 = exe.Text.LastIndexOf('\\'),  // we cannot use Path.GetFileNameWithoutExtension because the string contains "
                 ind2 = exe.Text.LastIndexOf('.');
-            string exe_text = exe.Text.Substring(ind1 + 1, ind2 - ind1 - 1);            
+            string exe_text = exe.Text.Substring(ind1 + 1, ind2 - ind1 - 1);
 
             Process[] Pr = Process.GetProcessesByName(exe_text);
             foreach (Process p in Pr)
             {
-                if (!p.HasExited) p.Kill();
+                if (!p.HasExited) KillProcessAndChildren(p.Id);
             }
             if (bg != null)
             {
                 bg.Abort();
                 bg.Dispose();
             }
-            if (csvfile != null) csvfile.Close();                      
+            if (csvfile != null) csvfile.Close();
 
             Process[] localAll = Process.GetProcesses();
             foreach (Process p in localAll)
@@ -778,7 +814,7 @@ namespace bench
 
         private void button_csv_Click(object sender, EventArgs e)
         {
-            Process p = new Process();
+            System.Diagnostics.Process p = new System.Diagnostics.Process();
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.UseShellExecute = true;
             startInfo.FileName = csv.Text;
@@ -801,7 +837,7 @@ namespace bench
             int param2 = getCheckedRadioButton(scatter2);
             if (param2 == -1) return;
             
-            Process p = new Process();
+            System.Diagnostics.Process p = new System.Diagnostics.Process();
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.FileName = "run-scatter.bat";
             string f1 = normalize_string(param_list[param1].Text), f2 = normalize_string(param_list[param2].Text);            
@@ -820,7 +856,7 @@ namespace bench
 
         private void button_cactus_Click(object sender, EventArgs e)
         {
-            Process p = new Process();
+            System.Diagnostics.Process p = new System.Diagnostics.Process();
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.FileName = "run-cactus.bat";
             startInfo.Arguments = "";
@@ -1028,7 +1064,7 @@ namespace bench
                     }                    
                     if (File.Exists(outfileName))
                     {
-                        Process p = new Process(); // we are only using this process as a carrier of the information from the file, so we can use the buildcsv function. 
+                        System.Diagnostics.Process p = new System.Diagnostics.Process(); // we are only using this process as a carrier of the information from the file, so we can use the buildcsv function. 
                         List<float> l = new List<float>();
                         processes[p] = new Tuple<string, string, List<float>>(param_list[par].Text, fileName, l);
                         try
@@ -1140,7 +1176,7 @@ namespace bench
 
         private void editHistoryFileToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Process p = new Process();
+            System.Diagnostics.Process p = new System.Diagnostics.Process();
             p.StartInfo.FileName = "notepad";
             p.StartInfo.Arguments = history_file;
             p.Start();
@@ -1153,7 +1189,7 @@ namespace bench
 
         private void configToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Process p = new Process();
+            Process p = new System.Diagnostics.Process();
             p.StartInfo.FileName = "notepad";
             p.StartInfo.Arguments = "bench.exe.config";
             p.Start();
