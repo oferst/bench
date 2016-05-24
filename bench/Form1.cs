@@ -1,4 +1,11 @@
-﻿using System;
+﻿/*
+ * HBench - a GUI-based platform for performance benchmarking
+ * Author: Ofer Strichman ofers@ie.technion.ac.il
+ * Distributed freely under the GPL license
+ */
+
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Configuration;
@@ -15,22 +22,16 @@ using System.Management;
 
 namespace bench
 {
-
-    
-    
-    
-    
-    // todo: timeout doesn't kill the actual process, only the cmd process. 
     public partial class filter : Form
     {
         // reading from config  file: 
-        string history_file = Path.Combine(Application.StartupPath, System.Configuration.ConfigurationManager.AppSettings["history_filename"]);//"history.txt"
-        string graphDir = System.Configuration.ConfigurationManager.AppSettings["cpbm"]; //@"c:\temp\cpbm-0.5\";        
-        StreamWriter logfile = new StreamWriter(System.Configuration.ConfigurationManager.AppSettings["log"]); // @"C:\temp\log.txt");        
-        string stat_tag = System.Configuration.ConfigurationManager.AppSettings["stat_tag"]; // ###
-        string abort_tag = System.Configuration.ConfigurationManager.AppSettings["abort_tag"];
-        bool hyperthreading = System.Configuration.ConfigurationManager.AppSettings["hyperthreading"] == "true";
-        static int param_list_size = int.Parse(System.Configuration.ConfigurationManager.AppSettings["param_list_size"]);
+        string history_file = Path.Combine(Application.StartupPath, ConfigurationManager.AppSettings["history_filename"]);//"history.txt"
+        string graphDir = ConfigurationManager.AppSettings["cpbm"]; //@"c:\temp\cpbm-0.5\";        
+        StreamWriter logfile = new StreamWriter(ConfigurationManager.AppSettings["log"]); // @"C:\temp\log.txt");        
+        string stat_tag = ConfigurationManager.AppSettings["stat_tag"]; // ###
+        string abort_tag = ConfigurationManager.AppSettings["abort_tag"];
+        bool hyperthreading = ConfigurationManager.AppSettings["hyperthreading"] == "true";
+        static int param_list_size = int.Parse(ConfigurationManager.AppSettings["param_list_size"]);
 
         // more configurations:   
         int timeout_val = Timeout.Infinite; // will be read from history file
@@ -38,8 +39,13 @@ namespace bench
         int cores = Environment.ProcessorCount;
         int[] active = new int[8]; // {3, 5, 7 }; //note that we push all other processes to 1,2  [core # begin at 1]. with hyperthreading=off use {2,3,4}
         int failed = 0;
-        
-        enum fields { exe, dir, filter_str, csv, param, param_groups, stat_field, core_list, timeout, min_mem, misc }; // elements maintained in the history file
+        const string labelTag = "#";
+        const string noOpTag = "<>";
+
+        enum fields {
+            exe, dir, filter_str, csv, param, param_groups, stat_field, core_list, timeout, min_mem,  // combos
+            checkBox_skip_long_runs, checkBox_remote, checkBox_rec, checkBox_rerun_empty_out, checkBox_filter_out, checkBox_filter_csv, checkBox_copy, // checkboxes
+            misc }; // elements maintained in the history file
 
         // declarations:
         Hashtable processes = new Hashtable();  // from process to <args, benchmark, list of results>
@@ -71,7 +77,8 @@ namespace bench
             radioset2.Size = new Size(20, param_list_size * 25);
             failed_benchmarks = new List<string>();
             for (int i = 3; i <= cores; ++i)  // cores 1,2 are preserved for other processes. 
-                checkedListBox_cores.Items.Add("c" + i.ToString());                        
+                checkedListBox_cores.Items.Add("c" + i.ToString());
+            ToolTip scatter_tt = new ToolTip();
 
             for (int i = 0; i < param_list_size; ++i)
             {
@@ -82,21 +89,21 @@ namespace bench
 
                 scatter1[i] = new RadioButton();                
                 scatter1[i].Location = new Point(0, i * 25);
+                scatter_tt.SetToolTip(scatter1[i], "First param for scatter plot");
                 radioset1.Controls.Add(scatter1[i]);
 
                 scatter2[i] = new RadioButton();            
                 scatter2[i].Location = new Point(0, i * 25);
+                scatter_tt.SetToolTip(scatter2[i], "Second param for scatter plot");
                 radioset2.Controls.Add(scatter2[i]);
             }
             scatter1[0].Checked = scatter2[1].Checked = true; 
             panel1.Controls.Add(radioset1);
             panel1.Controls.Add(radioset2);
-                        
-            checkBox_remote.Checked = false; 
-            checkBox_rec.Checked = true;
-            checkBox_emptyOut.Enabled = checkBox_out.Checked;
-            
+
             read_history(history_file);
+            checkBox_rerun_empty_out.Enabled = checkBox_filter_out.Checked;
+            checkBox_copy.Enabled = checkBox_remote.Checked;
         }
 
         #region history
@@ -144,16 +151,29 @@ namespace bench
                     catch
                     { }   // could be missing entry in the history file, so we let it go through. 
                 }
+                else if (C.GetType() == typeof(CheckBox))
+                {
+                    try
+                    {
+                        fields field = (fields)Enum.Parse(typeof(fields), C.Name);
+                        ((CheckBox)C).Checked = history[field][0] == "yes";
+                    }
+                    catch
+                    { }
+                }
             }
 
             // updating core list
-            string[] corelist = (history[fields.core_list][0]).Split(',');
-            foreach (string st in corelist)
-            {
-                int c;
-                if (int.TryParse(st, out c) == false || c <= 2 || c > cores) MessageBox.Show("field core_list in history file contains bad core indices (2 < i < " + cores + "). First 2 are saved for other processes.");
-                else checkedListBox_cores.SetItemCheckState(c - 3, CheckState.Checked);
-            }            
+            try {
+                string[] corelist = (history[fields.core_list][0]).Split(',');
+                foreach (string st in corelist)
+                {
+                    int c;
+                    if (int.TryParse(st, out c) == false || c <= 2 || c > cores) MessageBox.Show("field core_list in history file contains bad core indices (2 < i < " + cores + "). First 2 are saved for other processes.");
+                    else checkedListBox_cores.SetItemCheckState(c - 3, CheckState.Checked);
+                }
+            }
+            catch { MessageBox.Show("core list seems to be empty"); }       
         }
 
         void write_history()
@@ -182,8 +202,16 @@ namespace bench
 
         string normalize_string(string s)
         {
-            return s.Replace("=","").Replace(" ", "").Replace("-","").Replace("_","").Replace("@",""); // to make param a legal file name
+            return s.Replace("=", "").Replace(" ", "").Replace("-", "").Replace("_", "").Replace(labelTag, "").Replace("%f", ""); // to make param a legal file name
         }
+
+        string expand_string(string s, string filename, string param="", string outfilename="")
+        {            
+            string res = s.Replace("%f", filename).Replace("%p", param).Replace("%o", outfilename);
+            if (res == s) return res;
+            else return expand_string(res, filename, param, outfilename);  // recursive because the replacing strings may contain %directives themselves.
+        }
+
 
         string getid(string param, string filename)
         {
@@ -195,7 +223,7 @@ namespace bench
         void init_csv_file()
         {
             try {
-                csvfile = new StreamWriter(csv.Text, checkBox_append.Checked);
+                csvfile = new StreamWriter(csv.Text, checkBox_filter_csv.Checked);
             }
             catch 
             {
@@ -234,48 +262,6 @@ namespace bench
             csvfile.Close();
         }
 
-
-        /// <summary>
-        /// Temporary, for creating dir with files only in this list
-        /// </summary>
-        void readfileEntries()
-        {
-            string line;
-            StreamReader csvfile;
-            try
-            {
-                csvfile = new StreamReader(@"C:\temp\smtmuc\benchmarks\list.csv");      //(@"C:\temp\res.csv");                
-            }
-            catch
-            {
-                MessageBox.Show("seems that " + csv.Text + "is in use");
-                return;
-            }
-                        
-            while ((line = csvfile.ReadLine()) != null)
-            {                
-                entries.Add(line);             
-            }
-            csvfile.Close();
-        }
-
-        /// <summary>
-        /// Temporary, for erasing files not in a list. To activate, add a button ... 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        void erase_files(object sender, EventArgs e)
-        {
-            readfileEntries();
-            var fileEntries = new DirectoryInfo(@"C:\temp\smtmuc\benchmarks").GetFiles("*.smt", SearchOption.AllDirectories);
-            foreach (FileInfo fileinfo in fileEntries)  // for each benchmark file
-            {
-                string fileName = fileinfo.Name;
-                if (entries.Contains(fileName)) continue;
-
-                File.Delete(fileinfo.FullName);
-            }
-        }
 
         private void build_process_tree(int pid)
         {
@@ -317,7 +303,7 @@ namespace bench
                 failed++;
                 label_fails.Text = failed.ToString();
                 List<float> l = data.Item3;
-                l.Add(Convert.ToInt32(timeout.Text) + 1); // +1 for debugging                
+                l.Add(Convert.ToInt32(timeout.Text) + 1); // +1 for debugging
 
                 KillProcessAndChildren(p.Id);
             }            
@@ -339,33 +325,7 @@ namespace bench
 
         #endregion
 
-        #region work
-
-        /* obsolete: for reading output online.
-        void read_stdout(object sender, DataReceivedEventArgs e)
-        {
-            Process p = (Process)sender;
-
-            if (e.Data != null)
-            {                
-                string consoleLine = e.Data;
-                if (consoleLine.Length >= 4 && consoleLine.Substring(0, 3) == "###")
-                {
-                    var parts = consoleLine.Split(new char[] { ' ' });
-                    string tag = parts[1];
-                    if (tag == "Abort")
-                    {
-                        bg.ReportProgress(0, "* * * * * * * * * * * * *  Abort!");
-                        return;
-                    }                        
-                        
-                    if (!labels.Exists(x => x == tag)) labels.Add(tag);  // todo: wasteful. Perhaps get # of items from user. 
-                    float res = Convert.ToSingle(parts[2]);
-                    Tuple<string, string, List<float>> data = ((Tuple<string, string, List<float>>)processes[p]);
-                    data.Item3.Add(res);
-                }
-            }
-        } */
+        #region work              
 
         bool read_out_file(Process p, string filename, bool first)
         {
@@ -378,8 +338,13 @@ namespace bench
                 {
                     var parts = line.Split(new char[] { ' ' });
                     string tag = parts[1];
-                    if (tag == "SAT") return false;
-                    if (tag == abort_tag)
+                    //if (tag == "SAT") // uncomment if we want to erase benchmarks that are SAT.
+                    //{
+                    //    listBox1.Items.Add("* * * * * * * * * * * * *  SAT!");
+                    //    file.Close();
+                    //    return false;  
+                    //}
+                    if (tag == abort_tag || tag == "SAT")  
                     {
                         listBox1.Items.Add("* * * * * * * * * * * * *  Abort!");
                         file.Close();
@@ -388,7 +353,7 @@ namespace bench
 
                     
                     float res;
-                    if (Single.TryParse(parts[2], out res))
+                    if (float.TryParse(parts[2], out res))
                     {
                         if (first) { Debug.Assert(!labels.Exists(x => x == tag)); labels.Add(tag); }
                         else {
@@ -409,7 +374,23 @@ namespace bench
         }
 
 
-        void wait_for_Termination()
+
+        void wait_for_remote_Termination()
+        {
+            string remote_user = ConfigurationManager.AppSettings["remote_user"] + "@" + ConfigurationManager.AppSettings["remote_domain"];
+            int res;  
+            
+            while (true)
+            {
+                res = run_remote("ssh", remote_user + " \"qstat -u" + ConfigurationManager.AppSettings["remote_user"] + "| grep \"" + ConfigurationManager.AppSettings["remote_user"] + "\"").Item1;
+                if (res != 0) break;                
+                Thread.Sleep(5000); // 5 seconds wait                        
+            }
+            listBox1.Items.Add("* All remote processes terminated *");
+        }
+
+
+            void wait_for_Termination()
         {
             foreach (DictionaryEntry entry in processes)
             {
@@ -459,7 +440,7 @@ namespace bench
                 }
                 catch (Exception ex) { listBox1.Items.Add("exception: " + ex.Message); }
             }
-            if (cnt_wrong_label > 0) listBox1.Items.Add("Warning: " + stat_field.Text + " is not a column in " + cnt_wrong_label + " out files. Will not add data to statistics.");
+            if (cnt_wrong_label > 0) listBox1.Items.Add("Warning: \"" + stat_field.Text + "\" (the name of the statistics field specified below) is not a column in " + cnt_wrong_label + " out files. Will not add data to statistics.");
             foreach (string lbl in labels) csvheader += lbl + ",";
             
             if (Addheader)
@@ -482,7 +463,7 @@ namespace bench
         string remove_label(string args)
         {
             string str = args; 
-            int s = args.IndexOf('@');
+            int s = args.IndexOf(labelTag);
             if (s >= 0)
             {
                 int l = args.IndexOf(' ', s);
@@ -490,24 +471,28 @@ namespace bench
             }
             return str;
         }
+              
 
-        void run_remote(string cmd, string args) // for unix commands. Synchronous. 
+
+        Tuple<int, string, string> run_remote(string cmd, string args) // for unix commands. Synchronous. 
         {
             Process p = new Process();         
 
             p.StartInfo.FileName = cmd;
             p.StartInfo.Arguments = remove_label(args);
             p.StartInfo.UseShellExecute = false;
-            p.StartInfo.RedirectStandardOutput = false;
-            p.StartInfo.CreateNoWindow = true;            
-
+            p.StartInfo.RedirectStandardOutput = true;// false;
+            p.StartInfo.CreateNoWindow = true;
 
             try
             {
                 p.Start();
             }
             catch { MessageBox.Show("cannot start process" + p.StartInfo.FileName); throw; }
+            string output = p.StandardOutput.ReadToEnd();            
             p.WaitForExit();
+            // returns <exist-status, command, output of command>
+            return new Tuple<int,string,string>(p.ExitCode, "> " + p.StartInfo.FileName + " " + args, output);
         }
 
         Process run(string cmd, string args, string outfilename, int affinity = 0x007F)
@@ -558,10 +543,15 @@ namespace bench
             }
             Stopwatch stopwatch = Stopwatch.StartNew();
             bool ok = false;
-            bool copied = true; // !! temporary. because on remote we have all the files there anyway
+            bool copy_to_remote = checkBox_copy.Checked; 
             for (int par = 0; par < param_list_size; ++par)  // for each parameter
             {
-                if (param_list[par].Text == "<>") continue;
+                if (param_list[par].Text == noOpTag) continue;
+                if (param_list[par].Text.IndexOf("%f") == -1)
+                {
+                    listBox1.Items.Add("Warning: param " + param_list[par].Text + "does not include a %f directive. Skipping");
+                    continue;
+                }
                 bg.ReportProgress(0, "- - - - - " + param_list[par].Text + "- - - - - ");
                 failed = 0;
                 results.Clear();
@@ -569,7 +559,7 @@ namespace bench
                 foreach (FileInfo fileinfo in fileEntries)  // for each benchmark file
                 {
                     string fileName = fileinfo.FullName;
-                    if (checkBox_skipTO.Checked && failed_benchmarks.Contains(fileName))
+                    if (checkBox_skip_long_runs.Checked && failed_benchmarks.Contains(fileName))
                     {
                         bg.ReportProgress(0,"Skipping " + fileName + "; it timed-out with a previos configuration.");
                         continue;
@@ -579,6 +569,7 @@ namespace bench
                     ok = false;                    
                     do
                     {
+                        string outText = "";
                         long AvailableMem = PerformanceInfo.GetPhysicalAvailableMemoryInMiB();
                         if (AvailableMem > MinMem_val)
                             foreach (int i in active)
@@ -589,27 +580,38 @@ namespace bench
                                     if (checkBox_remote.Checked)
                                     {
                                         string bench = Path.GetFileName(fileName);
-                                        if (!copied)
-                                        {
-                                            bg.ReportProgress(0, "running " + fileName + " remotely. ");
-                                            cnt++;
-                                            bg.ReportProgress(3, cnt.ToString()); // label_cnt.Text 
-                                            File.Copy(fileName, bench, true); // copying benchmark to work dir. 
-                                            
-                                            run_remote("scp", bench + " " + remote_bench_path);//" ofers@tamnun.technion.ac.il:~/hmuc/test");
+                                        if (copy_to_remote)
+                                        {                                            
+                                            File.Copy(fileName, bench, true); // copying benchmark to work dir.                                            
+                                            outText = run_remote("scp", bench + " " + remote_bench_path).Item2;//" ofers@tamnun.technion.ac.il:~/hmuc/test");
+                                            bg.ReportProgress(0, outText);
                                             File.Delete(bench);
                                         }
-                                        run_remote("ssh", remote_user + " \"cd " + ConfigurationManager.AppSettings["remote_app_dir"] + ";qsub -v bench=" + bench + ",arg='" + param_list[par].Text + "',argname=" + normalize_string(param_list[par].Text) + " " + ConfigurationManager.AppSettings["remote_script"] + "\""); // "ofers@tamnun.technion.ac.il \"cd hmuc;qsub -v bench=" + bench + ",arg='" + param_list[par].Text + "',argname=" + normalize_string(param_list[par].Text) + " hmuc.sh\"");
+                                        string bench_remote_path = ConfigurationManager.AppSettings["remote_bench_dir"] +  bench;
+                                        if (ConfigurationManager.AppSettings["remote_bench_dir"].LastIndexOf("/")!= ConfigurationManager.AppSettings["remote_bench_dir"].Length - 1)
+                                        {
+                                            MessageBox.Show("remote_bench_dir as defined in .config file has to terminate with a '/'. Aborting.");
+                                            return;
+                                        }
+                                        bg.ReportProgress(0, "running " + fileName + " remotely. ");
+                                        cnt++;
+                                        bg.ReportProgress(3, cnt.ToString()); // label_cnt.Text                                         
+                                        Tuple<int, string, string> outTuple = run_remote(
+                                            "ssh ",
+                                            remote_user + " \"" + expand_string(ConfigurationManager.AppSettings["remote_ssh_cmd"], bench_remote_path, param_list[par].Text, outfile(bench_remote_path, param_list[par].Text))
+                                            );
+                                        bg.ReportProgress(0, outTuple.Item2); // command
+                                        bg.ReportProgress(0, outTuple.Item3); // output
                                     }
                                     else                               
                                     {
                                         string outfilename = outfile(fileName, param_list[par].Text);
-                                        if (!checkBox_out.Checked || !File.Exists(outfilename) || (checkBox_emptyOut.Checked && (new FileInfo(outfilename)).Length <= 10))
+                                        if (!checkBox_filter_out.Checked || !File.Exists(outfilename) || (checkBox_rerun_empty_out.Checked && (new FileInfo(outfilename)).Length <= 10))
                                         {
                                             bg.ReportProgress(0, "running " + fileName + " on core " + i.ToString());
                                             cnt++;
                                             bg.ReportProgress(3, cnt.ToString()); // label_cnt.Text 
-                                            p[i] = run(exe.Text, param_list[par].Text + " " + fileName, outfilename, 1 << (i - 1));
+                                            p[i] = run(exe.Text, expand_string(param_list[par].Text, fileName), outfilename, 1 << (i - 1));
                                             List<float> l = new List<float>();
                                             processes[p[i]] = new Tuple<string, string, List<float>>(param_list[par].Text, fileName, l);
                                         }
@@ -623,25 +625,31 @@ namespace bench
                         else bg.ReportProgress(0, "not enough memory...");
 
                         if (!ok)
-                        {
-                            //bg.ReportProgress(0, ".");
+                        {                 
                             Thread.Sleep(5000);// 5 seconds wait                        
                         }
                     } while (!ok);
                 }
-                copied = true;
+                copy_to_remote = false;  // no point in re-copying for the next parameter. 
             }
 
             // post processing
 
             bg.ReportProgress(4, ""); // button1.Enabled = true;
-            
-            if (checkBox_remote.Checked) return;
-            wait_for_Termination();            
 
+            if (checkBox_remote.Checked)
+            {
+                bg.ReportProgress(0, "Waiting for remote termination... "); //When all processes end, press `import to CSV'"); // because we do not check remotely if all processes ended.
+                wait_for_remote_Termination();
+                bg.ReportProgress(6, ""); // import_out_to_csv                      
+                return;
+            }
+            
+            wait_for_Termination();
+            
             bg.ReportProgress(0, "* all processes finished *");
             stopwatch.Stop();
-                        
+
             string time = (Convert.ToSingle(stopwatch.ElapsedMilliseconds) / 1000.0).ToString();
             bg.ReportProgress(0, "# of benchmarks:" + cnt);
 
@@ -650,7 +658,7 @@ namespace bench
 
             bg.ReportProgress(1, time); //label_paralel_time.Text            
             bg.ReportProgress(5, failed.ToString());
-            
+
             bg.ReportProgress(6, ""); // import_out_to_csv                      
         }
 
@@ -666,7 +674,7 @@ namespace bench
                 case 3: label_cnt.Text = log; break;
                 case 4: button1.Enabled = true; break;
                 case 5: label_fails.Text = log; break;
-                case 6: Debug.Assert(!checkBox_remote.Checked); import_out_to_csv(); break;
+                case 6: /*Debug.Assert(!checkBox_remote.Checked);  */import_out_to_csv(); break;
             }
         }
 
@@ -677,12 +685,11 @@ namespace bench
         void create_plot_files()
         {
             try
-            {
-                //   if (!checkBox_remote.Checked)   
+            {                
                 for (int par = 0; par < param_list_size; ++par)
                 {
                     string param = normalize_string(param_list[par].Text);
-                    if (param == "<>") continue;
+                    if (param == noOpTag) continue;
                     csv4plot[param] = new StreamWriter(graphDir + param + ".csv");
                     ((StreamWriter)csv4plot[param]).WriteLine("Benchmark,command,usertime,timeout");
                 }
@@ -705,7 +712,7 @@ namespace bench
             }
             catch
             {
-                MessageBox.Show("seems that " + csv.Text + "is in use. Close it and try again.");
+                MessageBox.Show("seems that " + csv.Text + " is in use. Close it and try again.");
                 return;
             }
 
@@ -739,7 +746,7 @@ namespace bench
 
             try
             {
-                if (checkBox_append.Checked && File.Exists(csv.Text)) readEntries();
+                if (checkBox_filter_csv.Checked && File.Exists(csv.Text)) readEntries();
                 else entries.Clear();
                 //init_csv_file();             
             }
@@ -751,8 +758,8 @@ namespace bench
             
             button1.Enabled = false;
             bg.WorkerReportsProgress = true;
-            bg.DoWork += new System.ComponentModel.DoWorkEventHandler(backgroundWorker1_DoWork);
-            bg.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(backgroundWorker1_ProgressChanged);
+            bg.DoWork += new DoWorkEventHandler(backgroundWorker1_DoWork);
+            bg.ProgressChanged += new ProgressChangedEventHandler(backgroundWorker1_ProgressChanged);
 
             if (!checkBox_remote.Checked)
             {
@@ -780,14 +787,43 @@ namespace bench
 
         private void button_kill_Click(object sender, EventArgs e)
         {
-            int ind1 = exe.Text.LastIndexOf('\\'),  // we cannot use Path.GetFileNameWithoutExtension because the string contains "
-                ind2 = exe.Text.LastIndexOf('.');
-            string exe_text = exe.Text.Substring(ind1 + 1, ind2 - ind1 - 1);
-
-            Process[] Pr = Process.GetProcessesByName(exe_text);
-            foreach (Process p in Pr)
+            if (checkBox_remote.Checked)
             {
-                if (!p.HasExited) KillProcessAndChildren(p.Id);
+
+                // the following command produeces, e.g., qstat -uofers | grep "ofers" | cut -d"." -f1 | xargs qdel, which kills all prcesses by user ofers.
+                string remote_user = ConfigurationManager.AppSettings["remote_user"] + "@" + ConfigurationManager.AppSettings["remote_domain"];
+                if (MessageBox.Show("Delete all processes of user " + remote_user + "?", "Confirm kill processes", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                {
+                    string outText = run_remote("ssh", remote_user + " \"qstat -u" + ConfigurationManager.AppSettings["remote_user"] + "| grep \"" +
+                      ConfigurationManager.AppSettings["remote_user"] + "\" | cut -d\".\" -f1 | xargs qdel\"").Item2;
+                    listBox1.Items.Add(outText);
+                }
+            }
+            else { // local
+                int ind1 = exe.Text.LastIndexOf('\\'),  // we cannot use Path.GetFileNameWithoutExtension because the string may contain "
+                ind2 = exe.Text.LastIndexOf('.');
+                string exe_text = exe.Text.Substring(ind1 + 1, ind2 - ind1 - 1);
+                if (MessageBox.Show("Delete all processes called " + exe_text + "?", "Confirm kill processes", MessageBoxButtons.YesNo) != DialogResult.Yes) return;
+
+                Process[] Pr = Process.GetProcessesByName(exe_text);
+                foreach (Process p in Pr)
+                {
+                    if (!p.HasExited) KillProcessAndChildren(p.Id);
+                }
+
+                Process[] localAll = Process.GetProcesses();
+                foreach (Process p in localAll)
+                {
+                    try
+                    {
+                        if (hyperthreading) p.ProcessorAffinity = (IntPtr)(0xFF);
+                        else p.ProcessorAffinity = (IntPtr)(0xF);
+                    }
+                    catch
+                    {
+                    }
+                }
+                listBox1.Items.Add("Retrieved Affinity");
             }
             if (bg != null)
             {
@@ -795,31 +831,20 @@ namespace bench
                 bg.Dispose();
             }
             if (csvfile != null) csvfile.Close();
-
-            Process[] localAll = Process.GetProcesses();
-            foreach (Process p in localAll)
-            {
-                try
-                {
-                    if (hyperthreading) p.ProcessorAffinity = (IntPtr)(0xFF);
-                    else p.ProcessorAffinity = (IntPtr)(0xF);            
-                }
-                catch
-                {                    
-                }
-            }
-            listBox1.Items.Add("Retrieved Affinity");
             button1.Enabled = true;
         }
 
         private void button_csv_Click(object sender, EventArgs e)
         {
-            System.Diagnostics.Process p = new System.Diagnostics.Process();
+            Process p = new Process();
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.UseShellExecute = true;
             startInfo.FileName = csv.Text;
             p.StartInfo = startInfo;
-            p.Start(); 
+            try {
+                p.Start();
+            }
+            catch { MessageBox.Show("The csv file cannot be opened."); }
         }
         #endregion
 
@@ -836,12 +861,12 @@ namespace bench
             if (param1 == -1) return;
             int param2 = getCheckedRadioButton(scatter2);
             if (param2 == -1) return;
-            
-            System.Diagnostics.Process p = new System.Diagnostics.Process();
+
+            Process p = new Process();
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.FileName = "run-scatter.bat";
             string f1 = normalize_string(param_list[param1].Text), f2 = normalize_string(param_list[param2].Text);            
-            if (f1 == "<>" || f2 == "<>") { MessageBox.Show("Param cannot be `<>'"); return; }
+            if (f1 == noOpTag || f2 == noOpTag) { MessageBox.Show("Param cannot be " + noOpTag); return; }
             startInfo.Arguments = string.Compare(f1, f2) < 0 ? f1 + " " + f2 : f2 + " " + f1; // apparently make_graph treats them alphabetically, so we need to give them alphabetically to know what pdf is eventually generated. 
             startInfo.WorkingDirectory = graphDir;
             string fullName1 = Path.Combine(graphDir, f1 + ".csv"), fullName2 = Path.Combine(graphDir, f2 + ".csv");
@@ -856,25 +881,26 @@ namespace bench
 
         private void button_cactus_Click(object sender, EventArgs e)
         {
-            System.Diagnostics.Process p = new System.Diagnostics.Process();
+            Process p = new Process();
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.FileName = "run-cactus.bat";
             startInfo.Arguments = "";
             for (int par = 0; par < param_list_size; ++par)  // for each parameter
             {
-                if (param_list[par].Text == "<>") continue;
+                if (param_list[par].Text == noOpTag) continue;
                 startInfo.Arguments += " " + normalize_string(param_list[par].Text) + ".csv";
             }
             startInfo.WorkingDirectory = graphDir;
             startInfo.CreateNoWindow = false;
             p.StartInfo = startInfo;
             p.Start();
-
         }
 
         private void checkBox_remote_CheckedChanged(object sender, EventArgs e)
         {
-            button_kill.Enabled = checkedListBox_cores.Enabled = !(((CheckBox)sender).Checked);
+            checkBox_filter_out.Enabled = timeout.Enabled = min_mem.Enabled = exe.Enabled = checkedListBox_cores.Enabled = !(((CheckBox)sender).Checked);
+            checkBox_copy.Enabled = (((CheckBox)sender).Checked);
+            checkBox_CheckedChanged(sender, e);
         }
 
         // Gets field # idx in a comma-separated line
@@ -890,8 +916,7 @@ namespace bench
         }
 
         private void del_Allfail_benchmark()
-        {
-            //MessageBox.Show("Sure", "Some Title", MessageBoxButtons.YesNo);
+        {            
             if (MessageBox.Show("This operation erases files. continue ? ", "confirm deletion", MessageBoxButtons.YesNo) == DialogResult.No) return;
             Hashtable benchmarks = new Hashtable();
             string fileName = csv.Text;
@@ -946,16 +971,15 @@ namespace bench
             string fileName = csv.Text;
             HashSet<string> failed_short_once = new HashSet<string>();
             bool header = true;
-            int timeFieldLocation = labels.IndexOf(stat_field.Text);
+            int timeFieldLocation = labels.IndexOf(stat_field.Text);            
             
-            // finding benchmarks with short longestcall
             try {
                 foreach (string line in File.ReadLines(fileName))
                 {                    
                     if (header)
                     {
-                        List<string> labels  = new List<string>(line.Split(new char[] {',' }));
-                        timeFieldLocation = labels.IndexOf(stat_field.Text);
+                        List<string> labels1  = new List<string>(line.Split(new char[] {',' }));
+                        timeFieldLocation = labels1.IndexOf(stat_field.Text);
                         if (timeFieldLocation == -1)
                         {
                             MessageBox.Show("cannot find field " + stat_field.Text + " in header of " + fileName);
@@ -1040,13 +1064,20 @@ namespace bench
             if (fileEntries.Length == 0) listBox1.Items.Add("empty file list\n");
             
             processes.Clear();
-            if (checkBox_append.Checked && File.Exists(csv.Text)) readEntries();
+            if (checkBox_filter_csv.Checked && File.Exists(csv.Text)) readEntries();
             else entries.Clear();
             if (checkBox_remote.Checked) listBox1.Items.Add("Files will be imported to " + Directory.GetCurrentDirectory());
             bool first = true;
+            string remote_user = "", remote_bench_path = "";
+            if (checkBox_remote.Checked)
+            {
+                remote_user = ConfigurationManager.AppSettings["remote_user"] + "@" + ConfigurationManager.AppSettings["remote_domain"];
+                remote_bench_path = remote_user + ":" + ConfigurationManager.AppSettings["remote_bench_dir"];
+            }
+
             for (int par = 0; par < param_list_size; ++par)  // for each parameter
             {
-                if (param_list[par].Text == "<>") continue;                
+                if (param_list[par].Text == noOpTag) continue;                
                 foreach (FileInfo fileinfo in fileEntries)  // for each benchmark file
                 {
                     string fileName = fileinfo.FullName;                    
@@ -1056,7 +1087,11 @@ namespace bench
                     if (checkBox_remote.Checked)
                     {
                         outfileName = outfile(Path.GetFileName(fileName), param_list[par].Text); // we import from the working directory (bench/bin/release/ or debug/)
-                        if (!File.Exists(outfileName)) run_remote("scp", "ofers@tamnun.technion.ac.il:~/hmuc/test/" + outfileName + " " + outfileName); // download the file
+                        if (!File.Exists(outfileName))
+                        {
+                            string outText = run_remote("scp", remote_bench_path + outfileName + " " + outfileName).Item2; // download the file
+                            listBox1.Items.Add(outText);
+                        }
                     }
                     else
                     {
@@ -1064,19 +1099,20 @@ namespace bench
                     }                    
                     if (File.Exists(outfileName))
                     {
-                        System.Diagnostics.Process p = new System.Diagnostics.Process(); // we are only using this process as a carrier of the information from the file, so we can use the buildcsv function. 
+                        Process p = new Process(); // we are only using this process as a carrier of the information from the file, so we can use the buildcsv function. 
                         List<float> l = new List<float>();
                         processes[p] = new Tuple<string, string, List<float>>(param_list[par].Text, fileName, l);
-                        try
-                        {
-                            if (!read_out_file(p, outfileName, first))
-                            {
-                                listBox1.Items.Add(fileName + " is SAT. Deleting.");
-                                File.Delete(fileName);
-                                processes.Remove(p);
-                            }
-                        }
-                        catch { return; } // we get here if there is inconsistencies in the labels
+                        read_out_file(p, outfileName, first);
+                        //try   // uncomment to delete from file sets those that are SAT 
+                        //{
+                        //    if (!read_out_file(p, outfileName, first))
+                        //    {
+                        //        listBox1.Items.Add(fileName + " is SAT. Deleting.");
+                        //        File.Delete(fileName);
+                        //        processes.Remove(p);
+                        //    }
+                        //}
+                        //catch { return; } // we get here if there is inconsistencies in the labels
                         file_exists++;
                         first = false;
                     }
@@ -1088,7 +1124,7 @@ namespace bench
                 }
             }
 
-            bool Addheader = !checkBox_append.Checked || !File.Exists(csv.Text);
+            bool Addheader = !checkBox_filter_csv.Checked || !File.Exists(csv.Text);
             try
             {
                 init_csv_file();
@@ -1121,7 +1157,8 @@ namespace bench
 
         private void checkBox_out_CheckedChanged(object sender, EventArgs e)
         {
-            checkBox_emptyOut.Enabled = checkBox_out.Checked;
+            checkBox_rerun_empty_out.Enabled = checkBox_filter_out.Checked;
+            checkBox_CheckedChanged(sender, e);
         }
 
         private void button4_Click(object sender, EventArgs e)
@@ -1170,13 +1207,13 @@ namespace bench
             }
             for (;i < param_list_size; ++i)
             {
-                param_list[i].Text = "<>";
+                param_list[i].Text = noOpTag;
             }
         }
 
         private void editHistoryFileToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            System.Diagnostics.Process p = new System.Diagnostics.Process();
+            Process p = new Process();
             p.StartInfo.FileName = "notepad";
             p.StartInfo.Arguments = history_file;
             p.Start();
@@ -1187,9 +1224,22 @@ namespace bench
             read_history(history_file);
         }
 
+        private void checkBox_CheckedChanged(object sender, EventArgs e)
+        {            
+            fields fieldValue = (fields)Enum.Parse(typeof(fields), ((CheckBox)sender).Name);
+            string checked_yesno = ((CheckBox)sender).Checked ? "yes" : "no";
+            if (!history.ContainsKey(fieldValue))
+            {
+                history[fieldValue] = new List<string>();
+                history[fieldValue].Insert(0, checked_yesno);
+            }
+            else history[fieldValue][0] = checked_yesno;
+            write_history_file = true;
+        }
+
         private void configToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Process p = new System.Diagnostics.Process();
+            Process p = new Process();
             p.StartInfo.FileName = "notepad";
             p.StartInfo.Arguments = "bench.exe.config";
             p.Start();
@@ -1199,12 +1249,12 @@ namespace bench
         {
             // here we update the history file if needed. 
             
-            // computing current param_group according to the text in param_list
+            // params. Computing current param_group according to the text in param_list
             string param_set = "";
             bool first = true;
             for (int i = 0; i < param_list_size; ++i)
             {
-                if (param_list[i].Text != "<>")
+                if (param_list[i].Text != noOpTag)
                 {
                     if (!first) param_set += ",";                    
                     param_set += param_list[i].Text;
@@ -1216,6 +1266,8 @@ namespace bench
                 history[fields.param_groups].Insert(0, param_set);
                 write_history_file = true;
             }
+
+            // cores
             string active_cores_str = "";
             first = true;
             foreach (int indexChecked in checkedListBox_cores.CheckedIndices)
@@ -1224,7 +1276,7 @@ namespace bench
                 active_cores_str += (indexChecked + 3).ToString();
                 first = false;
             }
-            if (!history.Keys.Contains(fields.core_list))
+            if (!history.Keys.Contains(fields.core_list) || history[fields.core_list].Count == 0)
             {
                 history[fields.core_list] = new List<string>();
                 history[fields.core_list].Add(active_cores_str);
@@ -1236,7 +1288,7 @@ namespace bench
                 history[fields.core_list][0] = active_cores_str;
                 write_history_file = true;
             }
-
+            
             if (write_history_file) write_history();
         }
     }

@@ -45,20 +45,21 @@
             this.label12 = new System.Windows.Forms.Label();
             this.label11 = new System.Windows.Forms.Label();
             this.button_kill = new System.Windows.Forms.Button();
-            this.button3 = new System.Windows.Forms.Button();
+            this.button_opencsv = new System.Windows.Forms.Button();
             this.checkedListBox_cores = new System.Windows.Forms.CheckedListBox();
             this.label13 = new System.Windows.Forms.Label();
             this.checkBox_rec = new System.Windows.Forms.CheckBox();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.checkBox_append = new System.Windows.Forms.CheckBox();
+            this.checkBox_filter_csv = new System.Windows.Forms.CheckBox();
             this.button_scatter = new System.Windows.Forms.Button();
             this.button_cactus = new System.Windows.Forms.Button();
             this.checkBox_remote = new System.Windows.Forms.CheckBox();
             this.button_import = new System.Windows.Forms.Button();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
-            this.checkBox_out = new System.Windows.Forms.CheckBox();
-            this.checkBox_emptyOut = new System.Windows.Forms.CheckBox();
-            this.checkBox_skipTO = new System.Windows.Forms.CheckBox();
+            this.checkBox_filter_out = new System.Windows.Forms.CheckBox();
+            this.checkBox_rerun_empty_out = new System.Windows.Forms.CheckBox();
+            this.checkBox_skip_long_runs = new System.Windows.Forms.CheckBox();
+            this.checkBox_copy = new System.Windows.Forms.CheckBox();
             this.label10 = new System.Windows.Forms.Label();
             this.button4 = new System.Windows.Forms.Button();
             this.exe = new System.Windows.Forms.ComboBox();
@@ -71,6 +72,7 @@
             this.cleanupToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.deleteShortsFromCsvToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.deleteAllfailBenchmarksToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.editHistoryFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -80,7 +82,6 @@
             this.stat_field = new System.Windows.Forms.ComboBox();
             this.timeout = new System.Windows.Forms.ComboBox();
             this.min_mem = new System.Windows.Forms.ComboBox();
-            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -88,7 +89,7 @@
             // 
             this.button1.BackColor = System.Drawing.SystemColors.Control;
             this.button1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(177)));
-            this.button1.Location = new System.Drawing.Point(453, 627);
+            this.button1.Location = new System.Drawing.Point(453, 579);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(86, 26);
             this.button1.TabIndex = 1;
@@ -109,7 +110,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(12, 524);
+            this.label1.Location = new System.Drawing.Point(12, 490);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(69, 13);
             this.label1.TabIndex = 4;
@@ -118,7 +119,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(10, 375);
+            this.label2.Location = new System.Drawing.Point(10, 341);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(44, 13);
             this.label2.TabIndex = 5;
@@ -127,7 +128,7 @@
             // label_paralel_time
             // 
             this.label_paralel_time.AutoSize = true;
-            this.label_paralel_time.Location = new System.Drawing.Point(92, 525);
+            this.label_paralel_time.Location = new System.Drawing.Point(92, 491);
             this.label_paralel_time.Name = "label_paralel_time";
             this.label_paralel_time.Size = new System.Drawing.Size(16, 13);
             this.label_paralel_time.TabIndex = 6;
@@ -163,7 +164,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(276, 524);
+            this.label3.Location = new System.Drawing.Point(276, 490);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(53, 13);
             this.label3.TabIndex = 15;
@@ -172,7 +173,7 @@
             // label_cnt
             // 
             this.label_cnt.AutoSize = true;
-            this.label_cnt.Location = new System.Drawing.Point(330, 525);
+            this.label_cnt.Location = new System.Drawing.Point(330, 491);
             this.label_cnt.Name = "label_cnt";
             this.label_cnt.Size = new System.Drawing.Size(16, 13);
             this.label_cnt.TabIndex = 16;
@@ -181,25 +182,25 @@
             // label8
             // 
             this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(2, 346);
+            this.label8.Location = new System.Drawing.Point(10, 316);
             this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(55, 13);
+            this.label8.Size = new System.Drawing.Size(70, 13);
             this.label8.TabIndex = 19;
-            this.label8.Text = "Tout (sec)";
+            this.label8.Text = "time-out (sec)";
             // 
             // label9
             // 
             this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(167, 346);
+            this.label9.Location = new System.Drawing.Point(195, 316);
             this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(73, 13);
+            this.label9.Size = new System.Drawing.Size(111, 13);
             this.label9.TabIndex = 20;
-            this.label9.Text = "min-mem (MB)";
+            this.label9.Text = "min-mem to start (MB):";
             // 
             // label_fails
             // 
             this.label_fails.AutoSize = true;
-            this.label_fails.Location = new System.Drawing.Point(420, 525);
+            this.label_fails.Location = new System.Drawing.Point(420, 491);
             this.label_fails.Name = "label_fails";
             this.label_fails.Size = new System.Drawing.Size(16, 13);
             this.label_fails.TabIndex = 22;
@@ -208,7 +209,7 @@
             // label12
             // 
             this.label12.AutoSize = true;
-            this.label12.Location = new System.Drawing.Point(380, 525);
+            this.label12.Location = new System.Drawing.Point(380, 491);
             this.label12.Name = "label12";
             this.label12.Size = new System.Drawing.Size(38, 13);
             this.label12.TabIndex = 23;
@@ -217,7 +218,7 @@
             // label11
             // 
             this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(8, 320);
+            this.label11.Location = new System.Drawing.Point(13, 520);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(43, 13);
             this.label11.TabIndex = 25;
@@ -225,7 +226,7 @@
             // 
             // button_kill
             // 
-            this.button_kill.Location = new System.Drawing.Point(453, 559);
+            this.button_kill.Location = new System.Drawing.Point(453, 550);
             this.button_kill.Name = "button_kill";
             this.button_kill.Size = new System.Drawing.Size(86, 26);
             this.button_kill.TabIndex = 26;
@@ -233,29 +234,29 @@
             this.button_kill.UseVisualStyleBackColor = true;
             this.button_kill.Click += new System.EventHandler(this.button_kill_Click);
             // 
-            // button3
+            // button_opencsv
             // 
-            this.button3.Location = new System.Drawing.Point(279, 559);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(70, 23);
-            this.button3.TabIndex = 27;
-            this.button3.Text = "open csv";
-            this.button3.UseVisualStyleBackColor = true;
-            this.button3.Click += new System.EventHandler(this.button_csv_Click);
+            this.button_opencsv.Location = new System.Drawing.Point(276, 517);
+            this.button_opencsv.Name = "button_opencsv";
+            this.button_opencsv.Size = new System.Drawing.Size(70, 23);
+            this.button_opencsv.TabIndex = 27;
+            this.button_opencsv.Text = "open csv";
+            this.button_opencsv.UseVisualStyleBackColor = true;
+            this.button_opencsv.Click += new System.EventHandler(this.button_csv_Click);
             // 
             // checkedListBox_cores
             // 
             this.checkedListBox_cores.CheckOnClick = true;
             this.checkedListBox_cores.FormattingEnabled = true;
-            this.checkedListBox_cores.Location = new System.Drawing.Point(401, 559);
+            this.checkedListBox_cores.Location = new System.Drawing.Point(443, 258);
             this.checkedListBox_cores.Name = "checkedListBox_cores";
-            this.checkedListBox_cores.Size = new System.Drawing.Size(46, 94);
+            this.checkedListBox_cores.Size = new System.Drawing.Size(72, 79);
             this.checkedListBox_cores.TabIndex = 29;
             // 
             // label13
             // 
             this.label13.AutoSize = true;
-            this.label13.Location = new System.Drawing.Point(398, 546);
+            this.label13.Location = new System.Drawing.Point(399, 261);
             this.label13.Name = "label13";
             this.label13.Size = new System.Drawing.Size(37, 13);
             this.label13.TabIndex = 30;
@@ -270,32 +271,34 @@
             this.checkBox_rec.TabIndex = 31;
             this.checkBox_rec.Text = "rec";
             this.checkBox_rec.UseVisualStyleBackColor = true;
+            this.checkBox_rec.Leave += new System.EventHandler(this.checkBox_CheckedChanged);
             // 
             // panel1
             // 
             this.panel1.AutoScroll = true;
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panel1.Location = new System.Drawing.Point(15, 397);
+            this.panel1.Location = new System.Drawing.Point(15, 363);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(522, 123);
             this.panel1.TabIndex = 32;
             // 
-            // checkBox_append
+            // checkBox_filter_csv
             // 
-            this.checkBox_append.AutoSize = true;
-            this.checkBox_append.Checked = true;
-            this.checkBox_append.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox_append.Location = new System.Drawing.Point(137, 289);
-            this.checkBox_append.Name = "checkBox_append";
-            this.checkBox_append.Size = new System.Drawing.Size(59, 17);
-            this.checkBox_append.TabIndex = 33;
-            this.checkBox_append.Text = "csv file";
-            this.toolTip1.SetToolTip(this.checkBox_append, "Excludes benchmarks for which there is an entry in the csv file");
-            this.checkBox_append.UseVisualStyleBackColor = true;
+            this.checkBox_filter_csv.AutoSize = true;
+            this.checkBox_filter_csv.Checked = true;
+            this.checkBox_filter_csv.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBox_filter_csv.Location = new System.Drawing.Point(137, 289);
+            this.checkBox_filter_csv.Name = "checkBox_filter_csv";
+            this.checkBox_filter_csv.Size = new System.Drawing.Size(59, 17);
+            this.checkBox_filter_csv.TabIndex = 33;
+            this.checkBox_filter_csv.Text = "csv file";
+            this.toolTip1.SetToolTip(this.checkBox_filter_csv, "Excludes benchmarks for which there is an entry in the csv file");
+            this.checkBox_filter_csv.UseVisualStyleBackColor = true;
+            this.checkBox_filter_csv.Leave += new System.EventHandler(this.checkBox_CheckedChanged);
             // 
             // button_scatter
             // 
-            this.button_scatter.Location = new System.Drawing.Point(15, 560);
+            this.button_scatter.Location = new System.Drawing.Point(15, 559);
             this.button_scatter.Name = "button_scatter";
             this.button_scatter.Size = new System.Drawing.Size(75, 23);
             this.button_scatter.TabIndex = 34;
@@ -305,7 +308,7 @@
             // 
             // button_cactus
             // 
-            this.button_cactus.Location = new System.Drawing.Point(15, 592);
+            this.button_cactus.Location = new System.Drawing.Point(96, 559);
             this.button_cactus.Name = "button_cactus";
             this.button_cactus.Size = new System.Drawing.Size(75, 23);
             this.button_cactus.TabIndex = 35;
@@ -316,17 +319,18 @@
             // checkBox_remote
             // 
             this.checkBox_remote.AutoSize = true;
-            this.checkBox_remote.Location = new System.Drawing.Point(455, 602);
+            this.checkBox_remote.Location = new System.Drawing.Point(348, 559);
             this.checkBox_remote.Name = "checkBox_remote";
             this.checkBox_remote.Size = new System.Drawing.Size(58, 17);
             this.checkBox_remote.TabIndex = 37;
             this.checkBox_remote.Text = "remote";
+            this.toolTip1.SetToolTip(this.checkBox_remote, "Run on a remote machine.");
             this.checkBox_remote.UseVisualStyleBackColor = true;
             this.checkBox_remote.CheckedChanged += new System.EventHandler(this.checkBox_remote_CheckedChanged);
             // 
             // button_import
             // 
-            this.button_import.Location = new System.Drawing.Point(279, 591);
+            this.button_import.Location = new System.Drawing.Point(352, 517);
             this.button_import.Name = "button_import";
             this.button_import.Size = new System.Drawing.Size(70, 23);
             this.button_import.TabIndex = 38;
@@ -336,46 +340,60 @@
             this.button_import.UseVisualStyleBackColor = true;
             this.button_import.Click += new System.EventHandler(this.button_import_Click);
             // 
-            // checkBox_out
+            // checkBox_filter_out
             // 
-            this.checkBox_out.AutoSize = true;
-            this.checkBox_out.Location = new System.Drawing.Point(202, 289);
-            this.checkBox_out.Name = "checkBox_out";
-            this.checkBox_out.Size = new System.Drawing.Size(62, 17);
-            this.checkBox_out.TabIndex = 41;
-            this.checkBox_out.Text = "out files";
-            this.toolTip1.SetToolTip(this.checkBox_out, "Excludes benchmarks for which there is already an out file");
-            this.checkBox_out.UseVisualStyleBackColor = true;
-            this.checkBox_out.CheckedChanged += new System.EventHandler(this.checkBox_out_CheckedChanged);
+            this.checkBox_filter_out.AutoSize = true;
+            this.checkBox_filter_out.Location = new System.Drawing.Point(202, 289);
+            this.checkBox_filter_out.Name = "checkBox_filter_out";
+            this.checkBox_filter_out.Size = new System.Drawing.Size(62, 17);
+            this.checkBox_filter_out.TabIndex = 41;
+            this.checkBox_filter_out.Text = "out files";
+            this.toolTip1.SetToolTip(this.checkBox_filter_out, "Excludes benchmarks for which there is already an out file");
+            this.checkBox_filter_out.UseVisualStyleBackColor = true;
+            this.checkBox_filter_out.CheckedChanged += new System.EventHandler(this.checkBox_out_CheckedChanged);
             // 
-            // checkBox_emptyOut
+            // checkBox_rerun_empty_out
             // 
-            this.checkBox_emptyOut.AutoSize = true;
-            this.checkBox_emptyOut.Location = new System.Drawing.Point(276, 289);
-            this.checkBox_emptyOut.Name = "checkBox_emptyOut";
-            this.checkBox_emptyOut.Size = new System.Drawing.Size(99, 17);
-            this.checkBox_emptyOut.TabIndex = 43;
-            this.checkBox_emptyOut.Text = "rerun empty out";
-            this.toolTip1.SetToolTip(this.checkBox_emptyOut, "ignores empty out files");
-            this.checkBox_emptyOut.UseVisualStyleBackColor = true;
+            this.checkBox_rerun_empty_out.AutoSize = true;
+            this.checkBox_rerun_empty_out.Location = new System.Drawing.Point(276, 289);
+            this.checkBox_rerun_empty_out.Name = "checkBox_rerun_empty_out";
+            this.checkBox_rerun_empty_out.Size = new System.Drawing.Size(99, 17);
+            this.checkBox_rerun_empty_out.TabIndex = 43;
+            this.checkBox_rerun_empty_out.Text = "rerun empty out";
+            this.toolTip1.SetToolTip(this.checkBox_rerun_empty_out, "ignores empty out files");
+            this.checkBox_rerun_empty_out.UseVisualStyleBackColor = true;
+            this.checkBox_rerun_empty_out.Leave += new System.EventHandler(this.checkBox_CheckedChanged);
             // 
-            // checkBox_skipTO
+            // checkBox_skip_long_runs
             // 
-            this.checkBox_skipTO.AutoSize = true;
-            this.checkBox_skipTO.Checked = true;
-            this.checkBox_skipTO.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox_skipTO.Location = new System.Drawing.Point(276, 261);
-            this.checkBox_skipTO.Name = "checkBox_skipTO";
-            this.checkBox_skipTO.Size = new System.Drawing.Size(93, 17);
-            this.checkBox_skipTO.TabIndex = 44;
-            this.checkBox_skipTO.Text = "Skip long runs";
-            this.toolTip1.SetToolTip(this.checkBox_skipTO, "Once a benchmark fails with some config. it will not be attempted again");
-            this.checkBox_skipTO.UseVisualStyleBackColor = true;
+            this.checkBox_skip_long_runs.AutoSize = true;
+            this.checkBox_skip_long_runs.Checked = true;
+            this.checkBox_skip_long_runs.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBox_skip_long_runs.Location = new System.Drawing.Point(276, 261);
+            this.checkBox_skip_long_runs.Name = "checkBox_skip_long_runs";
+            this.checkBox_skip_long_runs.Size = new System.Drawing.Size(93, 17);
+            this.checkBox_skip_long_runs.TabIndex = 44;
+            this.checkBox_skip_long_runs.Text = "Skip long runs";
+            this.toolTip1.SetToolTip(this.checkBox_skip_long_runs, "Once a benchmark fails with some config. it will not be attempted again");
+            this.checkBox_skip_long_runs.UseVisualStyleBackColor = true;
+            this.checkBox_skip_long_runs.Leave += new System.EventHandler(this.checkBox_CheckedChanged);
+            // 
+            // checkBox_copy
+            // 
+            this.checkBox_copy.AutoSize = true;
+            this.checkBox_copy.Location = new System.Drawing.Point(348, 582);
+            this.checkBox_copy.Name = "checkBox_copy";
+            this.checkBox_copy.Size = new System.Drawing.Size(96, 17);
+            this.checkBox_copy.TabIndex = 58;
+            this.checkBox_copy.Text = "copy to remote";
+            this.toolTip1.SetToolTip(this.checkBox_copy, "Copy benchmark to remote machine. Uncheck if the benchmarks are already there. ");
+            this.checkBox_copy.UseVisualStyleBackColor = true;
+            this.checkBox_copy.Leave += new System.EventHandler(this.checkBox_CheckedChanged);
             // 
             // label10
             // 
             this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(54, 289);
+            this.label10.Location = new System.Drawing.Point(54, 291);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(77, 13);
             this.label10.TabIndex = 42;
@@ -383,9 +401,9 @@
             // 
             // button4
             // 
-            this.button4.Location = new System.Drawing.Point(452, 228);
+            this.button4.Location = new System.Drawing.Point(443, 232);
             this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(32, 27);
+            this.button4.Size = new System.Drawing.Size(32, 21);
             this.button4.TabIndex = 46;
             this.button4.Text = "...";
             this.button4.UseVisualStyleBackColor = true;
@@ -396,7 +414,7 @@
             this.exe.FormattingEnabled = true;
             this.exe.Location = new System.Drawing.Point(57, 205);
             this.exe.Name = "exe";
-            this.exe.Size = new System.Drawing.Size(477, 21);
+            this.exe.Size = new System.Drawing.Size(482, 21);
             this.exe.TabIndex = 48;
             this.exe.SelectionChangeCommitted += new System.EventHandler(this.combo_SelectedIndexChanged);
             this.exe.Leave += new System.EventHandler(this.comboBox_Leave);
@@ -424,7 +442,7 @@
             // csv
             // 
             this.csv.FormattingEnabled = true;
-            this.csv.Location = new System.Drawing.Point(60, 317);
+            this.csv.Location = new System.Drawing.Point(65, 517);
             this.csv.Name = "csv";
             this.csv.Size = new System.Drawing.Size(205, 21);
             this.csv.TabIndex = 51;
@@ -434,7 +452,7 @@
             // param_groups
             // 
             this.param_groups.FormattingEnabled = true;
-            this.param_groups.Location = new System.Drawing.Point(57, 373);
+            this.param_groups.Location = new System.Drawing.Point(57, 339);
             this.param_groups.Name = "param_groups";
             this.param_groups.Size = new System.Drawing.Size(482, 21);
             this.param_groups.TabIndex = 52;
@@ -458,8 +476,8 @@
             this.editHistoryFileToolStripMenuItem,
             this.configToolStripMenuItem});
             this.cleanupToolStripMenuItem.Name = "cleanupToolStripMenuItem";
-            this.cleanupToolStripMenuItem.Size = new System.Drawing.Size(59, 20);
-            this.cleanupToolStripMenuItem.Text = "Actions";
+            this.cleanupToolStripMenuItem.Size = new System.Drawing.Size(50, 20);
+            this.cleanupToolStripMenuItem.Text = "Menu";
             // 
             // cleanupToolStripMenuItem1
             // 
@@ -489,6 +507,11 @@
             this.deleteShortsFromCsvToolStripMenuItem.ToolTipText = "Delete from csv benchmarks that their runtime is < 1 sec. in at least one of the " +
     "parameters";
             this.deleteShortsFromCsvToolStripMenuItem.Click += new System.EventHandler(this.button_del_shorts_click);
+            // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(208, 6);
             // 
             // deleteAllfailBenchmarksToolStripMenuItem
             // 
@@ -533,7 +556,7 @@
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(13, 622);
+            this.label7.Location = new System.Drawing.Point(11, 592);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(84, 13);
             this.label7.TabIndex = 54;
@@ -542,7 +565,7 @@
             // stat_field
             // 
             this.stat_field.FormattingEnabled = true;
-            this.stat_field.Location = new System.Drawing.Point(17, 643);
+            this.stat_field.Location = new System.Drawing.Point(95, 589);
             this.stat_field.Name = "stat_field";
             this.stat_field.Size = new System.Drawing.Size(143, 21);
             this.stat_field.TabIndex = 55;
@@ -552,7 +575,7 @@
             // timeout
             // 
             this.timeout.FormattingEnabled = true;
-            this.timeout.Location = new System.Drawing.Point(59, 345);
+            this.timeout.Location = new System.Drawing.Point(87, 312);
             this.timeout.Name = "timeout";
             this.timeout.Size = new System.Drawing.Size(97, 21);
             this.timeout.TabIndex = 56;
@@ -562,23 +585,19 @@
             // min_mem
             // 
             this.min_mem.FormattingEnabled = true;
-            this.min_mem.Location = new System.Drawing.Point(251, 346);
+            this.min_mem.Location = new System.Drawing.Point(307, 312);
             this.min_mem.Name = "min_mem";
             this.min_mem.Size = new System.Drawing.Size(122, 21);
             this.min_mem.TabIndex = 57;
             this.min_mem.SelectionChangeCommitted += new System.EventHandler(this.combo_SelectedIndexChanged);
             this.min_mem.Leave += new System.EventHandler(this.comboBox_Leave);
             // 
-            // toolStripSeparator1
-            // 
-            this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(208, 6);
-            // 
             // filter
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(590, 668);
+            this.ClientSize = new System.Drawing.Size(590, 622);
+            this.Controls.Add(this.checkBox_copy);
             this.Controls.Add(this.min_mem);
             this.Controls.Add(this.timeout);
             this.Controls.Add(this.stat_field);
@@ -589,20 +608,20 @@
             this.Controls.Add(this.dir);
             this.Controls.Add(this.exe);
             this.Controls.Add(this.button4);
-            this.Controls.Add(this.checkBox_skipTO);
-            this.Controls.Add(this.checkBox_emptyOut);
+            this.Controls.Add(this.checkBox_skip_long_runs);
+            this.Controls.Add(this.checkBox_rerun_empty_out);
             this.Controls.Add(this.label10);
-            this.Controls.Add(this.checkBox_out);
+            this.Controls.Add(this.checkBox_filter_out);
             this.Controls.Add(this.button_import);
             this.Controls.Add(this.checkBox_remote);
             this.Controls.Add(this.button_cactus);
             this.Controls.Add(this.button_scatter);
-            this.Controls.Add(this.checkBox_append);
+            this.Controls.Add(this.checkBox_filter_csv);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.checkBox_rec);
             this.Controls.Add(this.label13);
             this.Controls.Add(this.checkedListBox_cores);
-            this.Controls.Add(this.button3);
+            this.Controls.Add(this.button_opencsv);
             this.Controls.Add(this.button_kill);
             this.Controls.Add(this.label11);
             this.Controls.Add(this.label12);
@@ -622,7 +641,7 @@
             this.Controls.Add(this.menuStrip1);
             this.MainMenuStrip = this.menuStrip1;
             this.Name = "filter";
-            this.Text = "Form1";
+            this.Text = "HBench";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Form1_FormClosed);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
@@ -649,21 +668,21 @@
         private System.Windows.Forms.Label label12;
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.Button button_kill;
-        private System.Windows.Forms.Button button3;
+        private System.Windows.Forms.Button button_opencsv;
         private System.Windows.Forms.CheckedListBox checkedListBox_cores;
         private System.Windows.Forms.Label label13;
         private System.Windows.Forms.CheckBox checkBox_rec;
         private System.Windows.Forms.Panel panel1;
-        private System.Windows.Forms.CheckBox checkBox_append;
+        private System.Windows.Forms.CheckBox checkBox_filter_csv;
         private System.Windows.Forms.Button button_scatter;
         private System.Windows.Forms.Button button_cactus;
         private System.Windows.Forms.CheckBox checkBox_remote;
         private System.Windows.Forms.Button button_import;
         private System.Windows.Forms.ToolTip toolTip1;
-        private System.Windows.Forms.CheckBox checkBox_out;
+        private System.Windows.Forms.CheckBox checkBox_filter_out;
         private System.Windows.Forms.Label label10;
-        private System.Windows.Forms.CheckBox checkBox_emptyOut;
-        private System.Windows.Forms.CheckBox checkBox_skipTO;
+        private System.Windows.Forms.CheckBox checkBox_rerun_empty_out;
+        private System.Windows.Forms.CheckBox checkBox_skip_long_runs;
         private System.Windows.Forms.Button button4;
         private System.Windows.Forms.ComboBox exe;
         private System.Windows.Forms.ComboBox dir;
@@ -685,6 +704,7 @@
         private System.Windows.Forms.ComboBox timeout;
         private System.Windows.Forms.ComboBox min_mem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
+        private System.Windows.Forms.CheckBox checkBox_copy;
     }
 }
 
