@@ -21,7 +21,7 @@ using System.Management;
 
 
 namespace bench
-{
+{    
     public partial class filter : Form
     {
         // reading from config  file: 
@@ -296,13 +296,13 @@ namespace bench
             if (!p.HasExited)
             {
                 bg.ReportProgress(0, "timeout: process killed: " + p.StartInfo.Arguments);
-                
-                // updating time field
-                Tuple<string, string, List<float>> data = ((Tuple<string, string, List<float>>)processes[p]);
-                failed_benchmarks.Add(data.Item2);
+
+                // updating time field                
+                benchmark data = (benchmark)processes[p];                
+                failed_benchmarks.Add(data.name);
                 failed++;
                 label_fails.Text = failed.ToString();
-                List<float> l = data.Item3;
+                List<float> l = data.res;
                 l.Add(Convert.ToInt32(timeout.Text) + 1); // +1 for debugging
 
                 KillProcessAndChildren(p.Id);
@@ -362,9 +362,9 @@ namespace bench
                                 listBox1.Items.Add("label " + tag + " in file " + filename + " did not appear in the first file. Aborting");
                                 throw(new Exception());
                             }
-                        }
-                        Tuple<string, string, List<float>> data = ((Tuple<string, string, List<float>>)processes[p]);
-                        data.Item3.Add(res);
+                        }                        
+                        benchmark data = (benchmark)processes[p];
+                        data.res.Add(res);
                     }
                     else listBox1.Items.Add("skipping non-numerical data: " + parts[2]);
                 }
@@ -405,12 +405,12 @@ namespace bench
             int cnt_wrong_label = 0;
             create_plot_files();
             foreach (DictionaryEntry entry in processes)
-            {
-                Tuple<string, string, List<float>> trio = entry.Value as Tuple<string, string, List<float>>;
+            {                
+                benchmark bm = entry.Value as benchmark;
                 Process p1 = (Process)entry.Key;
                 
-                List<float> l = trio.Item3;
-                csvtext += getid(trio.Item1, trio.Item2) + ","; // benchmark
+                List<float> l = bm.res;
+                csvtext += getid(bm.param, bm.name) + ","; // benchmark
                 if (l.Count > 0)
                 {
                     csvtext += ","; // for the 'fail' column
@@ -431,9 +431,9 @@ namespace bench
                         
                         if (time_col < 0) { cnt_wrong_label++; }
                         else
-                            ((StreamWriter)csv4plot[normalize_string(trio.Item1)]).WriteLine(
-                            trio.Item2 + "," + // full benchmark path
-                            normalize_string(trio.Item1) + "," + // param
+                            ((StreamWriter)csv4plot[normalize_string(bm.param)]).WriteLine(
+                            bm.name + "," + // full benchmark path
+                            normalize_string(bm.param) + "," + // param
                             l[time_col].ToString() + "," +
                             timeout.Text + "s");
                     }
@@ -612,8 +612,8 @@ namespace bench
                                             cnt++;
                                             bg.ReportProgress(3, cnt.ToString()); // label_cnt.Text 
                                             p[i] = run(exe.Text, expand_string(param_list[par].Text, fileName), outfilename, 1 << (i - 1));
-                                            List<float> l = new List<float>();
-                                            processes[p[i]] = new Tuple<string, string, List<float>>(param_list[par].Text, fileName, l);
+                                            List<float> l = new List<float>();                                            
+                                            processes[p[i]] = new benchmark(param_list[par].Text, fileName, l);
                                         }
                                         else bg.ReportProgress(0, "skipping " + fileName + " due to existing out file.");
                                     }
@@ -1101,9 +1101,9 @@ namespace bench
                     {
                         Process p = new Process(); // we are only using this process as a carrier of the information from the file, so we can use the buildcsv function. 
                         List<float> l = new List<float>();
-                        processes[p] = new Tuple<string, string, List<float>>(param_list[par].Text, fileName, l);
+                        processes[p] = new benchmark(param_list[par].Text, fileName, l);
                         read_out_file(p, outfileName, first);
-                        //try   // uncomment to delete from file sets those that are SAT 
+                        //try   // uncomment to delete benchmark files that are SAT
                         //{
                         //    if (!read_out_file(p, outfileName, first))
                         //    {
@@ -1290,6 +1290,20 @@ namespace bench
             }
             
             if (write_history_file) write_history();
+        }
+    }
+
+    public class benchmark
+    {
+        public string param;
+        public string name;
+        public List<float> res;
+
+        public benchmark(string param, string name, List<float> res)
+        {
+            this.param = param;
+            this.name = name;
+            this.res = res;
         }
     }
 }
