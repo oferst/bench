@@ -4023,3 +4023,6 @@ history.txt
 bench/obj/Release/bench.filter.resources
 bench/bin/Release/tmp.cnf
 *.out
+hbench/obj/
+hbench/Properties/
+hbench/bin/
