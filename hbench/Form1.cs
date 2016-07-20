@@ -331,7 +331,8 @@ namespace bench
 
         bool read_out_file(Process p, string filename, bool first)
         {
-            if (first) listBox1.Items.Add("reading labels from " + filename);
+            bool success = false;
+            
             StreamReader file =   new StreamReader(filename);
             string line;
             while ((line = file.ReadLine()) != null)            
@@ -357,13 +358,17 @@ namespace bench
                     float res;
                     if (float.TryParse(parts[2], out res))
                     {
-                        if (first) { Debug.Assert(!labels.Exists(x => x == tag)); labels.Add(tag); }
+                        if (first) {
+                            Debug.Assert(!labels.Exists(x => x == tag));
+                            labels.Add(tag);
+                            success = true;
+                        }
                         else {
                             if (!labels.Exists(x => x == tag))
                             {
                                 listBox1.Items.Add("label " + tag + " in file " + filename + " did not appear in the first file. Aborting");
                                 throw(new Exception("incompatible labels"));
-                                //return true;
+                              //  return true;
                             }
                         }                        
                         benchmark data = (benchmark)processes[p];
@@ -373,7 +378,12 @@ namespace bench
                 }
             }
             file.Close();
-            return true;
+            if (first)
+            {
+                if (success) listBox1.Items.Add("reading labels from " + filename);
+                else listBox1.Items.Add("failed reading labels from " + filename);
+            }
+            return success;
         }
 
 
@@ -1105,7 +1115,7 @@ namespace bench
                         Process p = new Process(); // we are only using this process as a carrier of the information from the file, so we can use the buildcsv function. 
                         List<float> l = new List<float>();
                         processes[p] = new benchmark(param_list[par].Text, fileName, l);
-                        read_out_file(p, outfileName, first);
+                        bool res = read_out_file(p, outfileName, first);
                         //try   // uncomment to delete benchmark files that are SAT
                         //{
                         //    if (!read_out_file(p, outfileName, first))
@@ -1117,7 +1127,7 @@ namespace bench
                         //}
                         //catch { return; } // we get here if there is inconsistencies in the labels
                         file_exists++;
-                        first = false;
+                        if (first && res) first = false;  // we want to keep it 'first' as long as we did not read labels. 
                     }
                     else
                     {
