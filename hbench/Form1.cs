@@ -266,6 +266,8 @@ namespace bench
         private void build_process_tree(int pid)
         {
             kill_list.Add(pid);
+            Process proc = Process.GetProcessById(pid);
+            bg.ReportProgress(0, "added process " + proc.ProcessName);
             ManagementObjectSearcher searcher = new ManagementObjectSearcher
                ("Select * From Win32_Process Where ParentProcessID=" + pid);
             ManagementObjectCollection moc = searcher.Get();
@@ -360,7 +362,8 @@ namespace bench
                             if (!labels.Exists(x => x == tag))
                             {
                                 listBox1.Items.Add("label " + tag + " in file " + filename + " did not appear in the first file. Aborting");
-                                throw(new Exception());
+                                throw(new Exception("incompatible labels"));
+                                //return true;
                             }
                         }                        
                         benchmark data = (benchmark)processes[p];

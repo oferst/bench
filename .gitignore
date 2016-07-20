@@ -4026,3 +4026,4 @@ bench/bin/Release/tmp.cnf
 hbench/obj/
 hbench/Properties/
 hbench/bin/
+*.zip

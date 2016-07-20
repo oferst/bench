@@ -292,7 +292,8 @@
             this.checkBox_filter_csv.Size = new System.Drawing.Size(59, 17);
             this.checkBox_filter_csv.TabIndex = 33;
             this.checkBox_filter_csv.Text = "csv file";
-            this.toolTip1.SetToolTip(this.checkBox_filter_csv, "Excludes benchmarks for which there is an entry in the csv file");
+            this.toolTip1.SetToolTip(this.checkBox_filter_csv, "Excludes benchmarks for which there is an entry in the csv file. If unchecked the" +
+        " csv file is reset.");
             this.checkBox_filter_csv.UseVisualStyleBackColor = true;
             this.checkBox_filter_csv.Leave += new System.EventHandler(this.checkBox_CheckedChanged);
             // 
