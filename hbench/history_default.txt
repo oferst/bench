@@ -11,7 +11,7 @@
 c:\results.csv
 
 -- param_groups
--param1, -param1 param2
+%f, -param1 %f
 
 -- stat_field
 Time

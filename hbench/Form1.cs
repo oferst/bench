@@ -108,20 +108,21 @@ namespace bench
 
         #region history
         void read_history(string history_file)
-        {            
-            string[] lines;
+        {
+            history = new Dictionary<fields, List<string>>();
+            string[] lines = new string[]{""};
             try {
                 lines = File.ReadAllLines(history_file);
             }
             catch
             {
-                MessageBox.Show(history_file + " not found. You may use history_default.txt as a template, or fill the fields manually. They will be recorded in the history file for future use.");                
-                return;
+                MessageBox.Show(history_file + " not found (in the hbench directory). Copy history_default.txt to history.txt and restart.");
+                Environment.Exit(1);
             }
             fields fieldValue = fields.misc;
 
             // reading history file
-            history = new Dictionary<fields, List<string>>();
+
             foreach (string line in lines)
             {
                 if (line.Length == 0) continue;
@@ -169,11 +170,11 @@ namespace bench
                 foreach (string st in corelist)
                 {
                     int c;
-                    if (int.TryParse(st, out c) == false || c <= 2 || c > cores) MessageBox.Show("field core_list in history file contains bad core indices (2 < i < " + cores + "). First 2 are saved for other processes.");
+                    if (int.TryParse(st, out c) == false || c <= 2 || c > cores) MessageBox.Show("field core_list in history file contains bad core indices (should be in the range  3.." + cores + " on this machine). Cores 1,2 are saved for other processes.");
                     else checkedListBox_cores.SetItemCheckState(c - 3, CheckState.Checked);
                 }
             }
-            catch { MessageBox.Show("core list seems to be empty"); }       
+            catch { MessageBox.Show("Core list seems to be empty"); }       
         }
 
         void write_history()
@@ -207,7 +208,7 @@ namespace bench
 
         string expand_string(string s, string filename, string param="", string outfilename="")
         {            
-            string res = s.Replace("%f", filename).Replace("%p", param).Replace("%o", outfilename);
+            string res = s.Replace("%f", "\"" + filename + "\"").Replace("%p", param).Replace("%o", outfilename);
             if (res == s) return res;
             else return expand_string(res, filename, param, outfilename);  // recursive because the replacing strings may contain %directives themselves.
         }
@@ -624,9 +625,13 @@ namespace bench
                                             bg.ReportProgress(0, "running " + fileName + " on core " + i.ToString());
                                             cnt++;
                                             bg.ReportProgress(3, cnt.ToString()); // label_cnt.Text 
-                                            p[i] = run(exe.Text, expand_string(param_list[par].Text, fileName), outfilename, 1 << (i - 1));
-                                            List<float> l = new List<float>();                                            
-                                            processes[p[i]] = new benchmark(param_list[par].Text, fileName, l);
+                                            string local_exe_Text="";
+                                            exe.Invoke(new Action(() => {local_exe_Text = exe.Text; })); // since we are not on the form's thread, this is a safe way to get information from there. Without it we may get an exception.
+                                            string local_param_list_text = "";
+                                            param_list[par].Invoke(new Action(() => { local_param_list_text = param_list[par].Text; })); // since we are not on the form's thread, this is a safe way to get information from there. Without it we may get an exception.
+                                            p[i] = run(local_exe_Text, expand_string(local_param_list_text, fileName), outfilename, 1 << (i - 1));
+                                            List<float> l = new List<float>();
+                                            processes[p[i]] = new benchmark(local_param_list_text, fileName, l);
                                         }
                                         else bg.ReportProgress(0, "skipping " + fileName + " due to existing out file.");
                                     }
