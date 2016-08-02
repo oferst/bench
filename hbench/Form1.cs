@@ -477,11 +477,12 @@ namespace bench
         string remove_label(string args)
         {
             string str = args; 
-            int s = args.IndexOf(labelTag);
+            int s = str.IndexOf(labelTag);
             if (s >= 0)
             {
-                int l = args.IndexOf(' ', s);
-                str = args.Remove(s, l - s);
+                int l = str.Substring(s).IndexOf(' ');
+                if (l == -1) str = args.Remove(s); // when the label is at the end, it is not ending with a space
+                else str = args.Remove(s, l);
             }
             return str;
         }

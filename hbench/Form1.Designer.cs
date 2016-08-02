@@ -82,16 +82,18 @@
             this.stat_field = new System.Windows.Forms.ComboBox();
             this.timeout = new System.Windows.Forms.ComboBox();
             this.min_mem = new System.Windows.Forms.ComboBox();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.menuStrip1.SuspendLayout();
+            this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
             // button1
             // 
             this.button1.BackColor = System.Drawing.SystemColors.Control;
             this.button1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(177)));
-            this.button1.Location = new System.Drawing.Point(453, 579);
+            this.button1.Location = new System.Drawing.Point(453, 590);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(86, 26);
+            this.button1.Size = new System.Drawing.Size(86, 36);
             this.button1.TabIndex = 1;
             this.button1.Text = "start";
             this.button1.UseVisualStyleBackColor = false;
@@ -112,9 +114,9 @@
             this.label1.AutoSize = true;
             this.label1.Location = new System.Drawing.Point(12, 490);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(69, 13);
+            this.label1.Size = new System.Drawing.Size(57, 13);
             this.label1.TabIndex = 4;
-            this.label1.Text = "parallel Time:";
+            this.label1.Text = "Wall Time:";
             // 
             // label2
             // 
@@ -226,7 +228,7 @@
             // 
             // button_kill
             // 
-            this.button_kill.Location = new System.Drawing.Point(453, 550);
+            this.button_kill.Location = new System.Drawing.Point(453, 561);
             this.button_kill.Name = "button_kill";
             this.button_kill.Size = new System.Drawing.Size(86, 26);
             this.button_kill.TabIndex = 26;
@@ -248,7 +250,7 @@
             // 
             this.checkedListBox_cores.CheckOnClick = true;
             this.checkedListBox_cores.FormattingEnabled = true;
-            this.checkedListBox_cores.Location = new System.Drawing.Point(443, 258);
+            this.checkedListBox_cores.Location = new System.Drawing.Point(465, 258);
             this.checkedListBox_cores.Name = "checkedListBox_cores";
             this.checkedListBox_cores.Size = new System.Drawing.Size(72, 79);
             this.checkedListBox_cores.TabIndex = 29;
@@ -256,7 +258,7 @@
             // label13
             // 
             this.label13.AutoSize = true;
-            this.label13.Location = new System.Drawing.Point(399, 261);
+            this.label13.Location = new System.Drawing.Point(421, 261);
             this.label13.Name = "label13";
             this.label13.Size = new System.Drawing.Size(37, 13);
             this.label13.TabIndex = 30;
@@ -265,7 +267,7 @@
             // checkBox_rec
             // 
             this.checkBox_rec.AutoSize = true;
-            this.checkBox_rec.Location = new System.Drawing.Point(493, 234);
+            this.checkBox_rec.Location = new System.Drawing.Point(501, 234);
             this.checkBox_rec.Name = "checkBox_rec";
             this.checkBox_rec.Size = new System.Drawing.Size(41, 17);
             this.checkBox_rec.TabIndex = 31;
@@ -299,7 +301,7 @@
             // 
             // button_scatter
             // 
-            this.button_scatter.Location = new System.Drawing.Point(15, 559);
+            this.button_scatter.Location = new System.Drawing.Point(44, 17);
             this.button_scatter.Name = "button_scatter";
             this.button_scatter.Size = new System.Drawing.Size(75, 23);
             this.button_scatter.TabIndex = 34;
@@ -309,7 +311,7 @@
             // 
             // button_cactus
             // 
-            this.button_cactus.Location = new System.Drawing.Point(96, 559);
+            this.button_cactus.Location = new System.Drawing.Point(125, 17);
             this.button_cactus.Name = "button_cactus";
             this.button_cactus.Size = new System.Drawing.Size(75, 23);
             this.button_cactus.TabIndex = 35;
@@ -320,7 +322,7 @@
             // checkBox_remote
             // 
             this.checkBox_remote.AutoSize = true;
-            this.checkBox_remote.Location = new System.Drawing.Point(348, 559);
+            this.checkBox_remote.Location = new System.Drawing.Point(348, 570);
             this.checkBox_remote.Name = "checkBox_remote";
             this.checkBox_remote.Size = new System.Drawing.Size(58, 17);
             this.checkBox_remote.TabIndex = 37;
@@ -382,7 +384,7 @@
             // checkBox_copy
             // 
             this.checkBox_copy.AutoSize = true;
-            this.checkBox_copy.Location = new System.Drawing.Point(348, 582);
+            this.checkBox_copy.Location = new System.Drawing.Point(348, 593);
             this.checkBox_copy.Name = "checkBox_copy";
             this.checkBox_copy.Size = new System.Drawing.Size(96, 17);
             this.checkBox_copy.TabIndex = 58;
@@ -402,7 +404,7 @@
             // 
             // button4
             // 
-            this.button4.Location = new System.Drawing.Point(443, 232);
+            this.button4.Location = new System.Drawing.Point(446, 232);
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(32, 21);
             this.button4.TabIndex = 46;
@@ -557,7 +559,7 @@
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(11, 592);
+            this.label7.Location = new System.Drawing.Point(9, 50);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(84, 13);
             this.label7.TabIndex = 54;
@@ -566,7 +568,7 @@
             // stat_field
             // 
             this.stat_field.FormattingEnabled = true;
-            this.stat_field.Location = new System.Drawing.Point(95, 589);
+            this.stat_field.Location = new System.Drawing.Point(93, 47);
             this.stat_field.Name = "stat_field";
             this.stat_field.Size = new System.Drawing.Size(143, 21);
             this.stat_field.TabIndex = 55;
@@ -593,16 +595,28 @@
             this.min_mem.SelectionChangeCommitted += new System.EventHandler(this.combo_SelectedIndexChanged);
             this.min_mem.Leave += new System.EventHandler(this.comboBox_Leave);
             // 
+            // groupBox1
+            // 
+            this.groupBox1.Controls.Add(this.stat_field);
+            this.groupBox1.Controls.Add(this.label7);
+            this.groupBox1.Controls.Add(this.button_cactus);
+            this.groupBox1.Controls.Add(this.button_scatter);
+            this.groupBox1.Location = new System.Drawing.Point(4, 554);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(265, 78);
+            this.groupBox1.TabIndex = 59;
+            this.groupBox1.TabStop = false;
+            this.groupBox1.Text = "Graphs";
+            // 
             // filter
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(590, 622);
+            this.ClientSize = new System.Drawing.Size(590, 644);
+            this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.checkBox_copy);
             this.Controls.Add(this.min_mem);
             this.Controls.Add(this.timeout);
-            this.Controls.Add(this.stat_field);
-            this.Controls.Add(this.label7);
             this.Controls.Add(this.param_groups);
             this.Controls.Add(this.csv);
             this.Controls.Add(this.filter_str);
@@ -615,8 +629,6 @@
             this.Controls.Add(this.checkBox_filter_out);
             this.Controls.Add(this.button_import);
             this.Controls.Add(this.checkBox_remote);
-            this.Controls.Add(this.button_cactus);
-            this.Controls.Add(this.button_scatter);
             this.Controls.Add(this.checkBox_filter_csv);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.checkBox_rec);
@@ -646,6 +658,8 @@
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Form1_FormClosed);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
+            this.groupBox1.ResumeLayout(false);
+            this.groupBox1.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -706,6 +720,7 @@
         private System.Windows.Forms.ComboBox min_mem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.CheckBox checkBox_copy;
+        private System.Windows.Forms.GroupBox groupBox1;
     }
 }
 
