@@ -53,6 +53,7 @@ namespace bench
         List<System.Threading.Timer> timers = new List<System.Threading.Timer>();
         List<string> labels = new List<string>();        
         TextBox[] param_list = new TextBox[param_list_size];
+        List<string> ext_param_list = new List<string>(); 
         RadioButton[] scatter1 = new RadioButton[param_list_size];
         RadioButton[] scatter2 = new RadioButton[param_list_size];
         StreamWriter csvfile;        
@@ -201,12 +202,13 @@ namespace bench
 
         #region utils
 
+        
         string normalize_string(string s)
         {
             return s.Replace("=", "").Replace(" ", "").Replace("-", "").Replace("_", "").Replace(labelTag, "").Replace("%f", ""); // to make param a legal file name
         }
 
-        string expand_string(string s, string filename, string param="", string outfilename="")
+        string expand_string(string s, string filename, string param="", string outfilename="")  // the last two are used for remote execution
         {            
             string res = s.Replace("%f", "\"" + filename + "\"").Replace("%p", param).Replace("%o", outfilename);
             if (res == s) return res;
@@ -386,8 +388,7 @@ namespace bench
             }
             return success;
         }
-
-
+        
 
         void wait_for_remote_Termination()
         {
@@ -404,7 +405,7 @@ namespace bench
         }
 
 
-            void wait_for_Termination()
+        void wait_for_Termination()
         {
             foreach (DictionaryEntry entry in processes)
             {
@@ -558,16 +559,16 @@ namespace bench
             }
             Stopwatch stopwatch = Stopwatch.StartNew();
             bool ok = false;
-            bool copy_to_remote = checkBox_copy.Checked; 
-            for (int par = 0; par < param_list_size; ++par)  // for each parameter
+            bool copy_to_remote = checkBox_copy.Checked;
+            expand_param_list();             
+            for (int par = 0; par < ext_param_list.Count; ++par)  // for each parameter
             {
-                if (param_list[par].Text == noOpTag) continue;
-                if (param_list[par].Text.IndexOf("%f") == -1)
+                if (ext_param_list[par].IndexOf("%f") == -1)
                 {
-                    listBox1.Items.Add("Warning: param " + param_list[par].Text + "does not include a %f directive. Skipping");
+                    listBox1.Items.Add("Warning: param " + ext_param_list[par] + "does not include a %f directive. Skipping");
                     continue;
                 }
-                bg.ReportProgress(0, "- - - - - " + param_list[par].Text + "- - - - - ");
+                bg.ReportProgress(0, "- - - - - " + ext_param_list[par] + "- - - - - ");
                 failed = 0;
                 results.Clear();
                 accum_results.Clear();                                
@@ -579,7 +580,7 @@ namespace bench
                         bg.ReportProgress(0,"Skipping " + fileName + "; it timed-out with a previos configuration.");
                         continue;
                     }
-                    string id = getid(param_list[par].Text, fileName);
+                    string id = getid(ext_param_list[par], fileName);
                     if (entries.Contains(id)) continue;                    
                     ok = false;                    
                     do
@@ -613,14 +614,14 @@ namespace bench
                                         bg.ReportProgress(3, cnt.ToString()); // label_cnt.Text                                         
                                         Tuple<int, string, string> outTuple = run_remote(
                                             "ssh ",
-                                            remote_user + " \"" + expand_string(ConfigurationManager.AppSettings["remote_ssh_cmd"], bench_remote_path, param_list[par].Text, outfile(bench_remote_path, param_list[par].Text))
+                                            remote_user + " \"" + expand_string(ConfigurationManager.AppSettings["remote_ssh_cmd"], bench_remote_path, ext_param_list[par], outfile(bench_remote_path, ext_param_list[par]))
                                             );
                                         bg.ReportProgress(0, outTuple.Item2); // command
                                         bg.ReportProgress(0, outTuple.Item3); // output
                                     }
                                     else                               
                                     {
-                                        string outfilename = outfile(fileName, param_list[par].Text);
+                                        string outfilename = outfile(fileName, ext_param_list[par]);
                                         if (!checkBox_filter_out.Checked || !File.Exists(outfilename) || (checkBox_rerun_empty_out.Checked && (new FileInfo(outfilename)).Length <= 10))
                                         {
                                             bg.ReportProgress(0, "running " + fileName + " on core " + i.ToString());
@@ -628,11 +629,11 @@ namespace bench
                                             bg.ReportProgress(3, cnt.ToString()); // label_cnt.Text 
                                             string local_exe_Text="";
                                             exe.Invoke(new Action(() => {local_exe_Text = exe.Text; })); // since we are not on the form's thread, this is a safe way to get information from there. Without it we may get an exception.
-                                            string local_param_list_text = "";
-                                            param_list[par].Invoke(new Action(() => { local_param_list_text = param_list[par].Text; })); // since we are not on the form's thread, this is a safe way to get information from there. Without it we may get an exception.
-                                            p[i] = run(local_exe_Text, expand_string(local_param_list_text, fileName), outfilename, 1 << (i - 1));
+                                            // string local_param_list_text = "";
+                                            //param_list[par].Invoke(new Action(() => { local_param_list_text = ext_param_list[par]; })); // since we are not on the form's thread, this is a safe way to get information from there. Without it we may get an exception.
+                                            p[i] = run(local_exe_Text, expand_string(ext_param_list[par], fileName), outfilename, 1 << (i - 1));
                                             List<float> l = new List<float>();
-                                            processes[p[i]] = new benchmark(local_param_list_text, fileName, l);
+                                            processes[p[i]] = new benchmark(ext_param_list[par], fileName, l);
                                         }
                                         else bg.ReportProgress(0, "skipping " + fileName + " due to existing out file.");
                                     }
@@ -704,10 +705,11 @@ namespace bench
         void create_plot_files()
         {
             try
-            {                
-                for (int par = 0; par < param_list_size; ++par)
+            {
+                expand_param_list();            
+                for (int par = 0; par < ext_param_list.Count; ++par)
                 {
-                    string param = normalize_string(param_list[par].Text);
+                    string param = normalize_string(ext_param_list[par]);
                     if (param == noOpTag) continue;
                     csv4plot[param] = new StreamWriter(graphDir + param + ".csv");
                     ((StreamWriter)csv4plot[param]).WriteLine("Benchmark,command,usertime,timeout");
@@ -715,7 +717,7 @@ namespace bench
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Cannot create csv files!\n" + ex.ToString());
+                MessageBox.Show("Cannot create csv files for cpbm in" + graphDir + "!\n Here is the exception text:\n" + ex.ToString());
                 return;
             }
         }
@@ -867,6 +869,57 @@ namespace bench
         }
         #endregion
 
+        /// <summary>
+        /// Goes over all parameters (param_list), and creates a new list ext_param_list after expanding the cross-produce of expressions such as '{ 1 | 2 | 3 }'.
+        /// For example, %f -par1 = {1 | 2} - par2 = {0.1 | 0.2} -par3  will turn into 4 strings in ext_param_list
+        /// </summary>
+        private void expand_param_list()
+        {
+            ext_param_list.Clear();
+            for (int par = 0; par < param_list_size; ++par)  // for each parameter
+            {
+                if (param_list[par].Text == noOpTag) continue;
+                List<Tuple<int, int>> indices = new List<Tuple<int, int>>(); // pairs of start + end indices of '{' '}' in the string.
+                List<string[]> sets = new List<string[]>();
+                string str = param_list[par].Text; // -par1 = {"a1","a2"} -par2 = {"b1","b2"} -par3
+                int end = 0;
+                while (true)
+                {
+                    int start = str.IndexOf('{', end);
+                    if (start == -1) break;
+                    end = str.IndexOf('}', start + 1);
+                    if (end == -1)
+                    {
+                        MessageBox.Show("unbalanced {} in parameter " + par);
+                        return;
+                    }
+                    indices.Add(new Tuple<int, int>(start, end));
+                    string s = str.Substring(start + 1, end - start - 1); //the contents of the set
+                    sets.Add(s.Split('|'));                                        
+                }
+                string res = "";                
+                if (sets.Count > 0)
+                {
+                    var routes = product.CartesianProduct<string>(sets);
+                    foreach (var route in routes)  // route = {"a1","b1"} // array of strings
+                    {                        
+                        res = str.Substring(0, indices[0].Item1); // "-par1 = "
+                        int i = 0;
+                        foreach (string st in route)
+                        {
+                            res += st; // "-par1 = a1"
+                            if (i < indices.Count - 1) res += str.Substring(indices[i].Item2 + 1, indices[i + 1].Item1 - 1 - indices[i].Item2 - 1); // "-par1 = a1 -par2 = "
+                            else res += str.Substring(indices[i].Item2 + 1);
+                            i++;
+                        }
+                        ext_param_list.Add(res);
+                    }
+                }
+                else ext_param_list.Add(str);
+            }
+        }
+
+
         private int getCheckedRadioButton(RadioButton[] c)
         {                 
            for (int i = 0; i < c.Length; i++)                
@@ -880,7 +933,7 @@ namespace bench
             if (param1 == -1) return;
             int param2 = getCheckedRadioButton(scatter2);
             if (param2 == -1) return;
-
+            if (param_list[param1].Text.IndexOf("{") != -1 || param_list[param2].Text.IndexOf("{") != -1) { MessageBox.Show("Please specify scatter graphs without { } (product) symbols."); return; }
             Process p = new Process();
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.FileName = "run-scatter.bat";
@@ -904,10 +957,10 @@ namespace bench
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.FileName = "run-cactus.bat";
             startInfo.Arguments = "";
-            for (int par = 0; par < param_list_size; ++par)  // for each parameter
-            {
-                if (param_list[par].Text == noOpTag) continue;
-                startInfo.Arguments += " " + normalize_string(param_list[par].Text) + ".csv";
+            expand_param_list();
+            for (int par = 0; par < ext_param_list.Count; ++par)  // for each parameter
+            {           
+                startInfo.Arguments += " " + normalize_string(ext_param_list[par]) + ".csv";
             }
             startInfo.WorkingDirectory = graphDir;
             startInfo.CreateNoWindow = false;
@@ -1094,18 +1147,18 @@ namespace bench
                 remote_bench_path = remote_user + ":" + ConfigurationManager.AppSettings["remote_bench_dir"];
             }
 
-            for (int par = 0; par < param_list_size; ++par)  // for each parameter
-            {
-                if (param_list[par].Text == noOpTag) continue;                
+            expand_param_list();
+            for (int par = 0; par < ext_param_list.Count; ++par)  // for each parameter
+            {                
                 foreach (FileInfo fileinfo in fileEntries)  // for each benchmark file
                 {
                     string fileName = fileinfo.FullName;                    
-                    string id = getid(param_list[par].Text, fileName);
+                    string id = getid(ext_param_list[par], fileName);
                     if (entries.Contains(id)) { in_csv++; continue; }                    
                     string outfileName = "";
                     if (checkBox_remote.Checked)
                     {
-                        outfileName = outfile(Path.GetFileName(fileName), param_list[par].Text); // we import from the working directory (bench/bin/release/ or debug/)
+                        outfileName = outfile(Path.GetFileName(fileName), ext_param_list[par]); // we import from the working directory (bench/bin/release/ or debug/)
                         if (!File.Exists(outfileName))
                         {
                             string outText = run_remote("scp", remote_bench_path + outfileName + " " + outfileName).Item2; // download the file
@@ -1114,13 +1167,13 @@ namespace bench
                     }
                     else
                     {
-                        outfileName = outfile(fileName, param_list[par].Text); // we import from the same directory as the source cnf file
+                        outfileName = outfile(fileName, ext_param_list[par]); // we import from the same directory as the source cnf file
                     }                    
                     if (File.Exists(outfileName))
                     {
                         Process p = new Process(); // we are only using this process as a carrier of the information from the file, so we can use the buildcsv function. 
                         List<float> l = new List<float>();
-                        processes[p] = new benchmark(param_list[par].Text, fileName, l);
+                        processes[p] = new benchmark(ext_param_list[par], fileName, l);
                         bool res = read_out_file(p, outfileName, first);
                         //try   // uncomment to delete benchmark files that are SAT
                         //{
@@ -1325,5 +1378,46 @@ namespace bench
             this.res = res;
         }
     }
+
+    public static class product
+    {
+
+        public static IEnumerable<IEnumerable<T>> CartesianProduct<T>(this IEnumerable<IEnumerable<T>> sequences)
+        {
+            var accum = new List<T[]>();
+            var list = sequences.ToList();
+            if (list.Count > 0)
+                CartesianRecurse(accum, new Stack<T>(), list, list.Count - 1);
+            return accum;
+        }
+
+        static void CartesianRecurse<T>(List<T[]> accum, Stack<T> stack,
+                                        List<IEnumerable<T>> list, int index)
+        {
+            foreach (T item in list[index])
+            {
+                stack.Push(item);
+                if (index == 0)
+                    accum.Add(stack.ToArray());
+                else
+                    CartesianRecurse(accum, stack, list, index - 1);
+                stack.Pop();
+            }
+        }
+
+        public static void printAllTest()
+        {
+            List<string[]> L = new List<string[]> { new[] { "a", "b" }, new[] { "c", "d" }, new[] { "e", "f" } };
+
+            var routes = CartesianProduct<string>(L);
+            foreach (var route in routes)
+            {
+                Console.WriteLine(string.Join(", ", route));
+                Console.WriteLine(route.ElementAt(1));
+            }
+        }
+    }
+
+
 }
 
