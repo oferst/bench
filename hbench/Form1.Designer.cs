@@ -283,6 +283,8 @@
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(522, 123);
             this.panel1.TabIndex = 32;
+            this.toolTip1.SetToolTip(this.panel1, "Command line options. Example: \"%f -par1={1 | 2}\". %f expands to the benchmark na" +
+        "me. {1 | 2} expends to two separate runs. Permits cross-product.");
             // 
             // checkBox_filter_csv
             // 

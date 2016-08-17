@@ -41,6 +41,7 @@ namespace bench
         int failed = 0;
         const string labelTag = "#";
         const string noOpTag = "<>";
+        const char setSeparator = '|';
 
         enum fields {
             exe, dir, filter_str, csv, param, param_groups, stat_field, core_list, timeout, min_mem,  // combos
@@ -870,8 +871,10 @@ namespace bench
         #endregion
 
         /// <summary>
-        /// Goes over all parameters (param_list), and creates a new list ext_param_list after expanding the cross-produce of expressions such as '{ 1 | 2 | 3 }'.
-        /// For example, %f -par1 = {1 | 2} - par2 = {0.1 | 0.2} -par3  will turn into 4 strings in ext_param_list
+        /// Goes over all parameters (param_list), and creates a new list ext_param_list after expanding the cross-product of expressions such as '{ 1 | 2 | 3 }'.
+        /// For example, %f -par1 = {1 | 2} -par2 = {0.1 | 0.2} -par3  will turn into 4 strings in ext_param_list
+        /// %f -par1 = 1 -par2 = 0.1 -par3
+        /// ...
         /// </summary>
         private void expand_param_list()
         {
@@ -880,8 +883,8 @@ namespace bench
             {
                 if (param_list[par].Text == noOpTag) continue;
                 List<Tuple<int, int>> indices = new List<Tuple<int, int>>(); // pairs of start + end indices of '{' '}' in the string.
-                List<string[]> sets = new List<string[]>();
-                string str = param_list[par].Text; // -par1 = {"a1","a2"} -par2 = {"b1","b2"} -par3
+                List<string[]> sets = new List<string[]>(); // sets of parameters
+                string str = param_list[par].Text; // e.g., -par1 = {1 | 2} -par2 = {0.3 | 0.5} -par3
                 int end = 0;
                 while (true)
                 {
@@ -895,24 +898,24 @@ namespace bench
                     }
                     indices.Add(new Tuple<int, int>(start, end));
                     string s = str.Substring(start + 1, end - start - 1); //the contents of the set
-                    sets.Add(s.Split('|'));                                        
+                    sets.Add(s.Split(setSeparator)); 
                 }
                 string res = "";                
                 if (sets.Count > 0)
                 {
-                    var routes = product.CartesianProduct<string>(sets);
-                    foreach (var route in routes)  // route = {"a1","b1"} // array of strings
+                    var routes = product.CartesianProduct(sets);
+                    foreach (var route in routes)  // e.g., route = {1, 0.3} // array of strings
                     {                        
-                        res = str.Substring(0, indices[0].Item1); // "-par1 = "
+                        res = str.Substring(0, indices[0].Item1); // e.g., res = "-par1 = "
                         int i = 0;
                         foreach (string st in route)
                         {
-                            res += st; // "-par1 = a1"
-                            if (i < indices.Count - 1) res += str.Substring(indices[i].Item2 + 1, indices[i + 1].Item1 - 1 - indices[i].Item2 - 1); // "-par1 = a1 -par2 = "
-                            else res += str.Substring(indices[i].Item2 + 1);
+                            res += st; // e.g., res = "-par1 = 1"
+                            if (i < indices.Count - 1) res += str.Substring(indices[i].Item2 + 1, indices[i + 1].Item1 - 1 - indices[i].Item2 - 1); // e.g., res = "-par1 = 1 -par2 = "
+                            else res += str.Substring(indices[i].Item2 + 1); // the suffix
                             i++;
                         }
-                        ext_param_list.Add(res);
+                        ext_param_list.Add(res); // e.g. "-par1 = 1 -par2 = 0.3 -par3"
                     }
                 }
                 else ext_param_list.Add(str);
