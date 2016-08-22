@@ -19,7 +19,6 @@ using System.Diagnostics;
 using System.Threading;
 using System.Management;
 
-
 namespace bench
 {    
     public partial class filter : Form
@@ -67,7 +66,7 @@ namespace bench
         bool write_history_file = false;
         string benchmarksDir, searchPattern, csvtext;
         List<int> kill_list = new List<int>();
-
+        
         public filter()
         {
             InitializeComponent();
@@ -271,7 +270,7 @@ namespace bench
         {
             kill_list.Add(pid);
             Process proc = Process.GetProcessById(pid);
-            bg.ReportProgress(0, "added process " + proc.ProcessName);
+            bg.ReportProgress(0, "added process id = " + proc.Id + " (" + proc.ProcessName + ")");
             ManagementObjectSearcher searcher = new ManagementObjectSearcher
                ("Select * From Win32_Process Where ParentProcessID=" + pid);
             ManagementObjectCollection moc = searcher.Get();
