@@ -35,10 +35,10 @@ namespace bench
         // more configurations:   
         int timeout_val = Timeout.Infinite; // will be read from history file
         int MinMem_val = 0;  // in MB. Will be read from history file        
-        bool preserveCores12 = ConfigurationManager.AppSettings["PreserveFirstCores"] == "true"; 
+        bool preserveFirstCores = ConfigurationManager.AppSettings["PreserveFirstCores"] == "true"; 
         int firstcore;  
         int cores = Environment.ProcessorCount;
-        int[] active = new int[8]; // {3, 5, 7 }; //note that we push all other processes to 1,2  [core # begin at 1]. with hyperthreading=off use {2,3,4}
+        int[] active = new int[8]; // {3, 5, 7 }; 
         int failed = 0;
         const string labelTag = "#";
         const string noOpTag = "<>";
@@ -80,7 +80,8 @@ namespace bench
             radioset2.Size = new Size(20, param_list_size * 25);
             failed_benchmarks = new List<string>();
 
-            firstcore = preserveCores12 ? 3 : 1;
+            firstcore = preserveFirstCores ? (hyperthreading ? 3 : 2) : 1;
+            
             for (int i = firstcore; i <= cores; ++i)  // cores 1,2 are preserved for other processes. 
                 checkedListBox_cores.Items.Add("c" + i.ToString());
 
@@ -790,7 +791,7 @@ namespace bench
 
             if (!checkBox_remote.Checked)
             {
-                if (preserveCores12)
+                if (preserveFirstCores)
                 {
                     Process[] localAll = Process.GetProcesses();
                     int success = 0, failure = 0;
@@ -842,7 +843,7 @@ namespace bench
                     if (!p.HasExited) KillProcessAndChildren(p.Id);
                 }
 
-                if (preserveCores12) // we changed affinity of other processes, now we retrieve it. 
+                if (preserveFirstCores) // we changed affinity of other processes, now we retrieve it. 
                 {
                     Process[] localAll = Process.GetProcesses();
                     foreach (Process p in localAll)
