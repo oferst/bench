@@ -35,8 +35,10 @@ namespace bench
         // more configurations:   
         int timeout_val = Timeout.Infinite; // will be read from history file
         int MinMem_val = 0;  // in MB. Will be read from history file        
+        bool preserveFirstCores = ConfigurationManager.AppSettings["PreserveFirstCores"] == "true"; 
+        int firstcore;  
         int cores = Environment.ProcessorCount;
-        int[] active = new int[8]; // {3, 5, 7 }; //note that we push all other processes to 1,2  [core # begin at 1]. with hyperthreading=off use {2,3,4}
+        int[] active = new int[8]; // {3, 5, 7 }; 
         int failed = 0;
         const string labelTag = "#";
         const string noOpTag = "<>";
@@ -69,7 +71,7 @@ namespace bench
         
         public filter()
         {
-            InitializeComponent();
+            InitializeComponent();            
             GroupBox radioset1 = new GroupBox();
             GroupBox radioset2 = new GroupBox();
             radioset1.Location = new Point(2, 0);
@@ -77,8 +79,12 @@ namespace bench
             radioset1.Size = new Size(20, param_list_size * 25);
             radioset2.Size = new Size(20, param_list_size * 25);
             failed_benchmarks = new List<string>();
-            for (int i = 3; i <= cores; ++i)  // cores 1,2 are preserved for other processes. 
+
+            firstcore = preserveFirstCores ? (hyperthreading ? 3 : 2) : 1;
+            
+            for (int i = firstcore; i <= cores; ++i)  // cores 1,2 are preserved for other processes. 
                 checkedListBox_cores.Items.Add("c" + i.ToString());
+
             ToolTip scatter_tt = new ToolTip();
 
             for (int i = 0; i < param_list_size; ++i)
@@ -105,6 +111,7 @@ namespace bench
             read_history(history_file);
             checkBox_rerun_empty_out.Enabled = checkBox_filter_out.Checked;
             checkBox_copy.Enabled = checkBox_remote.Checked;
+            
         }
 
         #region history
@@ -180,11 +187,11 @@ namespace bench
                 foreach (string st in corelist)
                 {
                     int c;
-                    if (int.TryParse(st, out c) == false || c <= 2 || c > cores) MessageBox.Show("field core_list in history file contains bad core indices (should be in the range  3.." + cores + " on this machine). Cores 1,2 are saved for other processes.");
-                    else checkedListBox_cores.SetItemCheckState(c - 3, CheckState.Checked);
+                    if (int.TryParse(st, out c) == false || (c < firstcore) || c > cores) MessageBox.Show("field core_list in history file contains bad core indices (should be in the range  3.." + cores + " on this machine). Cores 1,2 are saved for other processes.");
+                    else checkedListBox_cores.SetItemCheckState(c - firstcore, CheckState.Checked);
                 }
             }
-            catch { MessageBox.Show("Core list seems to be empty"); }       
+            catch { MessageBox.Show("Core list seems to be empty"); }                        
         }
 
         void write_history()
@@ -760,7 +767,7 @@ namespace bench
             int j = 0;
             foreach (int indexChecked in checkedListBox_cores.CheckedIndices)
             {
-                active[j++] = indexChecked + 3;
+                active[j++] = indexChecked + firstcore;
             }
             try  // in case the field contains non-numeral.
             {
@@ -793,23 +800,27 @@ namespace bench
 
             if (!checkBox_remote.Checked)
             {
-                Process[] localAll = Process.GetProcesses();
-                int success = 0, failure = 0;
-                foreach (Process p in localAll)
+                if (preserveFirstCores)
                 {
-                    try
+                    Process[] localAll = Process.GetProcesses();
+                    int success = 0, failure = 0;
+                    foreach (Process p in localAll)
                     {
-                        if (hyperthreading) p.ProcessorAffinity = (IntPtr)((int)p.ProcessorAffinity & 3);  // cores 1,2
-                        else p.ProcessorAffinity = (IntPtr)((int)p.ProcessorAffinity & 1);  // core 1
-                        ++success;
+                        try
+                        {
+                            if (hyperthreading) p.ProcessorAffinity = (IntPtr)((int)p.ProcessorAffinity & 3);  // cores 1,2
+                            else p.ProcessorAffinity = (IntPtr)((int)p.ProcessorAffinity & 1);  // core 1
+                            ++success;
+                        }
+                        catch
+                        {
+                            ++failure;
+                        }
                     }
-                    catch
-                    {
-                        ++failure;
-                    }
+                    if (hyperthreading) listBox1.Items.Add("Moved " + success + " processes to cores 1,2");
+                    else listBox1.Items.Add("Moved " + success + " processes to core 1");
                 }
-                if (hyperthreading) listBox1.Items.Add("Moved " + success + " processes to cores 1,2");
-                else listBox1.Items.Add("Moved " + success + " processes to core 1");
+                else listBox1.Items.Add("Note: other processes may run on the same cores");
             }
             benchmarksDir = dir.Text; searchPattern = filter_str.Text;
             bg.RunWorkerAsync();           
@@ -841,19 +852,22 @@ namespace bench
                     if (!p.HasExited) KillProcessAndChildren(p.Id);
                 }
 
-                Process[] localAll = Process.GetProcesses();
-                foreach (Process p in localAll)
+                if (preserveFirstCores) // we changed affinity of other processes, now we retrieve it. 
                 {
-                    try
+                    Process[] localAll = Process.GetProcesses();
+                    foreach (Process p in localAll)
                     {
-                        if (hyperthreading) p.ProcessorAffinity = (IntPtr)(0xFF);
-                        else p.ProcessorAffinity = (IntPtr)(0xF);
+                        try
+                        {
+                            if (hyperthreading) p.ProcessorAffinity = (IntPtr)(0xFF);
+                            else p.ProcessorAffinity = (IntPtr)(0xF);
+                        }
+                        catch
+                        {
+                        }
                     }
-                    catch
-                    {
-                    }
+                    listBox1.Items.Add("Retrieved Affinity");
                 }
-                listBox1.Items.Add("Retrieved Affinity");
             }
             if (bg != null)
             {
@@ -1356,7 +1370,7 @@ namespace bench
             foreach (int indexChecked in checkedListBox_cores.CheckedIndices)
             {
                 if (!first) active_cores_str += ",";
-                active_cores_str += (indexChecked + 3).ToString();
+                active_cores_str += (indexChecked + firstcore).ToString();
                 first = false;
             }
             if (!history.Keys.Contains(fields.core_list) || history[fields.core_list].Count == 0)
