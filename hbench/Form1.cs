@@ -139,9 +139,18 @@ namespace bench
             }
 
             // associating history with the combo-s
-            foreach (Control C in Controls)
+            Stack<Control> controls = new Stack<Control>();
+            foreach (Control C in Controls) controls.Push(C);
+
+            while (controls.Count > 0)
             {
-                if (C.GetType() == typeof(ComboBox))
+                Control C = controls.Pop();            
+                if (C.GetType() == typeof(GroupBox))  
+                {
+                    foreach (Control cc in C.Controls) controls.Push(cc);
+                    continue; 
+                }
+                    if (C.GetType() == typeof(ComboBox))
                 {
                     try
                     {
