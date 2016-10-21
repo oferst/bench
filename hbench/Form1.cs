@@ -151,13 +151,15 @@ namespace bench
 
             while (controls.Count > 0)
             {
-                Control C = controls.Pop();            
-                if (C.GetType() == typeof(GroupBox))  
+                Control C = controls.Pop();
+                Type type = C.GetType();
+
+                if (type == typeof(GroupBox))  
                 {
                     foreach (Control cc in C.Controls) controls.Push(cc);
                     continue; 
                 }
-                    if (C.GetType() == typeof(ComboBox))
+                if (type == typeof(ComboBox))
                 {
                     try
                     {
@@ -169,7 +171,7 @@ namespace bench
                     catch
                     { }   // could be missing entry in the history file, so we let it go through. 
                 }
-                else if (C.GetType() == typeof(CheckBox))
+                else if (type == typeof(CheckBox))
                 {
                     try
                     {
@@ -503,9 +505,7 @@ namespace bench
             }
             return str;
         }
-              
-
-
+     
         Tuple<int, string, string> run_remote(string cmd, string args) // for unix commands. Synchronous. 
         {
             Process p = new Process();         
