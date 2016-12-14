@@ -67,7 +67,7 @@ namespace bench
         Dictionary<fields, List<string>> history;        
         bool write_history_file = false;
         string benchmarksDir, searchPattern, csvtext;
-        List<int> kill_list = new List<int>();
+        
         
         public filter()
         {
@@ -284,7 +284,7 @@ namespace bench
         }
 
 
-        private void build_process_tree(int pid)
+        private void build_process_tree(int pid, ref List<int> kill_list)
         {
             kill_list.Add(pid);
             Process proc = Process.GetProcessById(pid);
@@ -294,13 +294,14 @@ namespace bench
             ManagementObjectCollection moc = searcher.Get();
             foreach (ManagementObject mo in moc)
             {
-                build_process_tree(Convert.ToInt32(mo["ProcessID"]));
+                build_process_tree(Convert.ToInt32(mo["ProcessID"]), ref kill_list);
             }
         }
 
         private void KillProcessAndChildren(int pid)
         {
-            build_process_tree(pid);
+            List<int> kill_list = new List<int>();
+            build_process_tree(pid, ref kill_list);
             foreach (int p in kill_list)  // killing them top-down (first parent, then child). The order matters in situations where killing first the child makes the parent think that it terminated and wrote something accordingly. 
             {
                 try
@@ -324,10 +325,11 @@ namespace bench
                 benchmark data = (benchmark)processes[p];                
                 failed_benchmarks.Add(data.name);
                 failed++;
-                label_fails.Text = failed.ToString();
+                bg.ReportProgress(5, failed.ToString());
                 List<float> l = data.res;
-                l.Add(Convert.ToInt32(timeout.Text) + 1); // +1 for debugging
-
+                string local_timeout_Text = "";
+                timeout.Invoke(new Action(() => { local_timeout_Text = timeout.Text; })); // since we are not on the form's thread, this is a safe way to get information from there. Without it we may get an exception.
+                l.Add(Convert.ToInt32(local_timeout_Text) + 1); // +1 for debugging
                 KillProcessAndChildren(p.Id);
             }            
         }
@@ -710,7 +712,7 @@ namespace bench
                 case 3: label_cnt.Text = log; break;
                 case 4: button1.Enabled = true; break;
                 case 5: label_fails.Text = log; break;
-                case 6: /*Debug.Assert(!checkBox_remote.Checked);  */import_out_to_csv(); break;
+                case 6: /*Debug.Assert(!checkBox_remote.Checked);  */import_out_to_csv(); break;                
             }
         }
 
