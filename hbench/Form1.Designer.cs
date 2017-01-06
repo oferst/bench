@@ -83,6 +83,7 @@
             this.timeout = new System.Windows.Forms.ComboBox();
             this.min_mem = new System.Windows.Forms.ComboBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.markFailsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
@@ -284,7 +285,8 @@
             this.panel1.Size = new System.Drawing.Size(522, 123);
             this.panel1.TabIndex = 32;
             this.toolTip1.SetToolTip(this.panel1, "Command line options. Example: \"%f -par1={1 | 2}\". %f expands to the benchmark na" +
-        "me. {1 | 2} expends to two separate runs. Permits cross-product.");
+        "me. {1 | 2} expends to two separate runs. Permits cross-product. you may add #<t" +
+        "ext> as a label");
             // 
             // checkBox_filter_csv
             // 
@@ -479,6 +481,7 @@
             this.cleanupToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.cleanupToolStripMenuItem1,
             this.editHistoryFileToolStripMenuItem,
+            this.markFailsToolStripMenuItem,
             this.configToolStripMenuItem});
             this.cleanupToolStripMenuItem.Name = "cleanupToolStripMenuItem";
             this.cleanupToolStripMenuItem.Size = new System.Drawing.Size(50, 20);
@@ -610,6 +613,13 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Graphs";
             // 
+            // markFailsToolStripMenuItem
+            // 
+            this.markFailsToolStripMenuItem.Name = "markFailsToolStripMenuItem";
+            this.markFailsToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
+            this.markFailsToolStripMenuItem.Text = "mark fails";
+            this.markFailsToolStripMenuItem.Click += new System.EventHandler(this.button_mark_fails_Click);
+            // 
             // filter
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -723,6 +733,7 @@
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.CheckBox checkBox_copy;
         private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.ToolStripMenuItem markFailsToolStripMenuItem;
     }
 }
 

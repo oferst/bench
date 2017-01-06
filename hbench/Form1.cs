@@ -223,7 +223,7 @@ namespace bench
         
         string normalize_string(string s)
         {
-            return s.Replace("=", "").Replace(" ", "").Replace("-", "").Replace("_", "").Replace(labelTag, "").Replace("%f", ""); // to make param a legal file name
+            return s.Replace("=", "").Replace(" ", "").Replace("_", "").Replace(labelTag, "").Replace("%f", ""); // to make param a legal file name. Not removing '-' because some parameters use negative values. 
         }
 
         string expand_string(string s, string filename, string param="", string outfilename="")  // the last two are used for remote execution
@@ -417,7 +417,7 @@ namespace bench
             
             while (true)
             {
-                res = run_remote("ssh", remote_user + " \"qstat -u" + ConfigurationManager.AppSettings["remote_user"] + "| grep \"" + ConfigurationManager.AppSettings["remote_user"] + "\"").Item1;
+                res = run_remote("ssh ", remote_user + " \"qstat -u" + ConfigurationManager.AppSettings["remote_user"] + "| grep \"" + ConfigurationManager.AppSettings["remote_user"] + "\"").Item1;
                 if (res != 0) break;                
                 Thread.Sleep(5000); // 5 seconds wait                        
             }
@@ -510,8 +510,8 @@ namespace bench
      
         Tuple<int, string, string> run_remote(string cmd, string args) // for unix commands. Synchronous. 
         {
-            Process p = new Process();         
-
+            Process p = new Process();
+            //listBox1.Items.Add("remote: " + cmd + args);
             p.StartInfo.FileName = cmd;
             p.StartInfo.Arguments = remove_label(args);
             p.StartInfo.UseShellExecute = false;
@@ -617,7 +617,7 @@ namespace bench
                                         if (copy_to_remote)
                                         {                                            
                                             File.Copy(fileName, bench, true); // copying benchmark to work dir.                                            
-                                            outText = run_remote("scp", bench + " " + remote_bench_path).Item2;//" ofers@tamnun.technion.ac.il:~/hmuc/test");
+                                            outText = run_remote("scp ", bench + " " + remote_bench_path).Item2;//" ofers@tamnun.technion.ac.il:~/hmuc/test");
                                             bg.ReportProgress(0, outText);
                                             File.Delete(bench);
                                         }
@@ -674,7 +674,7 @@ namespace bench
             // post processing
 
             bg.ReportProgress(4, ""); // button1.Enabled = true;
-
+            if (cnt == 0) return;
             if (checkBox_remote.Checked)
             {
                 bg.ReportProgress(0, "Waiting for remote termination... "); //When all processes end, press `import to CSV'"); // because we do not check remotely if all processes ended.
@@ -735,7 +735,7 @@ namespace bench
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Cannot create csv files for cpbm in" + graphDir + "!\n Here is the exception text:\n" + ex.ToString());
+                MessageBox.Show("Cannot create csv files for cpbm in " + graphDir + ".\n Here is the exception text:\n" + ex.ToString());
                 return;
             }
         }
@@ -837,7 +837,7 @@ namespace bench
                 string remote_user = ConfigurationManager.AppSettings["remote_user"] + "@" + ConfigurationManager.AppSettings["remote_domain"];
                 if (MessageBox.Show("Delete all processes of user " + remote_user + "?", "Confirm kill processes", MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {
-                    string outText = run_remote("ssh", remote_user + " \"qstat -u" + ConfigurationManager.AppSettings["remote_user"] + "| grep \"" +
+                    string outText = run_remote("ssh ", remote_user + " \"qstat -u" + ConfigurationManager.AppSettings["remote_user"] + "| grep \"" +
                       ConfigurationManager.AppSettings["remote_user"] + "\" | cut -d\".\" -f1 | xargs qdel\"").Item2;
                     listBox1.Items.Add(outText);
                 }
@@ -1010,7 +1010,13 @@ namespace bench
             {
                 i = line.IndexOf(',', i + 1);
             }
-            string res = line.Substring(i+1, line.IndexOf(',', i + 1)-i-1);
+            if (i == -1) return "";
+            if (idx == 1) i--;
+            // getting the length of the field
+            int k = line.IndexOf(',', i + 1); // location of next comma
+            if (k == -1) k = line.Length; // in case idx was last
+            k = k - i - 1; // subtract location of current comma
+            string res = line.Substring(i+1, k); // line.IndexOf(',', i + 1)-i-1
             return res;
         }
 
@@ -1117,7 +1123,80 @@ namespace bench
             File.Delete(fileName);
             File.Move(tempFile, fileName);
         }
-        
+
+        private void button_mark_fails_Click(object sender, EventArgs e)
+        {
+            string fileName = csv.Text;
+            HashSet<string> failed_atleast_once = new HashSet<string>();
+            bool header = true;
+            int cnt = 0;
+            // finding failed benchmarks 
+            try
+            {
+                foreach (string line in File.ReadLines(fileName))
+                {
+                    cnt++;
+                    if (header) { header = false; continue; }
+                    string failed = getfield(line, 4);
+                    if (failed.Length == 0) continue;
+                    Debug.Assert(failed == "1");
+                    listBox1.Items.Add("failed line: " + line);
+                    failed_atleast_once.Add(Path.Combine(getfield(line, 2), getfield(line, 3)));
+                }
+            }
+            catch { MessageBox.Show("seems that " + csv.Text + "is in use"); return; }
+
+            // keeping only benchmarks that are not failed by any parameter combination. 
+
+            
+            StreamReader sr = new StreamReader(fileName);
+            string header_line = sr.ReadLine();
+            int i = 1;
+            int failed_column = 0;
+            string failed_column_text = "failed with some param";
+            string res;
+            while (true) {
+                res = getfield(header_line, i);
+                if (res == "") break;
+                if (res == failed_column_text)
+                {
+                    failed_column = i;
+                    break;
+                }
+                ++i;
+            }
+            if (failed_column == 0) header_line += "," + failed_column_text;
+            sr.Close();
+            List<string> lines = new List<string>();
+            foreach (string line in File.ReadLines(fileName))
+            {
+                if (getfield(line, 1) == "param")
+                {
+                    lines.Add(header_line);
+                    continue;
+                }
+                string line_st = line;
+                if (failed_column > 0) line_st = line_st.Substring(0, line_st.LastIndexOf(",")); // removing old value
+                if ((!failed_atleast_once.Contains(Path.Combine(getfield(line, 2), getfield(line, 3)))))
+                {                    
+                    lines.Add(line_st + ",");
+                }
+                else
+                {
+                    lines.Add(line_st + ", 1");
+                }
+            }
+            //var linesToKeep = File.ReadLines(fileName).Where(l => (!failed_atleast_once.Contains(Path.Combine(getfield(l, 2), getfield(l, 3))) || getfield(l, 1) == "param"));   // second item so it includes the header.         
+
+            var tempFile = Path.GetTempFileName();
+
+            File.WriteAllLines(tempFile, lines);
+
+            File.Delete(fileName);
+            File.Move(tempFile, fileName);
+        }
+
+
         private void button_del_fails_Click(object sender, EventArgs e)
         {            
             string fileName = csv.Text;
@@ -1188,7 +1267,7 @@ namespace bench
                         outfileName = outfile(Path.GetFileName(fileName), ext_param_list[par]); // we import from the working directory (bench/bin/release/ or debug/)
                         if (!File.Exists(outfileName))
                         {
-                            string outText = run_remote("scp", remote_bench_path + outfileName + " " + outfileName).Item2; // download the file
+                            string outText = run_remote("scp ", remote_bench_path + outfileName + " " + outfileName).Item2; // download the file
                             listBox1.Items.Add(outText);
                         }
                     }
@@ -1339,8 +1418,9 @@ namespace bench
         private void configToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Process p = new Process();
-            p.StartInfo.FileName = "notepad";
-            p.StartInfo.Arguments = "bench.exe.config";
+            p.StartInfo.FileName = "notepad++";
+            p.StartInfo.Arguments = "hbench.exe.config";
+            //p.StartInfo.WorkingDirectory = Application.StartupPath;
             p.Start();
         }
 
