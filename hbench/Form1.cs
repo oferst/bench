@@ -456,6 +456,7 @@ namespace bench
                 {
                     csvtext += "1,";                 
                  }
+                csvtext = csvtext.Substring(0, csvtext.Length - 1); // remove last ','
                 csvtext += "\n";
                 
                 try
@@ -477,10 +478,12 @@ namespace bench
             }
             if (cnt_wrong_label > 0) listBox1.Items.Add("Warning: \"" + stat_field.Text + "\" (the name of the statistics field specified below) is not a column in " + cnt_wrong_label + " out files. Will not add data to statistics.");
             foreach (string lbl in labels) csvheader += lbl + ",";
-            
+                        
             if (Addheader)
             {
-                csvfile.Write("param, dir, bench, fail," + csvheader);
+                csvheader = "param, dir, bench, fail," + csvheader;
+                csvheader = csvheader.Substring(0, csvheader.Length - 1); // remove last ','
+                csvfile.Write(csvheader);                
                 csvfile.WriteLine();
             }
             try
@@ -493,6 +496,7 @@ namespace bench
             }
             csvfile.Close();
             foreach (var key in csv4plot.Keys) ((StreamWriter)csv4plot[key]).Close();
+            if (ConfigurationManager.AppSettings["add_fails_column"] == "true") button_mark_fails_Click(null, EventArgs.Empty);
         }
 
         string remove_label(string args)
@@ -1176,7 +1180,7 @@ namespace bench
                     continue;
                 }
                 string line_st = line;
-                if (failed_column > 0) line_st = line_st.Substring(0, line_st.LastIndexOf(",")); // removing old value
+                if (failed_column > 0) line_st = line_st.Substring(0, line_st.LastIndexOf(",")); // removing old value, including ','
                 if ((!failed_atleast_once.Contains(Path.Combine(getfield(line, 2), getfield(line, 3)))))
                 {                    
                     lines.Add(line_st + ",");
@@ -1185,13 +1189,10 @@ namespace bench
                 {
                     lines.Add(line_st + ", 1");
                 }
-            }
-            //var linesToKeep = File.ReadLines(fileName).Where(l => (!failed_atleast_once.Contains(Path.Combine(getfield(l, 2), getfield(l, 3))) || getfield(l, 1) == "param"));   // second item so it includes the header.         
+            }        
 
             var tempFile = Path.GetTempFileName();
-
             File.WriteAllLines(tempFile, lines);
-
             File.Delete(fileName);
             File.Move(tempFile, fileName);
         }
