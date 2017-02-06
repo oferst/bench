@@ -454,7 +454,8 @@ namespace bench
                 }
                 else   // in case of timeout / mem-out / whatever
                 {
-                    csvtext += "1,";                 
+                    csvtext += "1,";
+                    for (int j = 0; j < labels.Count; ++j) csvtext += ","; // creating empty columns, because we later may add a last column 'failed with some param' so all rows must be aligned. 
                  }
                 csvtext = csvtext.Substring(0, csvtext.Length - 1); // remove last ','
                 csvtext += "\n";
@@ -1321,6 +1322,7 @@ namespace bench
 
         private void button_import_Click(object sender, EventArgs e)  // import out files from remote server, and process them to generate the csv + plot files. 
         {
+            labels.Clear();  // since we may import more than once. 
             import_out_to_csv();
         }
 
