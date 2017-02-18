@@ -110,8 +110,7 @@ namespace bench
 
             read_history(history_file);
             checkBox_rerun_empty_out.Enabled = checkBox_filter_out.Checked;
-            checkBox_copy.Enabled = checkBox_remote.Checked;
-            
+            checkBox_copy.Enabled = checkBox_remote.Checked;            
         }
 
         #region history
@@ -603,6 +602,14 @@ namespace bench
                         bg.ReportProgress(0,"Skipping " + fileName + "; it timed-out with a previos configuration.");
                         continue;
                     }
+
+                    string outfilename = outfile(fileName, ext_param_list[par]);
+                    if (checkBox_filter_out.Checked && File.Exists(outfilename) &&
+                        (!checkBox_rerun_empty_out.Checked || (new FileInfo(outfilename)).Length > 10)) {
+                        bg.ReportProgress(0, "skipping " + fileName + " due to existing out file.");
+                        continue;
+                    }                    
+
                     string id = getid(ext_param_list[par], fileName);
                     if (entries.Contains(id)) continue;                    
                     ok = false;                    
@@ -644,21 +651,16 @@ namespace bench
                                     }
                                     else                               
                                     {
-                                        string outfilename = outfile(fileName, ext_param_list[par]);
-                                        if (!checkBox_filter_out.Checked || !File.Exists(outfilename) || (checkBox_rerun_empty_out.Checked && (new FileInfo(outfilename)).Length <= 10))
-                                        {
-                                            bg.ReportProgress(0, "running " + fileName + " on core " + i.ToString());
-                                            cnt++;
-                                            bg.ReportProgress(3, cnt.ToString()); // label_cnt.Text 
-                                            string local_exe_Text="";
-                                            exe.Invoke(new Action(() => {local_exe_Text = exe.Text; })); // since we are not on the form's thread, this is a safe way to get information from there. Without it we may get an exception.
-                                            // string local_param_list_text = "";
-                                            //param_list[par].Invoke(new Action(() => { local_param_list_text = ext_param_list[par]; })); // since we are not on the form's thread, this is a safe way to get information from there. Without it we may get an exception.
-                                            p[i] = run(local_exe_Text, expand_string(ext_param_list[par], fileName), outfilename, 1 << (i - 1));
-                                            List<float> l = new List<float>();
-                                            processes[p[i]] = new benchmark(ext_param_list[par], fileName, l);
-                                        }
-                                        else bg.ReportProgress(0, "skipping " + fileName + " due to existing out file.");
+                                        bg.ReportProgress(0, "running " + fileName + " on core " + i.ToString());
+                                        cnt++;
+                                        bg.ReportProgress(3, cnt.ToString()); // label_cnt.Text 
+                                        string local_exe_Text = "";
+                                        exe.Invoke(new Action(() => { local_exe_Text = exe.Text; })); // since we are not on the form's thread, this is a safe way to get information from there. Without it we may get an exception.
+                                                                                                      // string local_param_list_text = "";
+                                                                                                      //param_list[par].Invoke(new Action(() => { local_param_list_text = ext_param_list[par]; })); // since we are not on the form's thread, this is a safe way to get information from there. Without it we may get an exception.
+                                        p[i] = run(local_exe_Text, expand_string(ext_param_list[par], fileName), outfilename, 1 << (i - 1));
+                                        List<float> l = new List<float>();
+                                        processes[p[i]] = new benchmark(ext_param_list[par], fileName, l);
                                     }
                                    
                                     ok = true;
@@ -951,7 +953,6 @@ namespace bench
             }
         }
 
-
         private int getCheckedRadioButton(RadioButton[] c)
         {                 
            for (int i = 0; i < c.Length; i++)                
@@ -1198,7 +1199,6 @@ namespace bench
             File.Move(tempFile, fileName);
         }
 
-
         private void button_del_fails_Click(object sender, EventArgs e)
         {            
             string fileName = csv.Text;
@@ -1264,17 +1264,14 @@ namespace bench
                     string id = getid(ext_param_list[par], fileName);
                     if (entries.Contains(id)) { in_csv++; continue; }                    
                     string outfileName = "";
-                    if (checkBox_remote.Checked)
-                    {
-                        outfileName = outfile(Path.GetFileName(fileName), ext_param_list[par]); // we import from the working directory (bench/bin/release/ or debug/)
-                        if (!File.Exists(outfileName))
-                        {
+                    if (checkBox_remote.Checked) {
+                        outfileName = outfile(Path.GetFileName(fileName), ext_param_list[par]); // we import from the working directory (bench/bin/release/ or debug/)                        
+                        if (!checkBox_filter_out.Checked || !File.Exists(outfileName) || (checkBox_rerun_empty_out.Checked && (new FileInfo(outfileName)).Length <= 10)) { 
                             string outText = run_remote("scp ", remote_bench_path + outfileName + " " + outfileName).Item2; // download the file
                             listBox1.Items.Add(outText);
                         }
                     }
-                    else
-                    {
+                    else  {
                         outfileName = outfile(fileName, ext_param_list[par]); // we import from the same directory as the source cnf file
                     }                    
                     if (File.Exists(outfileName))
