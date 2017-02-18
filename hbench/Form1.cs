@@ -347,6 +347,12 @@ namespace bench
             }
         }
 
+        bool filterOut(string outfilename) {
+            return checkBox_filter_out.Checked && File.Exists(outfilename) &&
+                   (!checkBox_rerun_empty_out.Checked || (new FileInfo(outfilename)).Length > 10);
+            }
+
+
         #endregion
 
         #region work              
@@ -420,7 +426,7 @@ namespace bench
                 if (res != 0) break;                
                 Thread.Sleep(5000); // 5 seconds wait                        
             }
-            listBox1.Items.Add("* All remote processes terminated *");
+            bg.ReportProgress(0, "* All remote processes terminated *");
         }
 
 
@@ -603,9 +609,8 @@ namespace bench
                         continue;
                     }
 
-                    string outfilename = outfile(fileName, ext_param_list[par]);
-                    if (checkBox_filter_out.Checked && File.Exists(outfilename) &&
-                        (!checkBox_rerun_empty_out.Checked || (new FileInfo(outfilename)).Length > 10)) {
+                    string outfilename = outfile(checkBox_remote.Checked ? Path.GetFileName(fileName) : fileName, ext_param_list[par]);                         
+                    if (filterOut(outfilename)) {
                         bg.ReportProgress(0, "skipping " + fileName + " due to existing out file.");
                         continue;
                     }                    
@@ -1003,7 +1008,7 @@ namespace bench
 
         private void checkBox_remote_CheckedChanged(object sender, EventArgs e)
         {
-            checkBox_filter_out.Enabled = timeout.Enabled = min_mem.Enabled = exe.Enabled = checkedListBox_cores.Enabled = !(((CheckBox)sender).Checked);
+            timeout.Enabled = min_mem.Enabled = exe.Enabled = checkedListBox_cores.Enabled = !(((CheckBox)sender).Checked);
             checkBox_copy.Enabled = (((CheckBox)sender).Checked);
             checkBox_CheckedChanged(sender, e);
         }
@@ -1266,7 +1271,7 @@ namespace bench
                     string outfileName = "";
                     if (checkBox_remote.Checked) {
                         outfileName = outfile(Path.GetFileName(fileName), ext_param_list[par]); // we import from the working directory (bench/bin/release/ or debug/)                        
-                        if (!checkBox_filter_out.Checked || !File.Exists(outfileName) || (checkBox_rerun_empty_out.Checked && (new FileInfo(outfileName)).Length <= 10)) { 
+                        if (!filterOut(outfileName)) { 
                             string outText = run_remote("scp ", remote_bench_path + outfileName + " " + outfileName).Item2; // download the file
                             listBox1.Items.Add(outText);
                         }
