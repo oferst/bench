@@ -352,31 +352,27 @@ namespace bench
         #region work              
 
         bool read_out_file(Process p, string filename, bool first)
-        {
-            bool success = false;
+        {           
             
+            bool success = false;
             StreamReader file =   new StreamReader(filename);
             string line;
+
             while ((line = file.ReadLine()) != null)            
             {                
                 if (line.Length >= 4 && line.Substring(0, 3) == stat_tag)
                 {
                     var parts = line.Split(new char[] { ' ' });
-                    string tag = parts[1];
-                    //if (tag == "SAT") // uncomment if we want to erase benchmarks that are SAT.
-                    //{
-                    //    listBox1.Items.Add("* * * * * * * * * * * * *  SAT!");
-                    //    file.Close();
-                    //    return false;  
-                    //}
+                    string tag = parts[1];            
+
                     if (tag == abort_tag || tag == "SAT")  
                     {
                         listBox1.Items.Add("* * * * * * * * * * * * *  Abort!");
-                        file.Close();
+                        file.Close();                        
                         return true;
                     }
 
-                    
+                     
                     float res;
                     if (float.TryParse(parts[2], out res))
                     {
@@ -393,8 +389,99 @@ namespace bench
                               //  return true;
                             }
                         }                        
+
                         benchmark data = (benchmark)processes[p];
                         data.res.Add(res);
+                        
+                    }
+                    else listBox1.Items.Add("skipping non-numerical data: " + parts[2]);
+                }
+            }
+            file.Close();
+            if (first)
+            {
+                if (success) listBox1.Items.Add("reading labels from " + filename);
+                else listBox1.Items.Add("failed reading labels from " + filename);
+            }            
+            return success;
+        }
+
+        /// <summary>
+        ///  same as read_out_file, but updates del=true if the file should be erased because
+        ///  ot os SAT, too easy (less than 30 sec.) or too hard (timed out).
+        /// </summary>
+        /// <param name="p"></param>
+        /// <param name="filename"></param>
+        /// <param name="first"></param>
+        /// <param name="del"></param>
+        /// <returns></returns>
+        bool read_out_file_del(Process p, string filename, bool first, out bool del)
+        {
+            if ((new FileInfo(filename)).Length <= 10)
+            {
+                listBox1.Items.Add("removing " + filename + ". Could not be solved.");
+                del = true;
+                return false; // !! delete files that cannot be solved within the timeout. 
+            }
+
+            bool success = false;
+            StreamReader file = new StreamReader(filename);
+            string line;
+
+            while ((line = file.ReadLine()) != null)
+            {
+                if (line.Length >= 4 && line.Substring(0, 3) == stat_tag)
+                {
+                    var parts = line.Split(new char[] { ' ' });
+                    string tag = parts[1];
+
+                    // RemoveSAT
+                    if (tag == "SAT") // uncomment if we want to erase benchmarks that are SAT.
+                    {
+                        listBox1.Items.Add("* * * * * * * * * * * * *  SAT!");
+                        file.Close();
+                        del = true;
+                        return false;
+                    }
+
+                    if (tag == abort_tag || tag == "SAT")
+                    {
+                        listBox1.Items.Add("* * * * * * * * * * * * *  Abort!");
+                        file.Close();
+                        del = false;
+                        return true;
+                    }
+
+
+                    float res;
+                    if (float.TryParse(parts[2], out res))
+                    {
+                        if (first)
+                        {
+                            Debug.Assert(!labels.Exists(x => x == tag));
+                            labels.Add(tag);
+                            success = true;
+                        }
+                        else
+                        {
+                            if (!labels.Exists(x => x == tag))
+                            {
+                                listBox1.Items.Add("label " + tag + " in file " + filename + " did not appear in the first file. Aborting");
+                                throw (new Exception("incompatible labels"));
+                                //  return true;
+                            }
+                        }
+
+                        if (tag == "time" && res < 30.0)
+                        {
+                            listBox1.Items.Add("removing " + filename + ". Too easy.");
+                            del = true;
+                            return false; // !! remove easy instances
+                        }
+
+                        benchmark data = (benchmark)processes[p];
+                        data.res.Add(res);
+
                     }
                     else listBox1.Items.Add("skipping non-numerical data: " + parts[2]);
                 }
@@ -405,9 +492,9 @@ namespace bench
                 if (success) listBox1.Items.Add("reading labels from " + filename);
                 else listBox1.Items.Add("failed reading labels from " + filename);
             }
+            del = false;
             return success;
         }
-        
 
         void wait_for_remote_Termination()
         {
@@ -530,7 +617,7 @@ namespace bench
             string output = p.StandardOutput.ReadToEnd();            
             p.WaitForExit();
             // returns <exist-status, command, output of command>
-            return new Tuple<int,string,string>(p.ExitCode, "> " + p.StartInfo.FileName + " " + args, output);
+            return new Tuple<int,string,string>(p.ExitCode, "> " + p.StartInfo.FileName + " " + p.StartInfo.Arguments, output);
         }
 
         Process run(string cmd, string args, string outfilename, int affinity = 0x007F)
@@ -1003,7 +1090,7 @@ namespace bench
 
         private void checkBox_remote_CheckedChanged(object sender, EventArgs e)
         {
-            checkBox_filter_out.Enabled = timeout.Enabled = min_mem.Enabled = exe.Enabled = checkedListBox_cores.Enabled = !(((CheckBox)sender).Checked);
+            timeout.Enabled = min_mem.Enabled = exe.Enabled = checkedListBox_cores.Enabled = !(((CheckBox)sender).Checked);
             checkBox_copy.Enabled = (((CheckBox)sender).Checked);
             checkBox_CheckedChanged(sender, e);
         }
@@ -1263,7 +1350,7 @@ namespace bench
                     string fileName = fileinfo.FullName;                    
                     string id = getid(ext_param_list[par], fileName);
                     if (entries.Contains(id)) { in_csv++; continue; }                    
-                    string outfileName = "";
+                    string outfileName = "";                    
                     if (checkBox_remote.Checked) {
                         outfileName = outfile(Path.GetFileName(fileName), ext_param_list[par]); // we import from the working directory (bench/bin/release/ or debug/)                        
                         if (!checkBox_filter_out.Checked || !File.Exists(outfileName) || (checkBox_rerun_empty_out.Checked && (new FileInfo(outfileName)).Length <= 10)) { 
@@ -1279,12 +1366,16 @@ namespace bench
                         Process p = new Process(); // we are only using this process as a carrier of the information from the file, so we can use the buildcsv function. 
                         List<float> l = new List<float>();
                         processes[p] = new benchmark(ext_param_list[par], fileName, l);
+                        
                         bool res = read_out_file(p, outfileName, first);
-                        //try   // uncomment to delete benchmark files that are SAT
+                        // uncomment the following to delete benchmark files that are SAT/too easy/too hard (see read_out_file_del)
+                        //bool del; // whether to delete the benchmark itself
+                        //bool res = read_out_file_del(p, outfileName, first, out del);
+                        //try  
                         //{
-                        //    if (!read_out_file(p, outfileName, first))
+                        //    if (del) // result is SAT
                         //    {
-                        //        listBox1.Items.Add(fileName + " is SAT. Deleting.");
+                        //        //listBox1.Items.Add(fileName + " is SAT. Deleting.");
                         //        File.Delete(fileName);
                         //        processes.Remove(p);
                         //    }
