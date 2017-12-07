@@ -18,6 +18,7 @@ using System.IO;
 using System.Diagnostics;
 using System.Threading;
 using System.Management;
+using System.Text.RegularExpressions;
 
 namespace bench
 {    
@@ -63,11 +64,30 @@ namespace bench
         Hashtable accum_results = new Hashtable();
         Hashtable results = new Hashtable();
         AbortableBackgroundWorker bg;
-        HashSet<string> entries = new HashSet<string>();        
+        HashSet<string> BenchmarkNamesFromCsv = new HashSet<string>();        
         Dictionary<fields, List<string>> history;        
         bool write_history_file = false;
-        string benchmarksDir, searchPattern, csvtext;
-        private bool stat_field_Changed = false; // if the stat_field (e.g. 'time') changed, we need to re-import the files in order to generate the right csv files. 
+        string benchmarksDir, searchPattern;
+        private const string id_prefix = "P: ";
+
+
+        private struct Forplot // used for storing information about benchmarks when preparing the plot files. 
+        {
+            string bench;
+            string param;
+            string val;
+            public Forplot(string b, string p, string v)
+            {
+                bench = b;
+                param = p;
+                val = v;
+            }
+
+            public string Bench { get => bench; set => bench = value; }
+            public string Param { get => param; set => param = value; }
+            public string Val { get => val; set => val = value; }
+        }
+
 
         public filter()
         {
@@ -110,7 +130,9 @@ namespace bench
 
             read_history(history_file);
             checkBox_rerun_empty_out.Enabled = checkBox_filter_out.Checked;
-            checkBox_copy.Enabled = checkBox_remote.Checked;            
+            checkBox_copy.Enabled = checkBox_remote.Checked;
+            searchPattern = filter_str.Text;
+            benchmarksDir = dir.Text;
         }
 
         #region history
@@ -222,7 +244,7 @@ namespace bench
         
         string normalize_string(string s)
         {
-            return s.Replace("=", "").Replace(" ", "").Replace("_", "").Replace(labelTag, "").Replace("%f", "").Replace("-","Dash"); // to make param a legal file name. Might have a problem with '-' because some parameters use negative values. We cannot use in the replacement string a "-" because having this in the file name makes scatter/cactus refer to this as a parameter.
+            return s.Replace("=", "").Replace(" ", "").Replace("_", "").Replace(labelTag, "").Replace("%f", "").Replace("-",""); // to make param a legal file name. Might have a problem with '-' because some parameters use negative values. We cannot use in the replacement string a "-" because having this in the file name makes scatter/cactus refer to this as a parameter.
         }
 
         string expand_string(string s, string filename, string param="", string outfilename="")  // the last two are used for remote execution
@@ -233,26 +255,21 @@ namespace bench
         }
 
 
+        string strip_id_prefix(string param)
+        {
+            System.Diagnostics.Debug.Assert(param.Substring(0, 3) == id_prefix);
+            return param.Substring(3);
+        }
+
         string getid(string param, string filename)
         {
-            return "P: " + param + "," +
+            return id_prefix + param + "," +
                 Path.GetDirectoryName(filename) + "," +  // benchmark
                 Path.GetFileName(filename);
         }
 
-        void init_csv_file()
-        {
-            try {
-                csvfile = new StreamWriter(csv.Text, checkBox_filter_csv.Checked);
-            }
-            catch 
-            {
-                MessageBox.Show("Cannot open " + csv.Text);
-                throw ;
-            }
-        }
-
-        void readEntries()
+        
+        void readBenchmarkNamesFromCsv()
         {       
             string line, res;
             StreamReader csvfile;
@@ -275,7 +292,7 @@ namespace bench
                 }
                 Debug.Assert(i >= 0);
                 res = line.Substring(0,i);
-                entries.Add(res);
+                BenchmarkNamesFromCsv.Add(res);
                 //if (line.IndexOf(',', i + 1) > i + 1) entries.Add(res);  // in case we have after file name ",," it means that time was not recorded; 
                 //else listBox1.Items.Add("remove line: " + line);
             }
@@ -356,7 +373,13 @@ namespace bench
         #endregion
 
         #region work              
-
+        /// <summary>
+        /// Reads data from filename, and updates the process p.
+        /// </summary>
+        /// <param name="p"></param>
+        /// <param name="filename"></param>
+        /// <param name="first"></param>
+        /// <returns></returns>
         bool read_out_file(Process p, string filename, bool first)
         {           
             
@@ -526,32 +549,77 @@ namespace bench
             }
         }
 
-        public struct Forplot
+        void prepareDataForCsv()
         {
-            string bench;
-            string param;
-            string val;
-            public Forplot(string b,string p, string v)
+            int in_csv = 0;
+            
+            filter_str.Invoke(new Action(() => { searchPattern = filter_str.Text; }));
+            dir.Invoke(new Action(() => { benchmarksDir = dir.Text; }));
+            var fileEntries = new DirectoryInfo(benchmarksDir).GetFiles(searchPattern, checkBox_rec.Checked ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+            if (fileEntries.Length == 0) listBox1.Items.Add("empty file list\n");
+
+            processes.Clear();
+            if (checkBox_filter_csv.Checked && File.Exists(csv.Text)) readBenchmarkNamesFromCsv();
+            else BenchmarkNamesFromCsv.Clear();
+            
+            bool first = true;            
+
+            expand_param_list();
+            for (int par = 0; par < ext_param_list.Count; ++par)  // for each parameter
             {
-                bench = b;
-                param = p;
-                val = v;
+                foreach (FileInfo fileinfo in fileEntries)  // for each benchmark file
+                {
+                    string fileName = fileinfo.FullName;
+                    string id = getid(ext_param_list[par], fileName);
+                    if (BenchmarkNamesFromCsv.Contains(id)) { in_csv++; continue; }
+                    string outfileName = outfile(fileName, ext_param_list[par]); // we import from the same directory as the source cnf file;                    
+
+                    if (File.Exists(outfileName))
+                    {
+                        Process p = new Process(); // we are only using this process as a carrier of the information from the file, so we can use the buildcsv function. 
+                        List<float> l = new List<float>();
+                        processes[p] = new benchmark(ext_param_list[par], fileName, l);
+
+                        bool res = read_out_file(p, outfileName, first);
+                        // uncomment the following to delete benchmark files that are SAT/too easy/too hard (see read_out_file_del)
+                        //bool del; // whether to delete the benchmark itself
+                        //bool res = read_out_file_del(p, outfileName, first, out del);
+                        //try  
+                        //{
+                        //    if (del) // result is SAT
+                        //    {
+                        //        //listBox1.Items.Add(fileName + " is SAT. Deleting.");
+                        //        File.Delete(fileName);
+                        //        processes.Remove(p);
+                        //    }
+                        //}
+                        //catch { return; } // we get here if there is inconsistencies in the labels
+                        if (first && res) first = false;  // we want to keep it 'first' as long as we did not read labels. 
+                    }
+                    else
+                    {
+                        listBox1.Items.Add(outfileName + " is missing");
+                    }
+                }
             }
-
-            public string Bench { get => bench; set => bench = value; }
-            public string Param { get => param; set => param = value; }
-            public string Val { get => val; set => val = value; }
         }
-        void buildcsv(bool Addheader)
-        {
-            string csvheader = "";
-            int cnt_wrong_label = 0;
-            init_csv_file(); 
-            init_plot_files();
-            List<Forplot> forplot = new List<Forplot>();  // saves information that is later used for generating the csv files for the plots. 
-            Forplot fp; 
-            float maxval = 0; // max value that is seen for the field that is being plotted (e.g., time). This will be used as the bound on the axis in the plots. 
 
+        void buildcsv()
+        {
+            bool Addheader = !checkBox_filter_csv.Checked || !File.Exists(csv.Text);
+            string csvheader = "", csvtext = "";
+            int cnt_wrong_label = 0;
+            
+            prepareDataForCsv(); // this fills 'processes'.
+            try
+            {
+                csvfile = new StreamWriter(csv.Text, checkBox_filter_csv.Checked);
+            }
+            catch
+            {
+                MessageBox.Show("Cannot open " + csv.Text);
+                throw;
+            }
             foreach (DictionaryEntry entry in processes)
             {                
                 benchmark bm = entry.Value as benchmark;
@@ -570,31 +638,15 @@ namespace bench
                     csvtext += "1,";
                     for (int j = 0; j < labels.Count; ++j) csvtext += ","; // creating empty columns, because we later may add a last column 'failed with some param' so all rows must be aligned. 
                  }
-                csvtext = csvtext.Substring(0, csvtext.Length - 1); // remove last ','
+                //csvtext = csvtext.Substring(0, csvtext.Length - 1); // remove last ','
                 csvtext += "\n";
-                
-                try
-                {
-                    if (l.Count > 0)  // if it is 0, it implies that it was a fail (typically T.O.).
-                    {
-                        // preparing plot data
-                        int time_col = labels.IndexOf(stat_field.Text);
-                        if (time_col < 0) { cnt_wrong_label++; }
-                        else
-                        {
-                            fp = new Forplot(bm.name, bm.param, l[time_col].ToString());
-                            forplot.Add(fp);                            
-                            if (l[time_col] > maxval) maxval = l[time_col];
-                        }   
-                    }
-                }
-                catch (Exception ex) { listBox1.Items.Add("exception: " + ex.Message); }
             }
             if (cnt_wrong_label > 0) listBox1.Items.Add("Warning: \"" + stat_field.Text + "\" (the name of the statistics field specified below) is not a column in " + cnt_wrong_label + " out files. Will not add data to statistics.");
-            foreach (string lbl in labels) csvheader += lbl + ",";
+            
                         
             if (Addheader)
             {
+                foreach (string lbl in labels) csvheader += lbl + ",";
                 csvheader = "param, dir, bench, fail," + csvheader;
                 csvheader = csvheader.Substring(0, csvheader.Length - 1); // remove last ','
                 csvfile.Write(csvheader);                
@@ -609,9 +661,56 @@ namespace bench
                 MessageBox.Show("seems that " + csv.Text + " is in use");
                 throw;
             }
-            csvfile.Close();
+            csvfile.Close();            
+            if (ConfigurationManager.AppSettings["add_fails_column"] == "true") button_mark_fails_Click(null, EventArgs.Empty);
+            listBox1.Items.Add("updated csv file");
+        }
 
-            // generating the csv files for the scatter/cactus plots. 
+
+        void prepare_plot_data_fromCSV()
+        {
+            string line;
+            StreamReader csvfile;
+            List<Forplot> forplot = new List<Forplot>();  // saves information that is later used for generating the csv files for the plots. 
+            Forplot fp;
+            float maxval = 0;
+
+            if (IsFileLocked(new FileInfo(csv.Text)))
+            {
+                MessageBox.Show(csv.Text + " is in use\n");
+                throw new Exception();
+            }
+            init_plot_files();
+
+            csvfile = new StreamReader(csv.Text);      //(@"C:\temp\res.csv");
+            string header = csvfile.ReadLine(); // header
+            string[] cols = header.Split(',');
+
+            int time_col = Array.IndexOf(cols, stat_field.Text);
+            if (time_col < 0)
+            {
+                MessageBox.Show(stat_field.Text + " is not in the header of " + csv.Text);
+                csvfile.Close();
+                throw new Exception();
+            }
+            Regex rgx = new Regex(filter_str.Text.Replace(".", @"\.").Replace("*", @".*")); 
+                
+
+            while ((line = csvfile.ReadLine()) != null)
+            {
+                if (!rgx.IsMatch(line)) continue;
+                cols = line.Split(',');
+                fp = new Forplot(cols[2], strip_id_prefix(cols[0]), cols[time_col]);
+                forplot.Add(fp);
+                float val = float.Parse(cols[time_col]);
+                if (val > maxval) maxval = val;
+            }
+            if (forplot.Count == 0)
+            {
+                MessageBox.Show("no line int he csv file matches the regular expression " + filter_str.Text);
+                throw new Exception();
+            }
+            maxval++; // we add one because if there is one dot (or all the dots have the same vlaue, it creates a problem in latex' pgfplot). 
             foreach (Forplot forp in forplot)
             {
                 ((StreamWriter)csv4plot[normalize_string(forp.Param)]).WriteLine(
@@ -620,10 +719,55 @@ namespace bench
                 forp.Val + "," +
                 maxval + "s");
             }
-
             foreach (var key in csv4plot.Keys) ((StreamWriter)csv4plot[key]).Close();
-            if (ConfigurationManager.AppSettings["add_fails_column"] == "true") button_mark_fails_Click(null, EventArgs.Empty);
+            csvfile.Close();
         }
+
+
+        //void prepare_plot_data()
+        //{
+        //    int cnt_wrong_label = 0;
+        //    init_plot_files();
+        //    List<Forplot> forplot = new List<Forplot>();  // saves information that is later used for generating the csv files for the plots. 
+        //    Forplot fp;
+        //    float maxval = 0; // max value that is seen for the field that is being plotted (e.g., time). This will be used as the bound on the axis in the plots. 
+
+        //    foreach (DictionaryEntry entry in processes)
+        //    {
+        //        benchmark bm = entry.Value as benchmark;
+        //        Process p1 = (Process)entry.Key;
+        //        List<float> l = bm.res;         
+
+        //        try
+        //        {
+        //            if (l.Count > 0)  // if it is 0, it implies that it was a fail (typically T.O.).
+        //            {
+        //                // preparing plot data
+        //                int time_col = labels.IndexOf(stat_field.Text);
+        //                if (time_col < 0) { cnt_wrong_label++; }
+        //                else
+        //                {
+        //                    fp = new Forplot(bm.name, bm.param, l[time_col].ToString());
+        //                    forplot.Add(fp);
+        //                    if (l[time_col] > maxval) maxval = l[time_col];
+        //                }
+        //            }
+        //        }
+        //        catch (Exception ex) { listBox1.Items.Add("exception: " + ex.Message); }
+        //    }
+        //    if (cnt_wrong_label > 0) listBox1.Items.Add("Warning: \"" + stat_field.Text + "\" (the name of the statistics field specified below) is not a column in " + cnt_wrong_label + " out files. Will not add data to statistics.");
+            
+        //    // generating the csv files for the scatter/cactus plots. 
+        //    foreach (Forplot forp in forplot)
+        //    {
+        //        ((StreamWriter)csv4plot[normalize_string(forp.Param)]).WriteLine(
+        //        forp.Bench + "," + // full benchmark path
+        //        normalize_string(forp.Param) + "," + // param
+        //        forp.Val + "," +
+        //        maxval + "s");
+        //    }
+        //    foreach (var key in csv4plot.Keys) ((StreamWriter)csv4plot[key]).Close();            
+        //}
 
         string remove_label(string args)
         {
@@ -640,6 +784,7 @@ namespace bench
      
         Tuple<int, string, string> run_remote(string cmd, string args) // for unix commands. Synchronous. 
         {
+            string local_dir_Text="";
             Process p = new Process();
             //listBox1.Items.Add("remote: " + cmd + args);
             p.StartInfo.FileName = cmd;
@@ -647,6 +792,9 @@ namespace bench
             p.StartInfo.UseShellExecute = false;
             p.StartInfo.RedirectStandardOutput = true;// false;
             p.StartInfo.CreateNoWindow = true;
+            dir.Invoke(new Action(() => { local_dir_Text = dir.Text; }));
+            p.StartInfo.WorkingDirectory = local_dir_Text;    // when executing a scp command, this will bring the files to the benchmarks dir. 
+             
 
             try
             {
@@ -729,14 +877,14 @@ namespace bench
                         continue;
                     }
 
-                    string outfilename = outfile(checkBox_remote.Checked ? Path.GetFileName(fileName) : fileName, ext_param_list[par]);                         
+                    string outfilename = outfile(fileName, ext_param_list[par]);                         
                     if (filterOut(outfilename)) {
                         bg.ReportProgress(0, "skipping " + fileName + " due to existing out file.");
                         continue;
                     }                    
 
                     string id = getid(ext_param_list[par], fileName);
-                    if (entries.Contains(id)) continue;                    
+                    if (BenchmarkNamesFromCsv.Contains(id)) continue;                    
                     ok = false;                    
                     do
                     {
@@ -809,27 +957,27 @@ namespace bench
             if (cnt == 0) return;
             if (checkBox_remote.Checked)
             {
-                bg.ReportProgress(0, "Waiting for remote termination... "); //When all processes end, press `import to CSV'"); // because we do not check remotely if all processes ended.
+                bg.ReportProgress(0, "Waiting for remote termination... "); 
                 wait_for_remote_Termination();
-                bg.ReportProgress(6, ""); // import_out_to_csv                      
-                return;
+                bg.ReportProgress(6, ""); // import_remote_out     
             }
-            
-            wait_for_Termination();
-            
-            bg.ReportProgress(0, "* all processes finished *");
-            stopwatch.Stop();
+            else
+            {
+                wait_for_Termination();
 
-            string time = (Convert.ToSingle(stopwatch.ElapsedMilliseconds) / 1000.0).ToString();
-            bg.ReportProgress(0, "# of benchmarks:" + cnt);
+                bg.ReportProgress(0, "* all processes finished *");
+                stopwatch.Stop();
 
-            bg.ReportProgress(0, "parallel time = " + time);
-            bg.ReportProgress(0, "============================");
+                string time = (Convert.ToSingle(stopwatch.ElapsedMilliseconds) / 1000.0).ToString();
+                bg.ReportProgress(0, "# of benchmarks:" + cnt);
 
-            bg.ReportProgress(1, time); //label_paralel_time.Text            
-            bg.ReportProgress(5, failed.ToString());
+                bg.ReportProgress(0, "parallel time = " + time);
+                bg.ReportProgress(0, "============================");
 
-            bg.ReportProgress(6, ""); // import_out_to_csv                      
+                bg.ReportProgress(1, time); //label_paralel_time.Text            
+                bg.ReportProgress(5, failed.ToString());
+            }
+            bg.ReportProgress(7, ""); // buildcsv() 
         }
 
         private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e)
@@ -844,10 +992,10 @@ namespace bench
                 case 3: label_cnt.Text = log; break;
                 case 4: button1.Enabled = true; break;
                 case 5: label_fails.Text = log; break;
-                case 6: /*Debug.Assert(!checkBox_remote.Checked);  */
-                    try { import_out_to_csv(); }
+                case 6: try { import_remote_out(); }
                     catch { return; }
-                    break;                
+                    break;
+                case 7: buildcsv(); break;
             }
         }
 
@@ -876,26 +1024,16 @@ namespace bench
         }
 
         private void button_start_Click(object sender, EventArgs e)
-        {
-            try {
-            if (File.Exists(csv.Text))
-            {
-                StreamReader csvfile = new StreamReader(csv.Text);
-                csvfile.Close();
-            }
-            }
-            catch
-            {
+        {            
+            if (IsFileLocked(new FileInfo(csv.Text))) { 
                 MessageBox.Show("seems that " + csv.Text + " is in use. Close it and try again.");
                 return;
             }
 
-
             label_paralel_time.Text = "";            
             label_cnt.Text = "";
             label_fails.Text = "";
-            labels.Clear();
-            csvtext = "";
+            labels.Clear();            
             bg = new AbortableBackgroundWorker();
             processes.Clear();
             accum_results.Clear();
@@ -920,8 +1058,8 @@ namespace bench
 
             try
             {
-                if (checkBox_filter_csv.Checked && File.Exists(csv.Text)) readEntries();
-                else entries.Clear();
+                if (checkBox_filter_csv.Checked && File.Exists(csv.Text)) readBenchmarkNamesFromCsv();
+                else BenchmarkNamesFromCsv.Clear();
                 //init_csv_file();             
             }
             catch (Exception ex)
@@ -959,8 +1097,11 @@ namespace bench
                 }
                 else listBox1.Items.Add("Note: other processes may run on the same cores");
             }
-            benchmarksDir = dir.Text; searchPattern = filter_str.Text;
-            bg.RunWorkerAsync();           
+            // update before run, in case we changed. 
+            searchPattern = filter_str.Text;
+            benchmarksDir = dir.Text;
+            bg.RunWorkerAsync();
+            
         }
 
         private void button_kill_Click(object sender, EventArgs e)
@@ -1090,23 +1231,28 @@ namespace bench
 
         private void button_scatter_Click(object sender, EventArgs e)
         {
+            // pre-conditions
             int param1 = getCheckedRadioButton(scatter1);
             if (param1 == -1) return;
             int param2 = getCheckedRadioButton(scatter2);
             if (param2 == -1) return;
+            if (param1 == param2) { MessageBox.Show("Please choose 2 different params."); return; } 
             if (param_list[param1].Text.IndexOf("{") != -1 || param_list[param2].Text.IndexOf("{") != -1) { MessageBox.Show("Please specify scatter graphs without { } (product) symbols."); return; }
-            if (stat_field_Changed)
+            if (param_list[param1].Text == noOpTag || param_list[param2].Text == noOpTag) { MessageBox.Show("Param cannot be " + noOpTag); return; }
+
+            
+            //prepare_plot_data();
+            try
             {
-                if (MessageBox.Show("If stat field has changed, need to re-import results. Import ? ", "confirm re-import", MessageBoxButtons.YesNo) == DialogResult.Yes)
-                    try { import_out_to_csv(); }
-                    catch { return; }
-                stat_field_Changed = false;
+                prepare_plot_data_fromCSV();
             }
+            catch { return; }
+
+            // preparing process for running cpbm's batch file. 
             Process p = new Process();
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.FileName = "run-scatter.bat";
-            string f1 = normalize_string(param_list[param1].Text), f2 = normalize_string(param_list[param2].Text);            
-            if (f1 == noOpTag || f2 == noOpTag) { MessageBox.Show("Param cannot be " + noOpTag); return; }
+            string f1 = normalize_string(param_list[param1].Text), f2 = normalize_string(param_list[param2].Text);
             startInfo.Arguments = string.Compare(f1, f2) < 0 ? f1 + " " + f2 : f2 + " " + f1; // apparently make_graph treats them alphabetically, so we need to give them alphabetically to know what pdf is eventually generated. 
             startInfo.WorkingDirectory = graphDir;
 
@@ -1116,21 +1262,22 @@ namespace bench
                 MessageBox.Show("files " + fullName1 + " or " + fullName2 + " cannot be found. Try re-importing the out files to generate them.");
                 return;
             }
-                p.StartInfo = startInfo;
+            p.StartInfo = startInfo;
             p.Start();
         }
 
         private void button_cactus_Click(object sender, EventArgs e)
         {
-            Process p = new Process();
-            ProcessStartInfo startInfo = new ProcessStartInfo();
-            if (stat_field_Changed)
+            //   prepare_plot_data();
+            try
             {
-                if (MessageBox.Show("If stat field has changed, need to re-import results. Import ? ", "confirm re-import", MessageBoxButtons.YesNo) == DialogResult.Yes)
-                    try { import_out_to_csv(); }
-                    catch { return; }
-                stat_field_Changed = false;
+                prepare_plot_data_fromCSV();
             }
+            catch { return; }
+
+
+            Process p = new Process();
+            ProcessStartInfo startInfo = new ProcessStartInfo();            
             startInfo.FileName = "run-cactus.bat";
             startInfo.Arguments = "";
             expand_param_list();
@@ -1147,7 +1294,7 @@ namespace bench
         private void checkBox_remote_CheckedChanged(object sender, EventArgs e)
         {
             timeout.Enabled = min_mem.Enabled = exe.Enabled = checkedListBox_cores.Enabled = !(((CheckBox)sender).Checked);
-            checkBox_copy.Enabled = (((CheckBox)sender).Checked);
+            checkBox_copy.Enabled = button_import.Enabled = (((CheckBox)sender).Checked);
             checkBox_CheckedChanged(sender, e);
         }
 
@@ -1403,31 +1550,29 @@ namespace bench
             return false;
         }
 
-        void import_out_to_csv()
-        {            
-            if (IsFileLocked(new FileInfo(csv.Text)))
-            {
-                MessageBox.Show(csv.Text + " is in use\n");
-                throw new Exception();
-            }
-            int in_csv = 0, file_exists = 0, file_not_exist = 0;
-            string benchmarksDir = dir.Text,
-            searchPattern = filter_str.Text;            
+
+        // import remote files
+        void import_remote_out()
+        {
+            if (!checkBox_remote.Checked) return;
+            int in_csv = 0, imported =0;
             listBox1.Items.Add("--- Importing ---");
+
+            dir.Invoke(new Action(() => { benchmarksDir = dir.Text; }));                        
+            filter_str.Invoke(new Action(() => { searchPattern = filter_str.Text; }));
             var fileEntries = new DirectoryInfo(benchmarksDir).GetFiles(searchPattern, checkBox_rec.Checked ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
             if (fileEntries.Length == 0) listBox1.Items.Add("empty file list\n");
             
             processes.Clear();
-            if (checkBox_filter_csv.Checked && File.Exists(csv.Text)) readEntries();
-            else entries.Clear();            
-            if (checkBox_remote.Checked) listBox1.Items.Add("Files will be imported to " + Directory.GetCurrentDirectory());
-            bool first = true;
+            if (checkBox_filter_csv.Checked && File.Exists(csv.Text)) readBenchmarkNamesFromCsv();
+            else BenchmarkNamesFromCsv.Clear();            
+            //if (checkBox_remote.Checked) listBox1.Items.Add("Files will be imported to " + Directory.GetCurrentDirectory());
+            
             string remote_user = "", remote_bench_path = "";
-            if (checkBox_remote.Checked)
-            {
-                remote_user = ConfigurationManager.AppSettings["remote_user"] + "@" + ConfigurationManager.AppSettings["remote_domain"];
-                remote_bench_path = remote_user + ":" + ConfigurationManager.AppSettings["remote_bench_dir"];
-            }
+
+            remote_user = ConfigurationManager.AppSettings["remote_user"] + "@" + ConfigurationManager.AppSettings["remote_domain"];
+            remote_bench_path = remote_user + ":" + ConfigurationManager.AppSettings["remote_bench_dir"];
+
 
             expand_param_list();
             for (int par = 0; par < ext_param_list.Count; ++par)  // for each parameter
@@ -1436,63 +1581,31 @@ namespace bench
                 {
                     string fileName = fileinfo.FullName;                    
                     string id = getid(ext_param_list[par], fileName);
-                    if (entries.Contains(id)) { in_csv++; continue; }                    
-                    string outfileName = "";                    
-                    if (checkBox_remote.Checked) {
-                        outfileName = outfile(Path.GetFileName(fileName), ext_param_list[par]); // we import from the working directory (bench/bin/release/ or debug/)                        
-                        if (!filterOut(outfileName)) { 
-                            string outText = run_remote("scp ", remote_bench_path + outfileName + " " + outfileName).Item2; // download the file
-                            listBox1.Items.Add(outText);
-                        }
-                    }
-                    else  {
-                        outfileName = outfile(fileName, ext_param_list[par]); // we import from the same directory as the source cnf file
-                    }                    
-                    if (File.Exists(outfileName))
+                    if (BenchmarkNamesFromCsv.Contains(id)) { in_csv++; continue; }                    
+                    string outfileName = outfile(fileName, ext_param_list[par]); // we import from the same directory as the source cnf file;                    
+
+                    // download those files to the local dir. 
+                    string remote_outfileName = outfile(Path.GetFileName(fileName), ext_param_list[par]); // we import from the working directory (bench/bin/release/ or debug/)                        
+                    if (!filterOut(outfileName))
                     {
-                        Process p = new Process(); // we are only using this process as a carrier of the information from the file, so we can use the buildcsv function. 
-                        List<float> l = new List<float>();
-                        processes[p] = new benchmark(ext_param_list[par], fileName, l);
-                        
-                        bool res = read_out_file(p, outfileName, first);
-                        // uncomment the following to delete benchmark files that are SAT/too easy/too hard (see read_out_file_del)
-                        //bool del; // whether to delete the benchmark itself
-                        //bool res = read_out_file_del(p, outfileName, first, out del);
-                        //try  
-                        //{
-                        //    if (del) // result is SAT
-                        //    {
-                        //        //listBox1.Items.Add(fileName + " is SAT. Deleting.");
-                        //        File.Delete(fileName);
-                        //        processes.Remove(p);
-                        //    }
-                        //}
-                        //catch { return; } // we get here if there is inconsistencies in the labels
-                        file_exists++;
-                        if (first && res) first = false;  // we want to keep it 'first' as long as we did not read labels. 
-                    }
-                    else
-                    {
-                        listBox1.Items.Add(outfileName + " is missing");
-                        file_not_exist++;
+                        string outText = run_remote("scp ", remote_bench_path + remote_outfileName + " .").Item2; // download the file
+                        imported++;
+                        listBox1.Items.Add(outText);
                     }
                 }
             }
 
-            bool Addheader = !checkBox_filter_csv.Checked || !File.Exists(csv.Text);
-           
             listBox1.Items.Add(in_csv.ToString() + " benchmarks already in the csv file.");
-            listBox1.Items.Add(file_exists.ToString() + " benchmark results imported from out files.");
-            listBox1.Items.Add(file_not_exist.ToString() + " outfile missing.");
-
-            try { buildcsv(Addheader); }  // we wrap it with try just in case we will in the future write code after this line. We do not want it to continue in case of an exception.
-            catch { throw; }
+            listBox1.Items.Add(imported.ToString() + " imported.");            
         }
 
         private void button_import_Click(object sender, EventArgs e)  // import out files from remote server, and process them to generate the csv + plot files. 
         {
             labels.Clear();  // since we may import more than once. 
-            try { import_out_to_csv(); }
+            try {
+                import_remote_out();
+                buildcsv();
+            }
             catch { return; }
         }
 
@@ -1542,8 +1655,7 @@ namespace bench
             string element = ((ComboBox)sender).SelectedItem.ToString();
             fields fieldValue = (fields)Enum.Parse(typeof(fields), ((ComboBox)sender).Name);
             history[fieldValue].Remove(element);
-            history[fieldValue].Insert(0, element);
-            if (fieldValue == fields.stat_field) stat_field_Changed = true;
+            history[fieldValue].Insert(0, element);            
             write_history_file = true;
         }
 
@@ -1587,11 +1699,6 @@ namespace bench
             }
             else history[fieldValue][0] = checked_yesno;
             write_history_file = true;
-        }
-
-        private void stat_field_TextChanged(object sender, EventArgs e)
-        {
-            stat_field_Changed = true;
         }
 
         private void configToolStripMenuItem_Click(object sender, EventArgs e)

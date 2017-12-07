@@ -342,8 +342,7 @@
             this.button_import.Size = new System.Drawing.Size(70, 23);
             this.button_import.TabIndex = 38;
             this.button_import.Text = "import";
-            this.toolTip1.SetToolTip(this.button_import, "from .out files to csv file + plot files.  out files for remote are in the releas" +
-        "e/ directory. ");
+            this.toolTip1.SetToolTip(this.button_import, "downloads remote .out files, and updates the csv file. ");
             this.button_import.UseVisualStyleBackColor = true;
             this.button_import.Click += new System.EventHandler(this.button_import_Click);
             // 
@@ -585,7 +584,6 @@
             this.stat_field.Size = new System.Drawing.Size(143, 21);
             this.stat_field.TabIndex = 55;
             this.stat_field.SelectionChangeCommitted += new System.EventHandler(this.combo_SelectedIndexChanged);
-            this.stat_field.TextChanged += new System.EventHandler(this.stat_field_TextChanged);
             this.stat_field.Leave += new System.EventHandler(this.comboBox_Leave);
             // 
             // timeout
