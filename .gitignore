@@ -4,3 +4,4 @@ hbench/obj/
 hbench/bin/
 *.zip
 .vs/
+CodeGraphData/

@@ -77,13 +77,13 @@
             this.editHistoryFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.refreshMenusToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.markFailsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.configToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.label7 = new System.Windows.Forms.Label();
             this.stat_field = new System.Windows.Forms.ComboBox();
             this.timeout = new System.Windows.Forms.ComboBox();
             this.min_mem = new System.Windows.Forms.ComboBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.markFailsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
@@ -553,6 +553,13 @@
             this.refreshMenusToolStripMenuItem.Text = "Refresh menus";
             this.refreshMenusToolStripMenuItem.Click += new System.EventHandler(this.refreshMenusToolStripMenuItem_Click);
             // 
+            // markFailsToolStripMenuItem
+            // 
+            this.markFailsToolStripMenuItem.Name = "markFailsToolStripMenuItem";
+            this.markFailsToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
+            this.markFailsToolStripMenuItem.Text = "mark fails";
+            this.markFailsToolStripMenuItem.Click += new System.EventHandler(this.button_mark_fails_Click);
+            // 
             // configToolStripMenuItem
             // 
             this.configToolStripMenuItem.Name = "configToolStripMenuItem";
@@ -578,6 +585,7 @@
             this.stat_field.Size = new System.Drawing.Size(143, 21);
             this.stat_field.TabIndex = 55;
             this.stat_field.SelectionChangeCommitted += new System.EventHandler(this.combo_SelectedIndexChanged);
+            this.stat_field.TextChanged += new System.EventHandler(this.stat_field_TextChanged);
             this.stat_field.Leave += new System.EventHandler(this.comboBox_Leave);
             // 
             // timeout
@@ -612,13 +620,6 @@
             this.groupBox1.TabIndex = 59;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Graphs";
-            // 
-            // markFailsToolStripMenuItem
-            // 
-            this.markFailsToolStripMenuItem.Name = "markFailsToolStripMenuItem";
-            this.markFailsToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
-            this.markFailsToolStripMenuItem.Text = "mark fails";
-            this.markFailsToolStripMenuItem.Click += new System.EventHandler(this.button_mark_fails_Click);
             // 
             // filter
             // 
