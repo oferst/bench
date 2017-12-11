@@ -310,6 +310,7 @@
             this.button_scatter.Size = new System.Drawing.Size(75, 23);
             this.button_scatter.TabIndex = 34;
             this.button_scatter.Text = "scatter";
+            this.toolTip1.SetToolTip(this.button_scatter, "Based on data in the csv file");
             this.button_scatter.UseVisualStyleBackColor = true;
             this.button_scatter.Click += new System.EventHandler(this.button_scatter_Click);
             // 
@@ -320,6 +321,7 @@
             this.button_cactus.Size = new System.Drawing.Size(75, 23);
             this.button_cactus.TabIndex = 35;
             this.button_cactus.Text = "cactus";
+            this.toolTip1.SetToolTip(this.button_cactus, "Based on data in the csv file");
             this.button_cactus.UseVisualStyleBackColor = true;
             this.button_cactus.Click += new System.EventHandler(this.button_cactus_Click);
             // 

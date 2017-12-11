@@ -241,12 +241,14 @@ namespace bench
 
         #region utils
 
-        
+        // called from background-worker thread
         string normalize_string(string s)
         {
             return s.Replace("=", "").Replace(" ", "").Replace("_", "").Replace(labelTag, "").Replace("%f", "").Replace("-",""); // to make param a legal file name. Might have a problem with '-' because some parameters use negative values. We cannot use in the replacement string a "-" because having this in the file name makes scatter/cactus refer to this as a parameter.
         }
 
+
+        // called from background-worker thread
         string expand_string(string s, string filename, string param="", string outfilename="")  // the last two are used for remote execution
         {            
             string res = s.Replace("%f", "\"" + filename + "\"").Replace("%p", param).Replace("%o", outfilename);
@@ -261,6 +263,7 @@ namespace bench
             return param.Substring(3);
         }
 
+        // called from background-worker thread
         string getid(string param, string filename)
         {
             return id_prefix + param + "," +
@@ -330,6 +333,7 @@ namespace bench
             }
     }
 
+        // called from background-worker thread
         void kill_process(Object stateinfo)
         {
             Process p = (Process)stateinfo;         
@@ -350,11 +354,13 @@ namespace bench
             }            
         }
 
+        // called from background-worker thread
         string outfile(string filename, string param)
         {
             return filename + "." + normalize_string(param) + ".out";
         }
 
+        // called from background-worker thread
         void Log(string msg, bool tofile = true)
         {
             listBox1.Items.Add(msg);            
@@ -364,6 +370,7 @@ namespace bench
             }
         }
 
+        // called from background-worker thread
         bool filterOut(string outfilename) {
             return checkBox_filter_out.Checked && File.Exists(outfilename) &&
                    (!checkBox_rerun_empty_out.Checked || (new FileInfo(outfilename)).Length > 10);
@@ -437,7 +444,7 @@ namespace bench
 
         /// <summary>
         ///  same as read_out_file, but updates del=true if the file should be erased because
-        ///  ot os SAT, too easy (less than 30 sec.) or too hard (timed out).
+        ///  it is SAT, too easy (less than 30 sec.) or too hard (timed out).
         /// </summary>
         /// <param name="p"></param>
         /// <param name="filename"></param>
@@ -525,6 +532,7 @@ namespace bench
             return success;
         }
 
+        // called from background-worker thread
         void wait_for_remote_Termination()
         {
             string remote_user = ConfigurationManager.AppSettings["remote_user"] + "@" + ConfigurationManager.AppSettings["remote_domain"];
@@ -539,7 +547,7 @@ namespace bench
             bg.ReportProgress(0, "* All remote processes terminated *");
         }
 
-
+        // called from background-worker thread
         void wait_for_Termination()
         {
             foreach (DictionaryEntry entry in processes)
@@ -723,52 +731,8 @@ namespace bench
             csvfile.Close();
         }
 
-
-        //void prepare_plot_data()
-        //{
-        //    int cnt_wrong_label = 0;
-        //    init_plot_files();
-        //    List<Forplot> forplot = new List<Forplot>();  // saves information that is later used for generating the csv files for the plots. 
-        //    Forplot fp;
-        //    float maxval = 0; // max value that is seen for the field that is being plotted (e.g., time). This will be used as the bound on the axis in the plots. 
-
-        //    foreach (DictionaryEntry entry in processes)
-        //    {
-        //        benchmark bm = entry.Value as benchmark;
-        //        Process p1 = (Process)entry.Key;
-        //        List<float> l = bm.res;         
-
-        //        try
-        //        {
-        //            if (l.Count > 0)  // if it is 0, it implies that it was a fail (typically T.O.).
-        //            {
-        //                // preparing plot data
-        //                int time_col = labels.IndexOf(stat_field.Text);
-        //                if (time_col < 0) { cnt_wrong_label++; }
-        //                else
-        //                {
-        //                    fp = new Forplot(bm.name, bm.param, l[time_col].ToString());
-        //                    forplot.Add(fp);
-        //                    if (l[time_col] > maxval) maxval = l[time_col];
-        //                }
-        //            }
-        //        }
-        //        catch (Exception ex) { listBox1.Items.Add("exception: " + ex.Message); }
-        //    }
-        //    if (cnt_wrong_label > 0) listBox1.Items.Add("Warning: \"" + stat_field.Text + "\" (the name of the statistics field specified below) is not a column in " + cnt_wrong_label + " out files. Will not add data to statistics.");
-            
-        //    // generating the csv files for the scatter/cactus plots. 
-        //    foreach (Forplot forp in forplot)
-        //    {
-        //        ((StreamWriter)csv4plot[normalize_string(forp.Param)]).WriteLine(
-        //        forp.Bench + "," + // full benchmark path
-        //        normalize_string(forp.Param) + "," + // param
-        //        forp.Val + "," +
-        //        maxval + "s");
-        //    }
-        //    foreach (var key in csv4plot.Keys) ((StreamWriter)csv4plot[key]).Close();            
-        //}
-
+     
+        // called from background-worker thread
         string remove_label(string args)
         {
             string str = args; 
@@ -781,7 +745,8 @@ namespace bench
             }
             return str;
         }
-     
+
+        // called from background-worker thread
         Tuple<int, string, string> run_remote(string cmd, string args) // for unix commands. Synchronous. 
         {
             string local_dir_Text="";
@@ -807,6 +772,7 @@ namespace bench
             return new Tuple<int,string,string>(p.ExitCode, "> " + p.StartInfo.FileName + " " + p.StartInfo.Arguments, output);
         }
 
+        // called from background-worker thread
         Process run(string cmd, string args, string outfilename, int affinity = 0x007F)
         {
             Process p = new Process();
@@ -958,8 +924,7 @@ namespace bench
             if (checkBox_remote.Checked)
             {
                 bg.ReportProgress(0, "Waiting for remote termination... "); 
-                wait_for_remote_Termination();
-                bg.ReportProgress(6, ""); // import_remote_out     
+                wait_for_remote_Termination();                
             }
             else
             {
@@ -976,10 +941,10 @@ namespace bench
 
                 bg.ReportProgress(1, time); //label_paralel_time.Text            
                 bg.ReportProgress(5, failed.ToString());
-            }
-            bg.ReportProgress(7, ""); // buildcsv() 
+            }            
         }
 
+        // called from background-worker thread
         private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
             String log = e.UserState as string;
@@ -991,11 +956,7 @@ namespace bench
                 case 1: label_paralel_time.Text = log; break;                
                 case 3: label_cnt.Text = log; break;
                 case 4: button1.Enabled = true; break;
-                case 5: label_fails.Text = log; break;
-                case 6: try { import_remote_out(); }
-                    catch { return; }
-                    break;
-                case 7: buildcsv(); break;
+                case 5: label_fails.Text = log; break;                
             }
         }
 
@@ -1072,6 +1033,7 @@ namespace bench
             bg.WorkerReportsProgress = true;
             bg.DoWork += new DoWorkEventHandler(backgroundWorker1_DoWork);
             bg.ProgressChanged += new ProgressChangedEventHandler(backgroundWorker1_ProgressChanged);
+            bg.RunWorkerCompleted += new RunWorkerCompletedEventHandler(backgroundWorker1_Completed);
 
             if (!checkBox_remote.Checked)
             {
@@ -1102,6 +1064,18 @@ namespace bench
             benchmarksDir = dir.Text;
             bg.RunWorkerAsync();
             
+        }
+
+        private void backgroundWorker1_Completed(object sender, RunWorkerCompletedEventArgs e)
+        {
+            if (e.Cancelled || e.Error!= null) return;
+            if (checkBox_remote.Checked)
+            {
+                try { import_remote_out(); }
+                catch { return; }
+            }
+            
+            buildcsv();
         }
 
         private void button_kill_Click(object sender, EventArgs e)
@@ -1176,6 +1150,8 @@ namespace bench
         /// %f -par1 = 1 -par2 = 0.1 -par3
         /// ...
         /// </summary>
+        
+        // called from background-worker thread
         private void expand_param_list()
         {
             ext_param_list.Clear();
@@ -1552,6 +1528,7 @@ namespace bench
 
 
         // import remote files
+        // called from background-worker thread
         void import_remote_out()
         {
             if (!checkBox_remote.Checked) return;
