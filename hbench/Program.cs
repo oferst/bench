@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
@@ -31,6 +32,9 @@ namespace bench
             // experimental
             SetErrorMode(ErrorModes.SEM_NOGPFAULTERRORBOX | ErrorModes.SEM_NOOPENFILEERRORBOX); // this funtion prevents error dialog box to show up after application crash
             // 
+            DateTime exe_date = File.GetLastWriteTime(System.Reflection.Assembly.GetEntryAssembly().Location);
+            DateTime source_date = File.GetLastWriteTime(@"..\..\Form1.cs");
+            if (source_date > exe_date) MessageBox.Show("Warning: date of executable is before date of source Form1.cs. Recompile !","Warning",MessageBoxButtons.OK, MessageBoxIcon.Warning);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new filter());

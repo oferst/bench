@@ -715,7 +715,7 @@ namespace bench
             }
             if (forplot.Count == 0)
             {
-                MessageBox.Show("no line int he csv file matches the regular expression " + filter_str.Text);
+                MessageBox.Show("no line in the csv file matches the regular expression " + filter_str.Text);
                 throw new Exception();
             }
             maxval++; // we add one because if there is one dot (or all the dots have the same vlaue, it creates a problem in latex' pgfplot). 
