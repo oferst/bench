@@ -13,9 +13,6 @@ c:\results.csv
 -- param_groups
 %f, -param1 %f
 
--- stat_field
-Time
-
 -- core_list
 3,5,7
 

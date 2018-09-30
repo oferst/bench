@@ -84,6 +84,7 @@
             this.timeout = new System.Windows.Forms.ComboBox();
             this.min_mem = new System.Windows.Forms.ComboBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.copy = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
@@ -92,7 +93,7 @@
             // 
             this.button1.BackColor = System.Drawing.SystemColors.Control;
             this.button1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(177)));
-            this.button1.Location = new System.Drawing.Point(453, 590);
+            this.button1.Location = new System.Drawing.Point(658, 692);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(86, 36);
             this.button1.TabIndex = 1;
@@ -104,16 +105,17 @@
             // 
             this.listBox1.FormattingEnabled = true;
             this.listBox1.HorizontalScrollbar = true;
-            this.listBox1.Location = new System.Drawing.Point(4, 26);
+            this.listBox1.Location = new System.Drawing.Point(0, 25);
             this.listBox1.Name = "listBox1";
-            this.listBox1.Size = new System.Drawing.Size(535, 173);
+            this.listBox1.SelectionMode = System.Windows.Forms.SelectionMode.MultiSimple;
+            this.listBox1.Size = new System.Drawing.Size(744, 238);
             this.listBox1.TabIndex = 2;
             this.listBox1.TabStop = false;
             // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(12, 490);
+            this.label1.Location = new System.Drawing.Point(8, 582);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(57, 13);
             this.label1.TabIndex = 4;
@@ -122,7 +124,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(10, 341);
+            this.label2.Location = new System.Drawing.Point(6, 433);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(44, 13);
             this.label2.TabIndex = 5;
@@ -131,7 +133,7 @@
             // label_paralel_time
             // 
             this.label_paralel_time.AutoSize = true;
-            this.label_paralel_time.Location = new System.Drawing.Point(92, 491);
+            this.label_paralel_time.Location = new System.Drawing.Point(88, 583);
             this.label_paralel_time.Name = "label_paralel_time";
             this.label_paralel_time.Size = new System.Drawing.Size(16, 13);
             this.label_paralel_time.TabIndex = 6;
@@ -140,7 +142,7 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(8, 261);
+            this.label4.Location = new System.Drawing.Point(4, 353);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(26, 13);
             this.label4.TabIndex = 9;
@@ -149,7 +151,7 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(5, 234);
+            this.label5.Location = new System.Drawing.Point(1, 326);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(47, 13);
             this.label5.TabIndex = 10;
@@ -158,7 +160,7 @@
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(8, 208);
+            this.label6.Location = new System.Drawing.Point(4, 300);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(24, 13);
             this.label6.TabIndex = 12;
@@ -167,7 +169,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(276, 490);
+            this.label3.Location = new System.Drawing.Point(272, 582);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(53, 13);
             this.label3.TabIndex = 15;
@@ -176,7 +178,7 @@
             // label_cnt
             // 
             this.label_cnt.AutoSize = true;
-            this.label_cnt.Location = new System.Drawing.Point(330, 491);
+            this.label_cnt.Location = new System.Drawing.Point(326, 583);
             this.label_cnt.Name = "label_cnt";
             this.label_cnt.Size = new System.Drawing.Size(16, 13);
             this.label_cnt.TabIndex = 16;
@@ -185,7 +187,7 @@
             // label8
             // 
             this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(10, 316);
+            this.label8.Location = new System.Drawing.Point(416, 357);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(70, 13);
             this.label8.TabIndex = 19;
@@ -194,7 +196,7 @@
             // label9
             // 
             this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(195, 316);
+            this.label9.Location = new System.Drawing.Point(377, 383);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(111, 13);
             this.label9.TabIndex = 20;
@@ -203,7 +205,7 @@
             // label_fails
             // 
             this.label_fails.AutoSize = true;
-            this.label_fails.Location = new System.Drawing.Point(420, 491);
+            this.label_fails.Location = new System.Drawing.Point(416, 583);
             this.label_fails.Name = "label_fails";
             this.label_fails.Size = new System.Drawing.Size(16, 13);
             this.label_fails.TabIndex = 22;
@@ -212,7 +214,7 @@
             // label12
             // 
             this.label12.AutoSize = true;
-            this.label12.Location = new System.Drawing.Point(380, 491);
+            this.label12.Location = new System.Drawing.Point(376, 583);
             this.label12.Name = "label12";
             this.label12.Size = new System.Drawing.Size(38, 13);
             this.label12.TabIndex = 23;
@@ -221,7 +223,7 @@
             // label11
             // 
             this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(13, 520);
+            this.label11.Location = new System.Drawing.Point(9, 612);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(43, 13);
             this.label11.TabIndex = 25;
@@ -229,7 +231,7 @@
             // 
             // button_kill
             // 
-            this.button_kill.Location = new System.Drawing.Point(453, 561);
+            this.button_kill.Location = new System.Drawing.Point(658, 663);
             this.button_kill.Name = "button_kill";
             this.button_kill.Size = new System.Drawing.Size(86, 26);
             this.button_kill.TabIndex = 26;
@@ -239,7 +241,7 @@
             // 
             // button_opencsv
             // 
-            this.button_opencsv.Location = new System.Drawing.Point(276, 517);
+            this.button_opencsv.Location = new System.Drawing.Point(272, 609);
             this.button_opencsv.Name = "button_opencsv";
             this.button_opencsv.Size = new System.Drawing.Size(70, 23);
             this.button_opencsv.TabIndex = 27;
@@ -251,7 +253,7 @@
             // 
             this.checkedListBox_cores.CheckOnClick = true;
             this.checkedListBox_cores.FormattingEnabled = true;
-            this.checkedListBox_cores.Location = new System.Drawing.Point(465, 258);
+            this.checkedListBox_cores.Location = new System.Drawing.Point(672, 346);
             this.checkedListBox_cores.Name = "checkedListBox_cores";
             this.checkedListBox_cores.Size = new System.Drawing.Size(72, 79);
             this.checkedListBox_cores.TabIndex = 29;
@@ -259,7 +261,7 @@
             // label13
             // 
             this.label13.AutoSize = true;
-            this.label13.Location = new System.Drawing.Point(421, 261);
+            this.label13.Location = new System.Drawing.Point(629, 353);
             this.label13.Name = "label13";
             this.label13.Size = new System.Drawing.Size(37, 13);
             this.label13.TabIndex = 30;
@@ -268,7 +270,7 @@
             // checkBox_rec
             // 
             this.checkBox_rec.AutoSize = true;
-            this.checkBox_rec.Location = new System.Drawing.Point(501, 234);
+            this.checkBox_rec.Location = new System.Drawing.Point(707, 326);
             this.checkBox_rec.Name = "checkBox_rec";
             this.checkBox_rec.Size = new System.Drawing.Size(41, 17);
             this.checkBox_rec.TabIndex = 31;
@@ -280,9 +282,9 @@
             // 
             this.panel1.AutoScroll = true;
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panel1.Location = new System.Drawing.Point(15, 363);
+            this.panel1.Location = new System.Drawing.Point(11, 455);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(522, 123);
+            this.panel1.Size = new System.Drawing.Size(733, 123);
             this.panel1.TabIndex = 32;
             this.toolTip1.SetToolTip(this.panel1, "Command line options. Example: \"%f -par1={1 | 2}\". %f expands to the benchmark na" +
         "me. {1 | 2} expends to two separate runs. Permits cross-product. you may add #<t" +
@@ -293,7 +295,7 @@
             this.checkBox_filter_csv.AutoSize = true;
             this.checkBox_filter_csv.Checked = true;
             this.checkBox_filter_csv.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox_filter_csv.Location = new System.Drawing.Point(137, 289);
+            this.checkBox_filter_csv.Location = new System.Drawing.Point(133, 381);
             this.checkBox_filter_csv.Name = "checkBox_filter_csv";
             this.checkBox_filter_csv.Size = new System.Drawing.Size(59, 17);
             this.checkBox_filter_csv.TabIndex = 33;
@@ -328,7 +330,7 @@
             // checkBox_remote
             // 
             this.checkBox_remote.AutoSize = true;
-            this.checkBox_remote.Location = new System.Drawing.Point(348, 570);
+            this.checkBox_remote.Location = new System.Drawing.Point(553, 672);
             this.checkBox_remote.Name = "checkBox_remote";
             this.checkBox_remote.Size = new System.Drawing.Size(58, 17);
             this.checkBox_remote.TabIndex = 37;
@@ -339,7 +341,7 @@
             // 
             // button_import
             // 
-            this.button_import.Location = new System.Drawing.Point(352, 517);
+            this.button_import.Location = new System.Drawing.Point(348, 609);
             this.button_import.Name = "button_import";
             this.button_import.Size = new System.Drawing.Size(70, 23);
             this.button_import.TabIndex = 38;
@@ -351,7 +353,7 @@
             // checkBox_filter_out
             // 
             this.checkBox_filter_out.AutoSize = true;
-            this.checkBox_filter_out.Location = new System.Drawing.Point(202, 289);
+            this.checkBox_filter_out.Location = new System.Drawing.Point(198, 381);
             this.checkBox_filter_out.Name = "checkBox_filter_out";
             this.checkBox_filter_out.Size = new System.Drawing.Size(62, 17);
             this.checkBox_filter_out.TabIndex = 41;
@@ -363,7 +365,7 @@
             // checkBox_rerun_empty_out
             // 
             this.checkBox_rerun_empty_out.AutoSize = true;
-            this.checkBox_rerun_empty_out.Location = new System.Drawing.Point(276, 289);
+            this.checkBox_rerun_empty_out.Location = new System.Drawing.Point(272, 381);
             this.checkBox_rerun_empty_out.Name = "checkBox_rerun_empty_out";
             this.checkBox_rerun_empty_out.Size = new System.Drawing.Size(99, 17);
             this.checkBox_rerun_empty_out.TabIndex = 43;
@@ -377,7 +379,7 @@
             this.checkBox_skip_long_runs.AutoSize = true;
             this.checkBox_skip_long_runs.Checked = true;
             this.checkBox_skip_long_runs.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox_skip_long_runs.Location = new System.Drawing.Point(276, 261);
+            this.checkBox_skip_long_runs.Location = new System.Drawing.Point(272, 353);
             this.checkBox_skip_long_runs.Name = "checkBox_skip_long_runs";
             this.checkBox_skip_long_runs.Size = new System.Drawing.Size(93, 17);
             this.checkBox_skip_long_runs.TabIndex = 44;
@@ -389,7 +391,7 @@
             // checkBox_copy
             // 
             this.checkBox_copy.AutoSize = true;
-            this.checkBox_copy.Location = new System.Drawing.Point(348, 593);
+            this.checkBox_copy.Location = new System.Drawing.Point(553, 695);
             this.checkBox_copy.Name = "checkBox_copy";
             this.checkBox_copy.Size = new System.Drawing.Size(96, 17);
             this.checkBox_copy.TabIndex = 58;
@@ -401,7 +403,7 @@
             // label10
             // 
             this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(54, 291);
+            this.label10.Location = new System.Drawing.Point(50, 383);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(77, 13);
             this.label10.TabIndex = 42;
@@ -409,7 +411,7 @@
             // 
             // button4
             // 
-            this.button4.Location = new System.Drawing.Point(446, 232);
+            this.button4.Location = new System.Drawing.Point(630, 325);
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(32, 21);
             this.button4.TabIndex = 46;
@@ -420,9 +422,9 @@
             // exe
             // 
             this.exe.FormattingEnabled = true;
-            this.exe.Location = new System.Drawing.Point(57, 205);
+            this.exe.Location = new System.Drawing.Point(53, 297);
             this.exe.Name = "exe";
-            this.exe.Size = new System.Drawing.Size(482, 21);
+            this.exe.Size = new System.Drawing.Size(691, 21);
             this.exe.TabIndex = 48;
             this.exe.SelectionChangeCommitted += new System.EventHandler(this.combo_SelectedIndexChanged);
             this.exe.Leave += new System.EventHandler(this.comboBox_Leave);
@@ -430,9 +432,9 @@
             // dir
             // 
             this.dir.FormattingEnabled = true;
-            this.dir.Location = new System.Drawing.Point(57, 233);
+            this.dir.Location = new System.Drawing.Point(53, 325);
             this.dir.Name = "dir";
-            this.dir.Size = new System.Drawing.Size(379, 21);
+            this.dir.Size = new System.Drawing.Size(571, 21);
             this.dir.TabIndex = 49;
             this.dir.SelectionChangeCommitted += new System.EventHandler(this.combo_SelectedIndexChanged);
             this.dir.Leave += new System.EventHandler(this.comboBox_Leave);
@@ -440,7 +442,7 @@
             // filter_str
             // 
             this.filter_str.FormattingEnabled = true;
-            this.filter_str.Location = new System.Drawing.Point(58, 259);
+            this.filter_str.Location = new System.Drawing.Point(54, 351);
             this.filter_str.Name = "filter_str";
             this.filter_str.Size = new System.Drawing.Size(207, 21);
             this.filter_str.TabIndex = 50;
@@ -450,7 +452,7 @@
             // csv
             // 
             this.csv.FormattingEnabled = true;
-            this.csv.Location = new System.Drawing.Point(65, 517);
+            this.csv.Location = new System.Drawing.Point(61, 609);
             this.csv.Name = "csv";
             this.csv.Size = new System.Drawing.Size(205, 21);
             this.csv.TabIndex = 51;
@@ -460,9 +462,9 @@
             // param_groups
             // 
             this.param_groups.FormattingEnabled = true;
-            this.param_groups.Location = new System.Drawing.Point(57, 339);
+            this.param_groups.Location = new System.Drawing.Point(53, 431);
             this.param_groups.Name = "param_groups";
-            this.param_groups.Size = new System.Drawing.Size(482, 21);
+            this.param_groups.Size = new System.Drawing.Size(691, 21);
             this.param_groups.TabIndex = 52;
             this.param_groups.SelectedIndexChanged += new System.EventHandler(this.param_groups_SelectedIndexChanged);
             this.param_groups.Leave += new System.EventHandler(this.comboBox_Leave);
@@ -473,7 +475,7 @@
             this.cleanupToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(590, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(780, 24);
             this.menuStrip1.TabIndex = 53;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -591,7 +593,7 @@
             // timeout
             // 
             this.timeout.FormattingEnabled = true;
-            this.timeout.Location = new System.Drawing.Point(87, 312);
+            this.timeout.Location = new System.Drawing.Point(493, 353);
             this.timeout.Name = "timeout";
             this.timeout.Size = new System.Drawing.Size(97, 21);
             this.timeout.TabIndex = 56;
@@ -601,7 +603,7 @@
             // min_mem
             // 
             this.min_mem.FormattingEnabled = true;
-            this.min_mem.Location = new System.Drawing.Point(307, 312);
+            this.min_mem.Location = new System.Drawing.Point(493, 379);
             this.min_mem.Name = "min_mem";
             this.min_mem.Size = new System.Drawing.Size(122, 21);
             this.min_mem.TabIndex = 57;
@@ -614,18 +616,29 @@
             this.groupBox1.Controls.Add(this.label7);
             this.groupBox1.Controls.Add(this.button_cactus);
             this.groupBox1.Controls.Add(this.button_scatter);
-            this.groupBox1.Location = new System.Drawing.Point(4, 554);
+            this.groupBox1.Location = new System.Drawing.Point(0, 646);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(265, 78);
             this.groupBox1.TabIndex = 59;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Graphs";
             // 
+            // copy
+            // 
+            this.copy.Location = new System.Drawing.Point(1, 269);
+            this.copy.Name = "copy";
+            this.copy.Size = new System.Drawing.Size(103, 23);
+            this.copy.TabIndex = 60;
+            this.copy.Text = "copy to clipboard";
+            this.copy.UseVisualStyleBackColor = true;
+            this.copy.Click += new System.EventHandler(this.copy_Click);
+            // 
             // filter
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(590, 644);
+            this.ClientSize = new System.Drawing.Size(780, 749);
+            this.Controls.Add(this.copy);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.checkBox_copy);
             this.Controls.Add(this.min_mem);
@@ -735,6 +748,7 @@
         private System.Windows.Forms.CheckBox checkBox_copy;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.ToolStripMenuItem markFailsToolStripMenuItem;
+        private System.Windows.Forms.Button copy;
     }
 }
 

@@ -111,7 +111,7 @@ namespace bench
             {
                 param_list[i] = new TextBox();                
                 param_list[i].Location = new Point(60,  i * 25);
-                param_list[i].Size = new Size(429, 20);     
+                param_list[i].Size = new Size(640, 20);     
                 panel1.Controls.Add(param_list[i]);
 
                 scatter1[i] = new RadioButton();                
@@ -420,8 +420,9 @@ namespace bench
                         else {
                             if (!labels.Exists(x => x == tag))
                             {
-                                listBox1.Items.Add("label " + tag + " in file " + filename + " did not appear in the first file. Aborting");
-                                throw(new Exception("incompatible labels"));
+                                listBox1.Items.Add("Warning: label " + tag + " in file " + filename + " did not appear in the first file. This will lead to non alighed data in the csv file. ");
+                                //   throw(new Exception("incompatible labels"));                                
+                                labels.Add(tag);
                               //  return true;
                             }
                         }                        
@@ -650,8 +651,10 @@ namespace bench
                 csvtext += "\n";
             }
             if (cnt_wrong_label > 0) listBox1.Items.Add("Warning: \"" + stat_field.Text + "\" (the name of the statistics field specified below) is not a column in " + cnt_wrong_label + " out files. Will not add data to statistics.");
-            
-                        
+
+            stat_field.DataSource = null;
+            stat_field.Items.Clear();
+            foreach (string lbl in labels) stat_field.Items.Add(lbl);
             if (Addheader)
             {
                 foreach (string lbl in labels) csvheader += lbl + ",";
@@ -986,7 +989,7 @@ namespace bench
 
         private void button_start_Click(object sender, EventArgs e)
         {            
-            if (IsFileLocked(new FileInfo(csv.Text))) { 
+            if (File.Exists(csv.Text) && IsFileLocked(new FileInfo(csv.Text))) { 
                 MessageBox.Show("seems that " + csv.Text + " is in use. Close it and try again.");
                 return;
             }
@@ -1174,7 +1177,15 @@ namespace bench
                     }
                     indices.Add(new Tuple<int, int>(start, end));
                     string s = str.Substring(start + 1, end - start - 1); //the contents of the set
-                    sets.Add(s.Split(setSeparator)); 
+                    sets.Add(s.Split(setSeparator));
+                    foreach (string st in sets.Last())
+                    {
+                        if (st == "")
+                        {
+                            MessageBox.Show("Warning: Empty element in parameter set " + sets.Count);
+                            return;
+                        }
+                    }
                 }
                 string res = "";                
                 if (sets.Count > 0)
@@ -1187,7 +1198,7 @@ namespace bench
                         foreach (string st in route)
                         {
                             res += st; // e.g., res = "-par1 = 1"
-                            if (i < indices.Count - 1) res += str.Substring(indices[i].Item2 + 1, indices[i + 1].Item1 - 1 - indices[i].Item2 - 1); // e.g., res = "-par1 = 1 -par2 = "
+                            if (i < indices.Count - 1) res += str.Substring(indices[i].Item2 + 1, indices[i + 1].Item1 - 1 - indices[i].Item2); // e.g., res = "-par1 = 1 -par2 = "
                             else res += str.Substring(indices[i].Item2 + 1); // the suffix
                             i++;
                         }
@@ -1685,6 +1696,16 @@ namespace bench
             p.StartInfo.Arguments = "hbench.exe.config";
             //p.StartInfo.WorkingDirectory = Application.StartupPath;
             p.Start();
+        }
+
+        private void copy_Click(object sender, EventArgs e)
+        {                   
+                string s = "";
+                foreach (object o in listBox1.Items)
+                {
+                    s += o.ToString() + "\n";
+                }
+                Clipboard.SetText(s);            
         }
 
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
