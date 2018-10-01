@@ -30,6 +30,7 @@ namespace bench
         StreamWriter logfile = new StreamWriter(ConfigurationManager.AppSettings["log"]); // @"C:\temp\log.txt");        
         string stat_tag = ConfigurationManager.AppSettings["stat_tag"]; // ###
         string abort_tag = ConfigurationManager.AppSettings["abort_tag"];
+        const string timedout_Tag = "timedout";
         bool hyperthreading = ConfigurationManager.AppSettings["hyperthreading"] == "true";
         static int param_list_size = int.Parse(ConfigurationManager.AppSettings["param_list_size"]);
 
@@ -306,7 +307,9 @@ namespace bench
         private void build_process_tree(int pid, ref List<int> kill_list)
         {
             kill_list.Add(pid);
-            Process proc = Process.GetProcessById(pid);
+            Process proc;
+            try { proc = Process.GetProcessById(pid); }
+            catch { return; } // by now it has exited. 
             bg.ReportProgress(0, "added process id = " + proc.Id + " (" + proc.ProcessName + ")");
             ManagementObjectSearcher searcher = new ManagementObjectSearcher
                ("Select * From Win32_Process Where ParentProcessID=" + pid);
@@ -339,17 +342,12 @@ namespace bench
             Process p = (Process)stateinfo;         
             if (!p.HasExited)
             {
-                bg.ReportProgress(0, "timeout: process killed: " + p.StartInfo.Arguments);
-
-                // updating time field                
+                bg.ReportProgress(0, "timeout: process killed: " + p.StartInfo.Arguments);                
                 benchmark data = (benchmark)processes[p];                
                 failed_benchmarks.Add(data.name);
                 failed++;
-                bg.ReportProgress(5, failed.ToString());
-                List<float> l = data.res;
-                string local_timeout_Text = "";
-                timeout.Invoke(new Action(() => { local_timeout_Text = timeout.Text; })); // since we are not on the form's thread, this is a safe way to get information from there. Without it we may get an exception.
-                l.Add(Convert.ToInt32(local_timeout_Text) + 1); // +1 for debugging
+                bg.ReportProgress(5, failed.ToString());                
+                data.timedout = true;
                 KillProcessAndChildren(p.Id);
             }            
         }
@@ -408,30 +406,36 @@ namespace bench
                         return true;
                     }
 
-                     
                     float res;
-                    if (float.TryParse(parts[2], out res))
-                    {
-                        if (first) {
-                            Debug.Assert(!labels.Exists(x => x == tag));
-                            labels.Add(tag);
-                            success = true;
-                        }
-                        else {
-                            if (!labels.Exists(x => x == tag))
-                            {
-                                listBox1.Items.Add("Warning: label " + tag + " in file " + filename + " did not appear in the first file. This will lead to non alighed data in the csv file. ");
-                                //   throw(new Exception("incompatible labels"));                                
-                                labels.Add(tag);
-                              //  return true;
-                            }
-                        }                        
 
-                        benchmark data = (benchmark)processes[p];
-                        data.res.Add(res);
-                        
+                    benchmark data = (benchmark)processes[p];
+                    if (tag == timedout_Tag) data.timedout = true;
+                    else
+                    {
+                        if (float.TryParse(parts[2], out res))
+                        {
+                            if (first)
+                            {
+                                Debug.Assert(!labels.Exists(x => x == tag));
+                                labels.Add(tag);
+                                success = true;
+                            }
+                            else
+                            {
+                                if (!labels.Exists(x => x == tag))
+                                {
+                                    listBox1.Items.Add("Warning: label " + tag + " in file " + filename + " did not appear in the first file. This will lead to non alighed data in the csv file. ");
+                                    //   throw(new Exception("incompatible labels"));                                
+                                    labels.Add(tag);
+                                    //  return true;
+                                }
+                            }
+
+                            data.res.Add(res);
+
+                        }
+                        else listBox1.Items.Add("skipping non-numerical data: " + parts[2]);
                     }
-                    else listBox1.Items.Add("skipping non-numerical data: " + parts[2]);
                 }
             }
             file.Close();
@@ -561,17 +565,16 @@ namespace bench
         void prepareDataForCsv()
         {
             int in_csv = 0;
-            
+
             filter_str.Invoke(new Action(() => { searchPattern = filter_str.Text; }));
             dir.Invoke(new Action(() => { benchmarksDir = dir.Text; }));
             var fileEntries = new DirectoryInfo(benchmarksDir).GetFiles(searchPattern, checkBox_rec.Checked ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
             if (fileEntries.Length == 0) listBox1.Items.Add("empty file list\n");
 
-            processes.Clear();
             if (checkBox_filter_csv.Checked && File.Exists(csv.Text)) readBenchmarkNamesFromCsv();
             else BenchmarkNamesFromCsv.Clear();
-            
-            bool first = true;            
+
+            bool first = true;
 
             expand_param_list();
             for (int par = 0; par < ext_param_list.Count; ++par)  // for each parameter
@@ -585,11 +588,35 @@ namespace bench
 
                     if (File.Exists(outfileName))
                     {
-                        Process p = new Process(); // we are only using this process as a carrier of the information from the file, so we can use the buildcsv function. 
-                        List<float> l = new List<float>();
-                        processes[p] = new benchmark(ext_param_list[par], fileName, l);
+                        bool exists = false;
+                        Process p1 = null;
+                        // Adding a 'timedout' label to output files of processes that timed-out. 
+                        foreach (Process p in processes.Keys)
+                        {
+                            benchmark bench = processes[p] as benchmark;
+                            if (bench.param != ext_param_list[par] || bench.name != fileName) continue;
+                            exists = true;
+                            p1 = p;
+                            if (bench.timedout)
+                            {
+                                using (StreamWriter sw = new StreamWriter(outfileName, true))
+                                {
+                                    sw.WriteLine(stat_tag + " " + timedout_Tag + " 1");
+                                }
+                                bench.res.Clear();
+                            }
+                            break;
+                        }
 
-                        bool res = read_out_file(p, outfileName, first);
+                        if (!exists) // this happens only when there is already an .out file, hence a new process is not added to processes
+                        {
+                            p1 = new Process(); // we are only using this process as a carrier of the information from the file, so we can use the buildcsv function. 
+                            List<float> l = new List<float>();
+                            processes[p1] = new benchmark(ext_param_list[par], fileName, l);
+                        }
+
+                        bool res = read_out_file(p1, outfileName, first);
+
                         // uncomment the following to delete benchmark files that are SAT/too easy/too hard (see read_out_file_del)
                         //bool del; // whether to delete the benchmark itself
                         //bool res = read_out_file_del(p, outfileName, first, out del);
@@ -625,6 +652,7 @@ namespace bench
                 csvfile = new StreamWriter(csv.Text, checkBox_filter_csv.Checked);
             }
             catch
+
             {
                 MessageBox.Show("Cannot open " + csv.Text);
                 throw;
@@ -638,13 +666,14 @@ namespace bench
                 csvtext += getid(bm.param, bm.name) + ","; // benchmark
                 if (l.Count > 0)
                 {
-                    csvtext += ","; // for the 'fail' column
+                    csvtext += ",,"; // for the 'fail/timedout' column
                     for (int i = 0; i < l.Count; ++i)
                         csvtext += l[i].ToString() + ",";
                 }
-                else   // in case of timeout / mem-out / whatever
+                else   // in case of timeout / other fails (mem-out / whatever)
                 {
-                    csvtext += "1,";
+                    if (bm.timedout) csvtext += ",1,";
+                    else csvtext += "1,,";
                     for (int j = 0; j < labels.Count; ++j) csvtext += ","; // creating empty columns, because we later may add a last column 'failed with some param' so all rows must be aligned. 
                  }
                 //csvtext = csvtext.Substring(0, csvtext.Length - 1); // remove last ','
@@ -658,7 +687,7 @@ namespace bench
             if (Addheader)
             {
                 foreach (string lbl in labels) csvheader += lbl + ",";
-                csvheader = "param, dir, bench, fail," + csvheader;
+                csvheader = "param, dir, bench, fail, timedout," + csvheader;
                 csvheader = csvheader.Substring(0, csvheader.Length - 1); // remove last ','
                 csvfile.Write(csvheader);                
                 csvfile.WriteLine();
@@ -830,7 +859,7 @@ namespace bench
             {
                 if (ext_param_list[par].IndexOf("%f") == -1)
                 {
-                    listBox1.Items.Add("Warning: param " + ext_param_list[par] + "does not include a %f directive. Skipping");
+                    listBox1.Items.Add("Warning: param " + ext_param_list[par] + " does not include a %f directive. Skipping");
                     continue;
                 }
                 bg.ReportProgress(0, "- - - - - " + ext_param_list[par] + "- - - - - ");
@@ -848,7 +877,7 @@ namespace bench
 
                     string outfilename = outfile(fileName, ext_param_list[par]);                         
                     if (filterOut(outfilename)) {
-                        bg.ReportProgress(0, "skipping " + fileName + " due to existing out file.");
+                        bg.ReportProgress(0, "Skipping " + fileName + " due to existing out file.");
                         continue;
                     }                    
 
@@ -1421,9 +1450,9 @@ namespace bench
                     cnt++;
                     if (header) { header = false; continue; }
                     string failed = getfield(line, 4);
-                    if (failed.Length == 0) continue;
-                    Debug.Assert(failed == "1");
-                    listBox1.Items.Add("failed line: " + line);
+                    string timedout = getfield(line, 5);
+                    if (failed.Length == 0 && timedout.Length == 0) continue;                    
+                    listBox1.Items.Add("failed/timeout benchmark: " + line);
                     failed_atleast_once.Add(Path.Combine(getfield(line, 2), getfield(line, 3)));
                 }
             }
@@ -1462,11 +1491,11 @@ namespace bench
                 if (failed_column > 0) line_st = line_st.Substring(0, line_st.LastIndexOf(",")); // removing old value, including ','
                 if ((!failed_atleast_once.Contains(Path.Combine(getfield(line, 2), getfield(line, 3)))))
                 {                    
-                    lines.Add(line_st + ",");
+                    lines.Add(line_st );
                 }
                 else
                 {
-                    lines.Add(line_st + ", 1");
+                    lines.Add(line_st + "1");
                 }
             }        
 
@@ -1761,12 +1790,14 @@ namespace bench
         public string param;
         public string name;
         public List<float> res;
+        public bool timedout;
 
         public benchmark(string param, string name, List<float> res)
         {
             this.param = param;
             this.name = name;
             this.res = res;
+            this.timedout = false;
         }
     }
 
