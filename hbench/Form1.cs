@@ -361,7 +361,8 @@ namespace bench
         // called from background-worker thread
         void Log(string msg, bool tofile = true)
         {
-            listBox1.Items.Add(msg);            
+            listBox1.Items.Add(msg); 
+            listBox1.Refresh();
             if (tofile)
             {
                 logfile.WriteLine(msg);
@@ -545,7 +546,7 @@ namespace bench
             
             while (true)
             {
-                res = run_remote("ssh ", remote_user + " \"qstat -u" + ConfigurationManager.AppSettings["remote_user"] + "| grep \"" + ConfigurationManager.AppSettings["remote_user"] + "\"").Item1;
+                res = run_remote("ssh ", remote_user + " \"qstat -u " + ConfigurationManager.AppSettings["remote_user"] + "| grep \"" + ConfigurationManager.AppSettings["remote_user"] + "\"").Item1;
                 if (res != 0) break;                
                 Thread.Sleep(5000); // 5 seconds wait                        
             }
@@ -767,13 +768,19 @@ namespace bench
         // called from background-worker thread
         string remove_label(string args)
         {
-            string str = args; 
-            int s = str.IndexOf(labelTag);
-            if (s >= 0)
+            string str = args;             
+            bool ok = false;
+            while (!ok)
             {
-                int l = str.Substring(s).IndexOf(' ');
-                if (l == -1) str = args.Remove(s); // when the label is at the end, it is not ending with a space
-                else str = args.Remove(s, l);
+                ok = true;
+                int s = str.IndexOf(labelTag);
+                if (s >= 0)
+                {
+                    ok = false;
+                    int l = str.Substring(s).IndexOf(' ');
+                    if (l == -1) str = str.Remove(s); // when the label is at the end, it is not ending with a space
+                    else str = str.Remove(s, l);
+                }
             }
             return str;
         }
@@ -783,7 +790,9 @@ namespace bench
         {
             string local_dir_Text="";
             Process p = new Process();
-            //listBox1.Items.Add("remote: " + cmd + args);
+            string msg = "remote: " + cmd + args;            
+            listBox1.Items.Add("remote: " + cmd + args);
+            listBox1.Refresh();
             p.StartInfo.FileName = cmd;
             p.StartInfo.Arguments = remove_label(args);
             p.StartInfo.UseShellExecute = false;
@@ -915,7 +924,7 @@ namespace bench
                                         bg.ReportProgress(3, cnt.ToString()); // label_cnt.Text                                         
                                         Tuple<int, string, string> outTuple = run_remote(
                                             "ssh ",
-                                            remote_user + " \"" + expand_string(ConfigurationManager.AppSettings["remote_ssh_cmd"], bench_remote_path, ext_param_list[par], outfile(bench_remote_path, ext_param_list[par]))
+                                            remote_user + " \"" + expand_string(ConfigurationManager.AppSettings["remote_ssh_cmd"], bench_remote_path, remove_label(ext_param_list[par]), outfile(bench_remote_path, ext_param_list[par]))
                                             );
                                         bg.ReportProgress(0, outTuple.Item2); // command
                                         bg.ReportProgress(0, outTuple.Item3); // output
@@ -974,6 +983,16 @@ namespace bench
                 bg.ReportProgress(1, time); //label_paralel_time.Text            
                 bg.ReportProgress(5, failed.ToString());
             }            
+        }
+
+        private Tuple<int, string, string> run_remote(string v, object p)
+        {
+            throw new NotImplementedException();
+        }
+
+        private string expand_string(string v1, string bench_remote_path, object p, string v2)
+        {
+            throw new NotImplementedException();
         }
 
         // called from background-worker thread
@@ -1091,6 +1110,7 @@ namespace bench
                 }
                 else listBox1.Items.Add("Note: other processes may run on the same cores");
             }
+
             // update before run, in case we changed. 
             searchPattern = filter_str.Text;
             benchmarksDir = dir.Text;
@@ -1623,7 +1643,10 @@ namespace bench
                 import_remote_out();
                 buildcsv();
             }
-            catch { return; }
+            catch (Exception ex)
+            {
+                Log(ex.Message);
+                return; }
         }
 
         private void button_del_allfail_Click(object sender, EventArgs e) // delete benchmarks that no combination of parameters solved.
