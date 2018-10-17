@@ -1760,6 +1760,11 @@ namespace bench
                 Clipboard.SetText(s);            
         }
 
+        private void btn_clear_Click(object sender, EventArgs e)
+        {
+            listBox1.Items.Clear();
+        }
+
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
             // here we update the history file if needed. 

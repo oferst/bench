@@ -85,6 +85,7 @@
             this.min_mem = new System.Windows.Forms.ComboBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.copy = new System.Windows.Forms.Button();
+            this.btn_clear = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
@@ -625,7 +626,7 @@
             // 
             // copy
             // 
-            this.copy.Location = new System.Drawing.Point(1, 269);
+            this.copy.Location = new System.Drawing.Point(1, 270);
             this.copy.Name = "copy";
             this.copy.Size = new System.Drawing.Size(103, 23);
             this.copy.TabIndex = 60;
@@ -633,11 +634,22 @@
             this.copy.UseVisualStyleBackColor = true;
             this.copy.Click += new System.EventHandler(this.copy_Click);
             // 
+            // btn_clear
+            // 
+            this.btn_clear.Location = new System.Drawing.Point(111, 270);
+            this.btn_clear.Name = "btn_clear";
+            this.btn_clear.Size = new System.Drawing.Size(103, 23);
+            this.btn_clear.TabIndex = 61;
+            this.btn_clear.Text = "clear";
+            this.btn_clear.UseVisualStyleBackColor = true;
+            this.btn_clear.Click += new System.EventHandler(this.btn_clear_Click);
+            // 
             // filter
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(780, 749);
+            this.Controls.Add(this.btn_clear);
             this.Controls.Add(this.copy);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.checkBox_copy);
@@ -749,6 +761,7 @@
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.ToolStripMenuItem markFailsToolStripMenuItem;
         private System.Windows.Forms.Button copy;
+        private System.Windows.Forms.Button btn_clear;
     }
 }
 
