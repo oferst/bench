@@ -86,6 +86,7 @@
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.copy = new System.Windows.Forms.Button();
             this.btn_clear = new System.Windows.Forms.Button();
+            this.chk_resetcsv = new System.Windows.Forms.CheckBox();
             this.menuStrip1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
@@ -644,11 +645,24 @@
             this.btn_clear.UseVisualStyleBackColor = true;
             this.btn_clear.Click += new System.EventHandler(this.btn_clear_Click);
             // 
+            // chk_resetcsv
+            // 
+            this.chk_resetcsv.AutoSize = true;
+            this.chk_resetcsv.Location = new System.Drawing.Point(275, 639);
+            this.chk_resetcsv.Name = "chk_resetcsv";
+            this.chk_resetcsv.Size = new System.Drawing.Size(69, 17);
+            this.chk_resetcsv.TabIndex = 62;
+            this.chk_resetcsv.Text = "reset csv";
+            this.toolTip1.SetToolTip(this.chk_resetcsv, "start from an empty csv file (note that if \'csv file\' is checked then the file is" +
+        " not reset)");
+            this.chk_resetcsv.UseVisualStyleBackColor = true;
+            // 
             // filter
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(780, 749);
+            this.Controls.Add(this.chk_resetcsv);
             this.Controls.Add(this.btn_clear);
             this.Controls.Add(this.copy);
             this.Controls.Add(this.groupBox1);
@@ -762,6 +776,7 @@
         private System.Windows.Forms.ToolStripMenuItem markFailsToolStripMenuItem;
         private System.Windows.Forms.Button copy;
         private System.Windows.Forms.Button btn_clear;
+        private System.Windows.Forms.CheckBox chk_resetcsv;
     }
 }
 

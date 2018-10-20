@@ -271,7 +271,7 @@ namespace bench
                 Path.GetDirectoryName(filename) + "," +  // benchmark
                 Path.GetFileName(filename);
         }
-
+        
         
         void readBenchmarkNamesFromCsv()
         {       
@@ -650,10 +650,9 @@ namespace bench
             prepareDataForCsv(); // this fills 'processes'.
             try
             {
-                csvfile = new StreamWriter(csv.Text, checkBox_filter_csv.Checked);
+                csvfile = new StreamWriter(csv.Text, checkBox_filter_csv.Checked || chk_resetcsv.Checked);
             }
             catch
-
             {
                 MessageBox.Show("Cannot open " + csv.Text);
                 throw;
