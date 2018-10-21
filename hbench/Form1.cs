@@ -303,6 +303,17 @@ namespace bench
             csvfile.Close();
         }
 
+        string GetRelativePath(string filespec, string folder)
+        {
+            Uri pathUri = new Uri(filespec);
+            // Folders must end in a slash
+            if (!folder.EndsWith(Path.DirectorySeparatorChar.ToString()))
+            {
+                folder += Path.DirectorySeparatorChar;
+            }
+            Uri folderUri = new Uri(folder);
+            return Uri.UnescapeDataString(folderUri.MakeRelativeUri(pathUri).ToString().Replace('/', Path.DirectorySeparatorChar));
+        }
 
         private void build_process_tree(int pid, ref List<int> kill_list)
         {
@@ -548,7 +559,7 @@ namespace bench
             {
                 res = run_remote("ssh ", remote_user + " \"qstat -u " + ConfigurationManager.AppSettings["remote_user"] + "| grep \"" + ConfigurationManager.AppSettings["remote_user"] + "\"").Item1;
                 if (res != 0) break;                
-                Thread.Sleep(5000); // 5 seconds wait                        
+                Thread.Sleep(10000); // 5 seconds wait                        
             }
             bg.ReportProgress(0, "* All remote processes terminated *");
         }
@@ -789,9 +800,8 @@ namespace bench
         {
             string local_dir_Text="";
             Process p = new Process();
-            string msg = "remote: " + cmd + args;            
-            listBox1.Items.Add("remote: " + cmd + args);
-            listBox1.Refresh();
+            string msg = "remote: " + cmd + args;
+            bg.ReportProgress(0, msg);                     
             p.StartInfo.FileName = cmd;
             p.StartInfo.Arguments = remove_label(args);
             p.StartInfo.UseShellExecute = false;
@@ -904,20 +914,40 @@ namespace bench
                                 {
                                     if (checkBox_remote.Checked)
                                     {
-                                        string bench = Path.GetFileName(fileName);
-                                        if (copy_to_remote)
-                                        {                                            
-                                            File.Copy(fileName, bench, true); // copying benchmark to work dir.                                            
-                                            outText = run_remote("scp ", bench + " " + remote_bench_path).Item2;//" ofers@tamnun.technion.ac.il:~/hmuc/test");
-                                            bg.ReportProgress(0, outText);
-                                            File.Delete(bench);
-                                        }
-                                        string bench_remote_path = ConfigurationManager.AppSettings["remote_bench_dir"] +  bench;
-                                        if (ConfigurationManager.AppSettings["remote_bench_dir"].LastIndexOf("/")!= ConfigurationManager.AppSettings["remote_bench_dir"].Length - 1)
+                                        if (ConfigurationManager.AppSettings["remote_bench_dir"].LastIndexOf("/") != ConfigurationManager.AppSettings["remote_bench_dir"].Length - 1)
                                         {
                                             MessageBox.Show("remote_bench_dir as defined in .config file has to terminate with a '/'. Aborting.");
+                                            e.Result = null;
                                             return;
                                         }
+                                        bg.ReportProgress(0, "Remote path (defined in App.config): " + ConfigurationManager.AppSettings["remote_bench_dir"]);
+                                        string relativepath = GetRelativePath(fileName, benchmarksDir).Replace("\\", "/"); 
+                                        string bench = Path.GetFileName(fileName);
+                                        if (copy_to_remote)
+                                        {                                         
+                                            string target = remote_bench_path + relativepath;
+                                            Tuple<int, string, string> res = run_remote("scp ", relativepath + " " + target);
+                                            if (res.Item1 != 0)
+                                            {
+                                                bg.ReportProgress(0, "*** Failed copying to remote dir " + target + ".");
+                                                bg.ReportProgress(0, "*** Check if the existing remote dir structure is identical to the source dir structure and that ");
+                                                bg.ReportProgress(0, "*** destination dirs have write permissions. Aborting.");
+                                                e.Result = null; // will be referred to in backgroundWorker1_Completed
+                                                return;
+                                            }                                            
+                                            outText = res.Item2;//" ofers@tamnun.technion.ac.il:~/hmuc/test");
+                                            bg.ReportProgress(0, outText);
+                                            res = run_remote("ssh ", remote_user + " \"chmod 644 " + ConfigurationManager.AppSettings["remote_bench_dir"] + relativepath + "\"");
+                                            if (res.Item1 != 0)
+                                            {
+                                                bg.ReportProgress(0, "*** Failed to change mode. Aborting");
+                                                e.Result = null;
+                                                return;
+                                            }
+                                            //File.Delete(bench);
+                                        }
+
+                                        string bench_remote_path = ConfigurationManager.AppSettings["remote_bench_dir"] + relativepath;                                      
                                         bg.ReportProgress(0, "running " + fileName + " remotely. ");
                                         cnt++;
                                         bg.ReportProgress(3, cnt.ToString()); // label_cnt.Text                                         
@@ -1119,7 +1149,7 @@ namespace bench
 
         private void backgroundWorker1_Completed(object sender, RunWorkerCompletedEventArgs e)
         {
-            if (e.Cancelled || e.Error!= null) return;
+            if (e.Cancelled || e.Error!= null || e.Result == null) return;
             if (checkBox_remote.Checked)
             {
                 try { import_remote_out(); }
