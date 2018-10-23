@@ -1040,7 +1040,11 @@ namespace bench
                 MessageBox.Show("seems that " + csv.Text + " is in use. Close it and try again.");
                 return;
             }
-
+            string remote_bench_path = ConfigurationManager.AppSettings["remote_bench_dir"];
+            string remote_bench_dir = Path.GetFileName(Path.GetDirectoryName(remote_bench_path));
+            string local_bench_dir = Path.GetFileName(Path.GetDirectoryName(dir.Text));
+            if (remote_bench_dir != local_bench_dir)
+                if (MessageBox.Show("Remote bench dir = " + remote_bench_dir + ", local dir = " + local_bench_dir + ". Continue ? ", "Warning", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning) == DialogResult.Cancel) return;
             label_paralel_time.Text = "";            
             label_cnt.Text = "";
             label_fails.Text = "";
