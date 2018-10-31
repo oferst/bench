@@ -661,7 +661,7 @@ namespace bench
             prepareDataForCsv(); // this fills 'processes'.
             try
             {
-                csvfile = new StreamWriter(csv.Text, checkBox_filter_csv.Checked || chk_resetcsv.Checked);
+                csvfile = new StreamWriter(csv.Text, checkBox_filter_csv.Checked || !chk_resetcsv.Checked);
             }
             catch
             {
@@ -800,8 +800,7 @@ namespace bench
         {
             string local_dir_Text="";
             Process p = new Process();
-            string msg = "remote: " + cmd + args;
-            bg.ReportProgress(0, msg);                     
+                                 
             p.StartInfo.FileName = cmd;
             p.StartInfo.Arguments = remove_label(args);
             p.StartInfo.UseShellExecute = false;
@@ -917,7 +916,7 @@ namespace bench
                                         if (ConfigurationManager.AppSettings["remote_bench_dir"].LastIndexOf("/") != ConfigurationManager.AppSettings["remote_bench_dir"].Length - 1)
                                         {
                                             MessageBox.Show("remote_bench_dir as defined in .config file has to terminate with a '/'. Aborting.");
-                                            e.Result = null;
+                                            e.Cancel = true;
                                             return;
                                         }
                                         bg.ReportProgress(0, "Remote path (defined in App.config): " + ConfigurationManager.AppSettings["remote_bench_dir"]);
@@ -932,7 +931,7 @@ namespace bench
                                                 bg.ReportProgress(0, "*** Failed copying to remote dir " + target + ".");
                                                 bg.ReportProgress(0, "*** Check if the existing remote dir structure is identical to the source dir structure and that ");
                                                 bg.ReportProgress(0, "*** destination dirs have write permissions. Aborting.");
-                                                e.Result = null; // will be referred to in backgroundWorker1_Completed
+                                                e.Cancel = true;  // will be referred to in backgroundWorker1_Completed
                                                 return;
                                             }                                            
                                             outText = res.Item2;//" ofers@tamnun.technion.ac.il:~/hmuc/test");
@@ -941,7 +940,7 @@ namespace bench
                                             if (res.Item1 != 0)
                                             {
                                                 bg.ReportProgress(0, "*** Failed to change mode. Aborting");
-                                                e.Result = null;
+                                                e.Cancel = true;
                                                 return;
                                             }
                                             //File.Delete(bench);
@@ -1064,17 +1063,23 @@ namespace bench
             }
         }
 
+        bool test_dir_compatibility()
+        {
+            string remote_bench_path = ConfigurationManager.AppSettings["remote_bench_dir"];
+            string remote_bench_dir = Path.GetFileName(Path.GetDirectoryName(remote_bench_path));
+            string local_bench_dir = Path.GetFileName(Path.GetDirectoryName(dir.Text));
+            if (remote_bench_dir != local_bench_dir)
+                if (MessageBox.Show("Remote bench dir = " + remote_bench_dir + ", local dir = " + local_bench_dir + ". Continue ? ", "Warning", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning) == DialogResult.Cancel) return false;
+            return true;
+        }
+
         private void button_start_Click(object sender, EventArgs e)
         {            
             if (File.Exists(csv.Text) && IsFileLocked(new FileInfo(csv.Text))) { 
                 MessageBox.Show("seems that " + csv.Text + " is in use. Close it and try again.");
                 return;
             }
-            string remote_bench_path = ConfigurationManager.AppSettings["remote_bench_dir"];
-            string remote_bench_dir = Path.GetFileName(Path.GetDirectoryName(remote_bench_path));
-            string local_bench_dir = Path.GetFileName(Path.GetDirectoryName(dir.Text));
-            if (remote_bench_dir != local_bench_dir)
-                if (MessageBox.Show("Remote bench dir = " + remote_bench_dir + ", local dir = " + local_bench_dir + ". Continue ? ", "Warning", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning) == DialogResult.Cancel) return;
+            if (!test_dir_compatibility()) return;
             label_paralel_time.Text = "";            
             label_cnt.Text = "";
             label_fails.Text = "";
@@ -1153,7 +1158,7 @@ namespace bench
 
         private void backgroundWorker1_Completed(object sender, RunWorkerCompletedEventArgs e)
         {
-            if (e.Cancelled || e.Error!= null || e.Result == null) return;
+            if (e.Cancelled || e.Error!= null) return;
             if (checkBox_remote.Checked)
             {
                 try { import_remote_out(); }
@@ -1625,9 +1630,15 @@ namespace bench
         void import_remote_out()
         {
             if (!checkBox_remote.Checked) return;
+            if (ConfigurationManager.AppSettings["remote_bench_dir"].LastIndexOf("/") != ConfigurationManager.AppSettings["remote_bench_dir"].Length - 1)
+            {
+                MessageBox.Show("remote_bench_dir as defined in .config file has to terminate with a '/'. Aborting.");             
+                return;
+            }
+            if (!test_dir_compatibility()) return;
             int in_csv = 0, imported =0;
             listBox1.Items.Add("--- Importing ---");
-
+            listBox1.Refresh();
             dir.Invoke(new Action(() => { benchmarksDir = dir.Text; }));                        
             filter_str.Invoke(new Action(() => { searchPattern = filter_str.Text; }));
             var fileEntries = new DirectoryInfo(benchmarksDir).GetFiles(searchPattern, checkBox_rec.Checked ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
@@ -1655,14 +1666,21 @@ namespace bench
                     string outfileName = outfile(fileName, ext_param_list[par]); // we import from the same directory as the source cnf file;                    
 
                     // download those files to the local dir. 
-                    string remote_outfileName = outfile(Path.GetFileName(fileName), ext_param_list[par]); // we import from the working directory (bench/bin/release/ or debug/)                        
+                    string relativefilename = fileName.Substring(dir.Text.Length).Replace('\\','/'); // e.g. suppose dir = test and the file is in test\dir1\a.cnf, then we get dir1/a.cnf
+                    string remote_outfileName = outfile(relativefilename, ext_param_list[par]); // we import from the working directory (bench/bin/release/ or debug/)                        
                     if (!filterOut(outfileName))
                     {
-                        string outText = run_remote("scp ", remote_bench_path + remote_outfileName + " .").Item2; // download the file
+                        int subdirLength = relativefilename.IndexOf('/');
+                        string local = subdirLength == -1? "." : relativefilename.Substring(0,subdirLength );
+                        Tuple<int, string,string> res = run_remote("scp ", remote_bench_path + remote_outfileName + " " + local);
+                        string outText = res.Item2; // download the file
                         imported++;
                         listBox1.Items.Add(outText);
+                        if (res.Item1 != 0) listBox1.Items.Add("*** Warning: exit code " + res.Item1);
+                        listBox1.Refresh();                        
                     }
                 }
+                listBox1.Refresh();
             }
 
             listBox1.Items.Add(in_csv.ToString() + " benchmarks already in the csv file.");
@@ -1796,6 +1814,11 @@ namespace bench
         private void btn_clear_Click(object sender, EventArgs e)
         {
             listBox1.Items.Clear();
+        }
+
+        private void button_save_Click(object sender, EventArgs e)
+        {
+            write_history();
         }
 
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
