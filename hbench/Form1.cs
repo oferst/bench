@@ -50,7 +50,7 @@ namespace bench
             exe, dir, filter_str, csv, param, param_groups, stat_field, core_list, timeout, min_mem,  // combos
             checkBox_skip_long_runs, checkBox_remote, checkBox_rec, checkBox_rerun_empty_out, checkBox_filter_out, checkBox_filter_csv, checkBox_copy, // checkboxes
             misc }; // elements maintained in the history file
-
+        enum header_fields { exedate, param, dir, bench, fail, timedout };
         // declarations:
         Hashtable processes = new Hashtable();  // from process to <args, benchmark, list of results>
         List<string> failed_benchmarks;
@@ -674,6 +674,7 @@ namespace bench
                 Process p1 = (Process)entry.Key;
                 
                 List<float> l = bm.res;
+                csvtext += File.GetLastWriteTime(exe.Text).ToString() + ",";
                 csvtext += getid(bm.param, bm.name) + ","; // benchmark
                 if (l.Count > 0)
                 {
@@ -698,7 +699,7 @@ namespace bench
             if (Addheader)
             {
                 foreach (string lbl in labels) csvheader += lbl + ",";
-                csvheader = "param, dir, bench, fail, timedout," + csvheader;
+                csvheader = String.Join(",", Enum.GetNames(typeof(header_fields))) + "," + csvheader;
                 csvheader = csvheader.Substring(0, csvheader.Length - 1); // remove last ','
                 csvfile.Write(csvheader);                
                 csvfile.WriteLine();
@@ -751,6 +752,7 @@ namespace bench
             {
                 if (!rgx.IsMatch(line)) continue;
                 cols = line.Split(',');
+                if (cols.Length - 1 < time_col) continue;
                 fp = new Forplot(cols[2], strip_id_prefix(cols[0]), cols[time_col]);
                 forplot.Add(fp);
                 float val = float.Parse(cols[time_col]);
@@ -764,9 +766,11 @@ namespace bench
             maxval++; // we add one because if there is one dot (or all the dots have the same vlaue, it creates a problem in latex' pgfplot). 
             foreach (Forplot forp in forplot)
             {
-                ((StreamWriter)csv4plot[normalize_string(forp.Param)]).WriteLine(
+                string key = normalize_string(forp.Param);
+                if (!csv4plot.Contains(key)) continue; // This can happen if the csv file contains entries different than what appear in the GUI list. 
+                ((StreamWriter)csv4plot[key]).WriteLine(
                 forp.Bench + "," + // full benchmark path
-                normalize_string(forp.Param) + "," + // param
+                key + "," + // param
                 forp.Val + "," +
                 maxval + "s");
             }
@@ -1320,7 +1324,11 @@ namespace bench
             {
                 prepare_plot_data_fromCSV();
             }
-            catch { return; }
+            catch (Exception ex)
+            {
+                listBox1.Items.Add(ex.ToString());
+                return;
+            }
 
             // preparing process for running cpbm's batch file. 
             Process p = new Process();
@@ -1372,16 +1380,20 @@ namespace bench
             checkBox_CheckedChanged(sender, e);
         }
 
+        private string getfield(string line, header_fields field)
+        {
+            return getfield(line, (int)field);
+        }
         // Gets field # idx in a comma-separated line
         private string getfield(string line, int idx)
         {
             int i=0;
-            for (int j = 0; j < idx-1; ++j)
+            for (int j = 0; j < idx; ++j)
             {
                 i = line.IndexOf(',', i + 1);
             }
             if (i == -1) return "";
-            if (idx == 1) i--;
+            if (idx == 0) i--; 
             // getting the length of the field
             int k = line.IndexOf(',', i + 1); // location of next comma
             if (k == -1) k = line.Length; // in case idx was last
@@ -1402,23 +1414,17 @@ namespace bench
             {
                 foreach (string line in File.ReadLines(fileName))
                 {
-                    benchmarks[getfield(line, 3)] = getfield(line, 2);
+                    benchmarks[getfield(line, header_fields.bench)] = getfield(line, header_fields.dir);
                 }
             }
             catch { MessageBox.Show("seems that " + csv.Text + "is in use"); return; }
 
             foreach (string line in File.ReadLines(fileName))
             {
-                string time = getfield(line, 4);
-                double d;
-                bool isdouble = double.TryParse(time, out d);
-                if (isdouble)
-                {
-                    if (d <= Convert.ToInt32(timeout.Text) + 1)
-                    {
-                        benchmarks.Remove(getfield(line, 3));
-                    }
-                }
+                if (getfield(line,header_fields.fail) == "" &&
+                    getfield(line, header_fields.timedout) == "" )                
+                        benchmarks.Remove(getfield(line, header_fields.bench));
+                
             }
 
             foreach (string key in benchmarks.Keys)
@@ -1432,7 +1438,7 @@ namespace bench
             }
             listBox1.Items.Add("Deleted benchmarks: " + cnt);
 
-            var linesToKeep = File.ReadLines(fileName).Where(l => !failed_all.Contains(getfield(l, 3)));
+            var linesToKeep = File.ReadLines(fileName).Where(l => !failed_all.Contains(getfield(l, header_fields.bench)));
             var tempFile = Path.GetTempFileName();
 
             File.WriteAllLines(tempFile, linesToKeep);
@@ -1472,7 +1478,7 @@ namespace bench
                         if (d < 1.0)
                         {
                             listBox1.Items.Add("short longesttime line: " + line);
-                            failed_short_once.Add(getfield(line, 3));
+                            failed_short_once.Add(getfield(line, header_fields.bench));
                         }
                     }
                 }
@@ -1484,7 +1490,7 @@ namespace bench
             }
 
             // keeping only benchmarks that take time. 
-            var linesToKeep = File.ReadLines(fileName).Where(l => (!failed_short_once.Contains(getfield(l, 3)) || getfield(l, 1) == "param"));   // second item so it includes the header.
+            var linesToKeep = File.ReadLines(fileName).Where(l => (!failed_short_once.Contains(getfield(l, header_fields.bench)) || getfield(l, header_fields.param) == "param"));   // second item so it includes the header.
 
             var tempFile = Path.GetTempFileName();
 
@@ -1507,11 +1513,11 @@ namespace bench
                 {
                     cnt++;
                     if (header) { header = false; continue; }
-                    string failed = getfield(line, 4);
-                    string timedout = getfield(line, 5);
+                    string failed = getfield(line, header_fields.fail);
+                    string timedout = getfield(line, header_fields.timedout);
                     if (failed.Length == 0 && timedout.Length == 0) continue;                    
                     listBox1.Items.Add("failed/timeout benchmark: " + line);
-                    failed_atleast_once.Add(Path.Combine(getfield(line, 2), getfield(line, 3)));
+                    failed_atleast_once.Add(Path.Combine(getfield(line, header_fields.dir), getfield(line, header_fields.bench)));
                 }
             }
             catch { MessageBox.Show("seems that " + csv.Text + "is in use"); return; }
@@ -1540,20 +1546,20 @@ namespace bench
             List<string> lines = new List<string>();
             foreach (string line in File.ReadLines(fileName))
             {
-                if (getfield(line, 1) == "param")
+                if (getfield(line, header_fields.param) == "param")
                 {
                     lines.Add(header_line);
                     continue;
                 }
                 string line_st = line;
                 if (failed_column > 0) line_st = line_st.Substring(0, line_st.LastIndexOf(",")); // removing old value, including ','
-                if ((!failed_atleast_once.Contains(Path.Combine(getfield(line, 2), getfield(line, 3)))))
+                if ((!failed_atleast_once.Contains(Path.Combine(getfield(line, header_fields.dir), getfield(line, header_fields.bench)))))
                 {                    
-                    lines.Add(line_st );
+                    lines.Add(line_st + ","); 
                 }
                 else
                 {
-                    lines.Add(line_st + "1");
+                    lines.Add(line_st + ",1");
                 }
             }        
 
@@ -1575,17 +1581,18 @@ namespace bench
                 {
                     cnt++;
                     if (header) { header = false; continue; }
-                    string failed = getfield(line, 4);
+                    string failed = getfield(line, header_fields.fail);
                     if (failed.Length == 0) continue;
                     Debug.Assert(failed == "1");
+                    failed = getfield(line, header_fields.timedout);
                     listBox1.Items.Add("failed line: " + line);
-                    failed_atleast_once.Add(Path.Combine(getfield(line, 2), getfield(line, 3)));
+                    failed_atleast_once.Add(Path.Combine(getfield(line, header_fields.dir), getfield(line, header_fields.bench)));
                 }
             }
             catch { MessageBox.Show("seems that " + csv.Text + "is in use"); return; }
             
             // keeping only benchmarks that are not failed by any parameter combination. 
-            var linesToKeep = File.ReadLines(fileName).Where(l => (!failed_atleast_once.Contains(Path.Combine(getfield(l, 2), getfield(l, 3))) || getfield(l, 1) == "param"));   // second item so it includes the header.         
+            var linesToKeep = File.ReadLines(fileName).Where(l => (!failed_atleast_once.Contains(Path.Combine(getfield(l, header_fields.dir), getfield(l, header_fields.bench))) || getfield(l, header_fields.param) == "param"));   // second item so it includes the header.         
             
             var tempFile = Path.GetTempFileName();
 
