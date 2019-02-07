@@ -5,3 +5,5 @@ hbench/bin/
 *.zip
 .vs/
 CodeGraphData/
+bench/bin/
+bench/obj/
