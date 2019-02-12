@@ -657,7 +657,9 @@ namespace bench
             bool Addheader = !checkBox_filter_csv.Checked || !File.Exists(csv.Text);
             string csvheader = "", csvtext = "";
             int cnt_wrong_label = 0;
-            
+            string exedate = "";
+            if (!checkBox_remote.Checked) exedate = File.GetLastWriteTime(exe.Text).ToString();
+
             prepareDataForCsv(); // this fills 'processes'.
             try
             {
@@ -674,7 +676,7 @@ namespace bench
                 Process p1 = (Process)entry.Key;
                 
                 List<float> l = bm.res;
-                csvtext += File.GetLastWriteTime(exe.Text).ToString() + ",";
+                csvtext += exedate + ",";                
                 csvtext += getid(bm.param, bm.name) + ","; // benchmark
                 if (l.Count > 0)
                 {
@@ -1643,7 +1645,7 @@ namespace bench
                 MessageBox.Show("remote_bench_dir as defined in .config file has to terminate with a '/'. Aborting.");             
                 return;
             }
-            if (!test_dir_compatibility()) return;
+
             int in_csv = 0, imported =0;
             listBox1.Items.Add("--- Importing ---");
             listBox1.Refresh();
@@ -1698,6 +1700,7 @@ namespace bench
         private void button_import_Click(object sender, EventArgs e)  // import out files from remote server, and process them to generate the csv + plot files. 
         {
             labels.Clear();  // since we may import more than once. 
+            if (!test_dir_compatibility()) return;
             try {
                 import_remote_out();
                 buildcsv();
