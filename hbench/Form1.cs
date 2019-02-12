@@ -113,7 +113,9 @@ namespace bench
                 param_list[i] = new TextBox();                
                 param_list[i].Location = new Point(60,  i * 25);
                 param_list[i].Size = new Size(640, 20);     
+                param_list[i].Leave += new System.EventHandler(this.textBox_Leave);
                 panel1.Controls.Add(param_list[i]);
+
 
                 scatter1[i] = new RadioButton();                
                 scatter1[i].Location = new Point(0, i * 25);
@@ -755,7 +757,7 @@ namespace bench
                 if (!rgx.IsMatch(line)) continue;
                 cols = line.Split(',');
                 if (cols.Length - 1 < time_col) continue;
-                fp = new Forplot(cols[2], strip_id_prefix(cols[0]), cols[time_col]);
+                fp = new Forplot(cols[2], strip_id_prefix(cols[(int)header_fields.param]), cols[time_col]);
                 forplot.Add(fp);
                 float val = float.Parse(cols[time_col]);
                 if (val > maxval) maxval = val;
@@ -1086,7 +1088,7 @@ namespace bench
                 MessageBox.Show("seems that " + csv.Text + " is in use. Close it and try again.");
                 return;
             }
-            if (!test_dir_compatibility()) return;
+            if (checkBox_remote.Checked &&  !test_dir_compatibility()) return;
             label_paralel_time.Text = "";            
             label_cnt.Text = "";
             label_fails.Text = "";
@@ -1744,12 +1746,22 @@ namespace bench
             string text = ((ComboBox)sender).Text;
             fields fieldValue = (fields)Enum.Parse(typeof(fields), ((ComboBox)sender).Name);
             if (!history.ContainsKey(fieldValue)) history[fieldValue] = new List<string>();
-            if (!history[fieldValue].Contains(text))
-            {
-                history[fieldValue].Insert(0,text);                
-                ((ComboBox)sender).DataSource = history[fieldValue];
-                write_history_file = true;                
-            }
+            if (history[fieldValue].Contains(text)) history[fieldValue].Remove(text);
+            history[fieldValue].Insert(0, text);
+            ((ComboBox)sender).DataSource = history[fieldValue];
+            write_history_file = true;
+        }
+
+        private void textBox_Leave(object sender, EventArgs e) // only used for param_groups
+        {
+            string text = ((TextBox)sender).Text;
+            if (text == noOpTag) return;
+            fields fieldValue = (fields)Enum.Parse(typeof(fields), "param_groups");
+            if (!history.ContainsKey(fieldValue)) history[fieldValue] = new List<string>();
+            // remove (if exists) and insert to put tha latest first in the order. 
+            if (history[fieldValue].Contains(text)) history[fieldValue].Remove(text);            
+            history[fieldValue].Insert(0, text);            
+            write_history_file = true;                        
         }
 
         private void combo_SelectedIndexChanged(object sender, EventArgs e)
