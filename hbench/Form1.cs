@@ -396,8 +396,13 @@ namespace bench
         List<FileInfo> getFilesInDir()
         {
             List<FileInfo> res = new List<FileInfo>();
-            foreach (FileInfo fi in new DirectoryInfo(benchmarksDir).GetFiles(searchPattern, checkBox_rec.Checked ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly).Where(fi => string.Compare(".txt", fi.Extension, StringComparison.OrdinalIgnoreCase) == 0))
+
+            string extension = searchPattern.Substring(searchPattern.LastIndexOf('.'));            
+            var filelist = new DirectoryInfo(benchmarksDir).GetFiles(searchPattern, checkBox_rec.Checked ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+            if (extension == "") return filelist.ToList();
+            foreach (FileInfo fi in filelist)
             {
+                if (string.Compare(extension, fi.Extension, StringComparison.OrdinalIgnoreCase) != 0) continue;
                 res.Add(fi);
             }
             return res;
