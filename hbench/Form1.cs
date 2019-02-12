@@ -388,6 +388,20 @@ namespace bench
                    (!checkBox_rerun_empty_out.Checked || (new FileInfo(outfilename)).Length > 10);
             }
 
+        /// <summary>
+        /// We cannot just use normal GetFiles because it has various unexpected behaviors, e.g., *.txt also includes *.txta (or anything longer than "txt")
+        /// so here we filter it out. 
+        /// </summary>
+        /// <returns></returns>
+        List<FileInfo> getFilesInDir()
+        {
+            List<FileInfo> res = new List<FileInfo>();
+            foreach (FileInfo fi in new DirectoryInfo(benchmarksDir).GetFiles(searchPattern, checkBox_rec.Checked ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly).Where(fi => string.Compare(".txt", fi.Extension, StringComparison.OrdinalIgnoreCase) == 0))
+            {
+                res.Add(fi);
+            }
+            return res;
+        }
 
         #endregion
 
@@ -582,8 +596,8 @@ namespace bench
 
             filter_str.Invoke(new Action(() => { searchPattern = filter_str.Text; }));
             dir.Invoke(new Action(() => { benchmarksDir = dir.Text; }));
-            var fileEntries = new DirectoryInfo(benchmarksDir).GetFiles(searchPattern, checkBox_rec.Checked ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
-            if (fileEntries.Length == 0) listBox1.Items.Add("empty file list\n");
+            var fileEntries = getFilesInDir();                
+            if (fileEntries.Count == 0) listBox1.Items.Add("empty file list\n");
 
             if (checkBox_filter_csv.Checked && File.Exists(csv.Text)) readBenchmarkNamesFromCsv();
             else BenchmarkNamesFromCsv.Clear();
@@ -862,14 +876,13 @@ namespace bench
             timers.Add(timer); // needed ?
             return p;
         }
-
+        
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {            
             int cnt = 0;
             Process[] p = new Process[cores + 1];
-            
-            var fileEntries = new DirectoryInfo(benchmarksDir).GetFiles(searchPattern, checkBox_rec.Checked ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
-            if (fileEntries.Length == 0) bg.ReportProgress(0, "empty file list\n");
+            List<FileInfo> fileEntries = getFilesInDir();
+            if (fileEntries.Count == 0) bg.ReportProgress(0, "empty file list\n");
             string remote_user = "", remote_bench_path ="";
             if (checkBox_remote.Checked)
             {
@@ -896,7 +909,7 @@ namespace bench
                     string fileName = fileinfo.FullName;
                     if (checkBox_skip_long_runs.Checked && failed_benchmarks.Contains(fileName))
                     {
-                        bg.ReportProgress(0,"Skipping " + fileName + "; it timed-out with a previos configuration.");
+                        bg.ReportProgress(0,"Skipping " + fileName + "; it timed-out with a previous configuration.");
                         continue;
                     }
 
@@ -1653,8 +1666,8 @@ namespace bench
             listBox1.Refresh();
             dir.Invoke(new Action(() => { benchmarksDir = dir.Text; }));                        
             filter_str.Invoke(new Action(() => { searchPattern = filter_str.Text; }));
-            var fileEntries = new DirectoryInfo(benchmarksDir).GetFiles(searchPattern, checkBox_rec.Checked ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
-            if (fileEntries.Length == 0) listBox1.Items.Add("empty file list\n");
+            var fileEntries = getFilesInDir();
+            if (fileEntries.Count == 0) listBox1.Items.Add("empty file list\n");
             
             processes.Clear();
             if (checkBox_filter_csv.Checked && File.Exists(csv.Text)) readBenchmarkNamesFromCsv();
@@ -1758,7 +1771,7 @@ namespace bench
             if (text == noOpTag) return;
             fields fieldValue = (fields)Enum.Parse(typeof(fields), "param_groups");
             if (!history.ContainsKey(fieldValue)) history[fieldValue] = new List<string>();
-            // remove (if exists) and insert to put tha latest first in the order. 
+            // remove (if exists) and insert to put the latest first in the order. 
             if (history[fieldValue].Contains(text)) history[fieldValue].Remove(text);            
             history[fieldValue].Insert(0, text);            
             write_history_file = true;                        
