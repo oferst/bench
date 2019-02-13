@@ -396,9 +396,17 @@ namespace bench
         List<FileInfo> getFilesInDir()
         {
             List<FileInfo> res = new List<FileInfo>();
-
-            string extension = searchPattern.Substring(searchPattern.LastIndexOf('.'));            
-            var filelist = new DirectoryInfo(benchmarksDir).GetFiles(searchPattern, checkBox_rec.Checked ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+            FileInfo[] filelist = null;
+            string extension = searchPattern.Substring(searchPattern.LastIndexOf('.'));
+            try
+            {
+                 filelist = new DirectoryInfo(benchmarksDir).GetFiles(searchPattern, checkBox_rec.Checked ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+            }
+            catch
+            {
+                MessageBox.Show("cannot open directory " + benchmarksDir + ". Aborting.");
+                Application.Exit();
+            }
             if (extension == "") return filelist.ToList();
             foreach (FileInfo fi in filelist)
             {
