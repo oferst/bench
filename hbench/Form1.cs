@@ -136,6 +136,7 @@ namespace bench
             checkBox_copy.Enabled = checkBox_remote.Checked;
             searchPattern = filter_str.Text;
             benchmarksDir = dir.Text;
+            readLabelsFromCsv();
         }
 
         #region history
@@ -274,7 +275,33 @@ namespace bench
                 Path.GetFileName(filename);
         }
         
-        
+        void readLabelsFromCsv()
+        {
+            string header, nextline;
+            List<string> vals;
+            StreamReader csvfile;
+            try
+            {
+                csvfile = new StreamReader(csv.Text);      //(@"C:\temp\res.csv");
+                header = csvfile.ReadLine(); // header
+                nextline = csvfile.ReadLine();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message + "\n seems that " + csv.Text + " is in use");
+                throw;
+            }
+            labels = header.Split(',').ToList<string>();
+            vals = nextline.Split(',').ToList<string>();
+            stat_field.DataSource = null;
+            stat_field.Items.Clear();
+            int res;
+            for (int i = 0; i < labels.Count(); ++i)
+                if (int.TryParse(vals[i], out res) || vals[i] == "") stat_field.Items.Add(labels[i]);
+            csvfile.Close();
+        }
+
+
         void readBenchmarkNamesFromCsv()
         {       
             string line, res;
@@ -1868,6 +1895,11 @@ namespace bench
         private void button_save_Click(object sender, EventArgs e)
         {
             write_history();
+        }
+
+        private void stat_field_Click(object sender, EventArgs e)
+        {
+            readLabelsFromCsv();
         }
 
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)

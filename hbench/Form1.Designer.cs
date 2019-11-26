@@ -603,6 +603,7 @@
             this.stat_field.Size = new System.Drawing.Size(143, 21);
             this.stat_field.TabIndex = 55;
             this.stat_field.SelectionChangeCommitted += new System.EventHandler(this.combo_SelectedIndexChanged);
+            this.stat_field.Click += new System.EventHandler(this.stat_field_Click);
             this.stat_field.Leave += new System.EventHandler(this.comboBox_Leave);
             // 
             // timeout
