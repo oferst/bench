@@ -19,6 +19,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Management;
 using System.Text.RegularExpressions;
+using System.Globalization;
 
 namespace bench
 {    
@@ -295,9 +296,10 @@ namespace bench
             vals = nextline.Split(',').ToList<string>();
             stat_field.DataSource = null;
             stat_field.Items.Clear();
-            int res;
-            for (int i = 0; i < labels.Count(); ++i)
-                if (int.TryParse(vals[i], out res) || vals[i] == "") stat_field.Items.Add(labels[i]);
+            decimal res;
+            for (int i = 0; i < labels.Count(); ++i) // only include labels that the entry in the next line is either a number or empty. We use decimal because it permits e.g. 1.3E7
+                if (decimal.TryParse(vals[i], NumberStyles.Any, CultureInfo.InvariantCulture, out res) || vals[i] == "") 
+                    stat_field.Items.Add(labels[i]);
             csvfile.Close();
         }
 
@@ -808,13 +810,13 @@ namespace bench
 
             while ((line = csvfile.ReadLine()) != null)
             {
-                if (!rgx.IsMatch(line)) continue;
+                float val;
+                if (!rgx.IsMatch(line)) continue;                
                 cols = line.Split(',');
                 if (cols.Length - 1 < time_col) continue;
                 fp = new Forplot(Path.Combine(cols[2],cols[3]), strip_id_prefix(cols[(int)header_fields.param]), cols[time_col]);
                 forplot.Add(fp);
-                float val = float.Parse(cols[time_col]);
-                if (val > maxval) maxval = val;
+                if (float.TryParse(cols[time_col], out val) && val > maxval) maxval = val;
             }
             if (forplot.Count == 0)
             {
