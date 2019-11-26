@@ -779,7 +779,7 @@ namespace bench
         }
 
 
-        void prepare_plot_data_fromCSV()
+        bool prepare_plot_data_fromCSV()
         {
             string line;
             StreamReader csvfile;
@@ -787,23 +787,31 @@ namespace bench
             Forplot fp;
             float maxval = 0;
 
+            if (stat_field.Text == "")
+            {
+                MessageBox.Show("Please select a statistics field");
+                return false;
+            }
+
             if (IsFileLocked(new FileInfo(csv.Text)))
             {
                 MessageBox.Show(csv.Text + " is in use\n");
-                throw new Exception();
+                return false;
             }
+            
             init_plot_files();
 
             csvfile = new StreamReader(csv.Text);      //(@"C:\temp\res.csv");
             string header = csvfile.ReadLine(); // header
             string[] cols = header.Split(',');
 
-            int time_col = Array.IndexOf(cols, stat_field.Text);
-            if (time_col < 0)
+            int stat_field_col = Array.IndexOf(cols, stat_field.Text);
+            if (stat_field_col < 0)
             {
                 MessageBox.Show(stat_field.Text + " is not in the header of " + csv.Text);
                 csvfile.Close();
-                throw new Exception();
+                return false;
+
             }
             Regex rgx = new Regex(filter_str.Text.Replace(".", @"\.").Replace("*", @".*")); 
                 
@@ -813,21 +821,28 @@ namespace bench
                 float val;
                 if (!rgx.IsMatch(line)) continue;                
                 cols = line.Split(',');
-                if (cols.Length - 1 < time_col) continue;
-                fp = new Forplot(Path.Combine(cols[2],cols[3]), strip_id_prefix(cols[(int)header_fields.param]), cols[time_col]);
+                if (cols.Length - 1 < stat_field_col) continue;
+                string param = strip_id_prefix(cols[(int)header_fields.param]);
+                string key = normalize_string(param);
+                if (!csv4plot.Contains(key)) continue; // This can happen if the csv file contains entries different than what appear in the GUI list. 
+                fp = new Forplot(
+                    Path.Combine(cols[2],cols[3]), // path + benchmark-name
+                    param, 
+                    cols[stat_field_col] 
+                    );
                 forplot.Add(fp);
-                if (float.TryParse(cols[time_col], out val) && val > maxval) maxval = val;
+                if (float.TryParse(cols[stat_field_col], out val) && val > maxval) maxval = val;
             }
             if (forplot.Count == 0)
             {
                 MessageBox.Show("no line in the csv file matches the regular expression " + filter_str.Text);
-                throw new Exception();
+                return false;
             }
             maxval++; // we add one because if there is one dot (or all the dots have the same vlaue, it creates a problem in latex' pgfplot). 
             foreach (Forplot forp in forplot)
             {
                 string key = normalize_string(forp.Param);
-                if (!csv4plot.Contains(key)) continue; // This can happen if the csv file contains entries different than what appear in the GUI list. 
+                Debug.Assert(csv4plot.Contains(key)); 
                 ((StreamWriter)csv4plot[key]).WriteLine(
                 forp.Bench + "," + // full benchmark path
                 key + "," + // param
@@ -836,6 +851,7 @@ namespace bench
             }
             foreach (var key in csv4plot.Keys) ((StreamWriter)csv4plot[key]).Close();
             csvfile.Close();
+            return true;
         }
 
      
@@ -1382,7 +1398,7 @@ namespace bench
             //prepare_plot_data();
             try
             {
-                prepare_plot_data_fromCSV();
+                if (!prepare_plot_data_fromCSV()) return;
             }
             catch (Exception ex)
             {
@@ -1413,7 +1429,7 @@ namespace bench
             //   prepare_plot_data();
             try
             {
-                prepare_plot_data_fromCSV();
+                if (!prepare_plot_data_fromCSV()) return;
             }
             catch { return; }
 
