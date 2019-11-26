@@ -784,7 +784,7 @@ namespace bench
                 if (!rgx.IsMatch(line)) continue;
                 cols = line.Split(',');
                 if (cols.Length - 1 < time_col) continue;
-                fp = new Forplot(cols[2], strip_id_prefix(cols[(int)header_fields.param]), cols[time_col]);
+                fp = new Forplot(Path.Combine(cols[2],cols[3]), strip_id_prefix(cols[(int)header_fields.param]), cols[time_col]);
                 forplot.Add(fp);
                 float val = float.Parse(cols[time_col]);
                 if (val > maxval) maxval = val;
