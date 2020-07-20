@@ -48,7 +48,7 @@ namespace bench
         const char setSeparator = '|';
 
         enum fields {
-            exe, dir, filter_str, csv, param, param_groups, stat_field, core_list, timeout, min_mem,  // combos
+            exe, dir, filter_str, maxfiles, csv, param, param_groups, stat_field, core_list, timeout, min_mem,  // combos
             checkBox_skip_long_runs, checkBox_remote, checkBox_rec, checkBox_rerun_empty_out, checkBox_filter_out, checkBox_filter_csv, checkBox_copy, // checkboxes
             misc }; // elements maintained in the history file
         enum header_fields { exedate, param, dir, bench, fail, timedout };
@@ -289,8 +289,8 @@ namespace bench
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message + "\n seems that " + csv.Text + " is in use");
-                throw;
+                MessageBox.Show("cannot read labels from " + csv.Text);
+                return;
             }
             labels = header.Split(',').ToList<string>();
             vals = nextline.Split(',').ToList<string>();
@@ -437,9 +437,17 @@ namespace bench
                 Application.Exit();
             }
             if (extension == "") return filelist.ToList();
+            int counter = int.MaxValue;
+            if (maxfiles.Text != "" && maxfiles.Text != "0" && !int.TryParse(maxfiles.Text, out counter))
+            {
+                bg.ReportProgress(0, "Non-numeric value in max-files. Putting no limits on # of files.");
+                counter = int.MaxValue;
+            };  
             foreach (FileInfo fi in filelist)
             {
                 if (string.Compare(extension, fi.Extension, StringComparison.OrdinalIgnoreCase) != 0) continue;
+                counter--;
+                if (counter < 0) break;
                 res.Add(fi);
             }
             return res;

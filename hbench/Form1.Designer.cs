@@ -88,6 +88,8 @@
             this.copy = new System.Windows.Forms.Button();
             this.btn_clear = new System.Windows.Forms.Button();
             this.button_save = new System.Windows.Forms.Button();
+            this.label14 = new System.Windows.Forms.Label();
+            this.maxfiles = new System.Windows.Forms.ComboBox();
             this.menuStrip1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
@@ -256,7 +258,7 @@
             // 
             this.checkedListBox_cores.CheckOnClick = true;
             this.checkedListBox_cores.FormattingEnabled = true;
-            this.checkedListBox_cores.Location = new System.Drawing.Point(672, 346);
+            this.checkedListBox_cores.Location = new System.Drawing.Point(672, 351);
             this.checkedListBox_cores.Name = "checkedListBox_cores";
             this.checkedListBox_cores.Size = new System.Drawing.Size(72, 79);
             this.checkedListBox_cores.TabIndex = 29;
@@ -273,7 +275,7 @@
             // checkBox_rec
             // 
             this.checkBox_rec.AutoSize = true;
-            this.checkBox_rec.Location = new System.Drawing.Point(707, 326);
+            this.checkBox_rec.Location = new System.Drawing.Point(596, 328);
             this.checkBox_rec.Name = "checkBox_rec";
             this.checkBox_rec.Size = new System.Drawing.Size(41, 17);
             this.checkBox_rec.TabIndex = 31;
@@ -426,7 +428,7 @@
             // 
             // button4
             // 
-            this.button4.Location = new System.Drawing.Point(630, 325);
+            this.button4.Location = new System.Drawing.Point(558, 326);
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(32, 21);
             this.button4.TabIndex = 46;
@@ -449,7 +451,7 @@
             this.dir.FormattingEnabled = true;
             this.dir.Location = new System.Drawing.Point(53, 325);
             this.dir.Name = "dir";
-            this.dir.Size = new System.Drawing.Size(571, 21);
+            this.dir.Size = new System.Drawing.Size(495, 21);
             this.dir.TabIndex = 49;
             this.dir.SelectionChangeCommitted += new System.EventHandler(this.combo_SelectedIndexChanged);
             this.dir.Leave += new System.EventHandler(this.comboBox_Leave);
@@ -669,11 +671,33 @@
             this.button_save.UseVisualStyleBackColor = true;
             this.button_save.Click += new System.EventHandler(this.button_save_Click);
             // 
+            // label14
+            // 
+            this.label14.AutoSize = true;
+            this.label14.Location = new System.Drawing.Point(639, 328);
+            this.label14.Name = "label14";
+            this.label14.Size = new System.Drawing.Size(51, 13);
+            this.label14.TabIndex = 64;
+            this.label14.Text = "Max files:";
+            // 
+            // maxfiles
+            // 
+            this.maxfiles.FormattingEnabled = true;
+            this.maxfiles.Location = new System.Drawing.Point(686, 326);
+            this.maxfiles.Name = "maxfiles";
+            this.maxfiles.Size = new System.Drawing.Size(58, 21);
+            this.maxfiles.TabIndex = 65;
+            this.toolTip1.SetToolTip(this.maxfiles, "Max # of benchmarks");
+            this.maxfiles.SelectionChangeCommitted += new System.EventHandler(this.combo_SelectedIndexChanged);
+            this.maxfiles.Leave += new System.EventHandler(this.comboBox_Leave);
+            // 
             // filter
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(780, 749);
+            this.Controls.Add(this.maxfiles);
+            this.Controls.Add(this.label14);
             this.Controls.Add(this.button_save);
             this.Controls.Add(this.chk_resetcsv);
             this.Controls.Add(this.btn_clear);
@@ -791,6 +815,8 @@
         private System.Windows.Forms.Button btn_clear;
         private System.Windows.Forms.CheckBox chk_resetcsv;
         private System.Windows.Forms.Button button_save;
+        private System.Windows.Forms.Label label14;
+        private System.Windows.Forms.ComboBox maxfiles;
     }
 }
 
