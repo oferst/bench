@@ -269,13 +269,17 @@ namespace bench
         }
 
         // called from background-worker thread
-        string getid(string param, string filename)
+        string getid(string param, string filename, string prefix = id_prefix)
         {
-            return id_prefix + param + "," +
-                Path.GetDirectoryName(filename) + "," +  // benchmark
-                Path.GetFileName(filename);
+            return getid(param, Path.GetDirectoryName(filename), Path.GetFileName(filename), prefix);                
         }
-        
+
+        string getid(string param, string dir, string filename, string prefix)
+        {
+            return prefix + param + "," +
+                dir + "," +  // benchmark
+                filename;
+        }
         void readLabelsFromCsv()
         {
             string header, nextline;
@@ -287,20 +291,24 @@ namespace bench
                 header = csvfile.ReadLine(); // header
                 nextline = csvfile.ReadLine();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 MessageBox.Show("cannot read labels from " + csv.Text);
                 return;
             }
             labels = header.Split(',').ToList<string>();
-            vals = nextline.Split(',').ToList<string>();
+            bool validfirstline = nextline != null;
+            if (validfirstline) vals = nextline.Split(',').ToList<string>();
+            else vals = labels; // just to get the same count; won't be used. 
             stat_field.DataSource = null;
             stat_field.Items.Clear();
             decimal res;
-            for (int i = 0; i < labels.Count(); ++i) // only include labels that the entry in the next line is either a number or empty. We use decimal because it permits e.g. 1.3E7
-                if (decimal.TryParse(vals[i], NumberStyles.Any, CultureInfo.InvariantCulture, out res) || vals[i] == "") 
+            // only include labels that the entry in the next line is either a number or empty.
+            // We use decimal because it permits e.g. 1.3E7
+            for (int i = 0; i < labels.Count() && i < vals.Count(); ++i) 
+                if (!validfirstline || decimal.TryParse(vals[i], NumberStyles.Any, CultureInfo.InvariantCulture, out res) || vals[i] == "") 
                     stat_field.Items.Add(labels[i]);
-            csvfile.Close();
+            csvfile.Close(); 
         }
 
 
@@ -317,19 +325,11 @@ namespace bench
                 MessageBox.Show(ex.Message + "\n seems that " + csv.Text + " is in use");
                 throw;
             }
-            
-            int i;
+                        
             while ((line = csvfile.ReadLine()) != null)
-            {
-                i = 0;
-                for (int j = 0; j < 3; ++j) {
-                    i = line.IndexOf(',', i+1);
-                }
-                Debug.Assert(i >= 0);
-                res = line.Substring(0,i);
-                BenchmarkNamesFromCsv.Add(res);
-                //if (line.IndexOf(',', i + 1) > i + 1) entries.Add(res);  // in case we have after file name ",," it means that time was not recorded; 
-                //else listBox1.Items.Add("remove line: " + line);
+            {  
+                res = getid(getfield(line, header_fields.param), getfield(line, header_fields.dir), getfield(line, header_fields.bench),"");
+                BenchmarkNamesFromCsv.Add(res);            
             }
             csvfile.Close();
         }
@@ -438,7 +438,9 @@ namespace bench
             }
             if (extension == "") return filelist.ToList();
             int counter = int.MaxValue;
-            if (maxfiles.Text != "" && maxfiles.Text != "0" && !int.TryParse(maxfiles.Text, out counter))
+            string text="";
+            maxfiles.Invoke(new Action(() => { text = maxfiles.Text; }));
+            if (text != "" && text != "0" && !int.TryParse(text, out counter))
             {
                 bg.ReportProgress(0, "Non-numeric value in max-files. Putting no limits on # of files.");
                 counter = int.MaxValue;
@@ -467,7 +469,19 @@ namespace bench
         {           
             
             bool success = false;
-            StreamReader file =   new StreamReader(filename);
+            StreamReader file = null;
+            for (int i = 0; i < 3; ++i)
+            {
+                try
+                {
+                    file = new StreamReader(filename);
+                    break;
+                }
+                catch
+                {
+                    Thread.Sleep(3000);
+                }
+            }
             string line;
 
             while ((line = file.ReadLine()) != null)            
@@ -625,7 +639,7 @@ namespace bench
             {
                 res = run_remote("ssh ", remote_user + " \"qstat -u " + ConfigurationManager.AppSettings["remote_user"] + "| grep \"" + ConfigurationManager.AppSettings["remote_user"] + "\"").Item1;
                 if (res != 0) break;                
-                Thread.Sleep(10000); // 5 seconds wait                        
+                Thread.Sleep(10000); // 10 seconds wait                        
             }
             bg.ReportProgress(0, "* All remote processes terminated *");
         }
@@ -649,7 +663,10 @@ namespace bench
             var fileEntries = getFilesInDir();                
             if (fileEntries.Count == 0) listBox1.Items.Add("empty file list\n");
 
-            if (checkBox_filter_csv.Checked && File.Exists(csv.Text)) readBenchmarkNamesFromCsv();
+            if (checkBox_filter_csv.Checked && File.Exists(csv.Text))
+            {
+                readBenchmarkNamesFromCsv();
+            }
             else BenchmarkNamesFromCsv.Clear();
 
             bool first = true;
@@ -720,7 +737,7 @@ namespace bench
 
         void buildcsv()
         {
-            bool Addheader = !checkBox_filter_csv.Checked || !File.Exists(csv.Text);
+            bool Addheader = /*!checkBox_filter_csv.Checked ||*/ chk_resetcsv.Checked || !File.Exists(csv.Text);
             string csvheader = "", csvtext = "";
             int cnt_wrong_label = 0;
             string exedate = "";
@@ -830,11 +847,12 @@ namespace bench
                 if (!rgx.IsMatch(line)) continue;                
                 cols = line.Split(',');
                 if (cols.Length - 1 < stat_field_col) continue;
-                string param = strip_id_prefix(cols[(int)header_fields.param]);
+                string param = strip_id_prefix(getfield(line, header_fields.param));
                 string key = normalize_string(param);
                 if (!csv4plot.Contains(key)) continue; // This can happen if the csv file contains entries different than what appear in the GUI list. 
+                if (cols[stat_field_col] == "") continue; // timeout cases
                 fp = new Forplot(
-                    Path.Combine(cols[2],cols[3]), // path + benchmark-name
+                    Path.Combine(getfield(line, header_fields.dir), getfield(line, header_fields.bench)), 
                     param, 
                     cols[stat_field_col] 
                     );
@@ -849,12 +867,14 @@ namespace bench
             maxval++; // we add one because if there is one dot (or all the dots have the same vlaue, it creates a problem in latex' pgfplot). 
             foreach (Forplot forp in forplot)
             {
+                if (forp.Val == "") continue;
                 string key = normalize_string(forp.Param);
                 Debug.Assert(csv4plot.Contains(key)); 
                 ((StreamWriter)csv4plot[key]).WriteLine(
                 forp.Bench + "," + // full benchmark path
                 key + "," + // param
-                forp.Val + "," +
+                forp.Val 
+                + "," +
                 maxval + "s");
             }
             foreach (var key in csv4plot.Keys) ((StreamWriter)csv4plot[key]).Close();
@@ -1468,8 +1488,18 @@ namespace bench
         {
             return getfield(line, (int)field);
         }
+
+       private string getfield(string line, int idx) // if this does not work, check it is not equivalent to the version below.
+        {
+            string[] fields = line.Split(',');            
+            if (idx >= fields.Length) return "";
+          //  string old = getfield1(line, idx);
+        //    Debug.Assert(fields[idx] == old );
+            return fields[idx];
+        }
         // Gets field # idx in a comma-separated line
-        private string getfield(string line, int idx)
+        // obselete
+     /*   private string getfield1(string line, int idx)
         {
             int i=0;
             for (int j = 0; j < idx; ++j)
@@ -1482,9 +1512,10 @@ namespace bench
             int k = line.IndexOf(',', i + 1); // location of next comma
             if (k == -1) k = line.Length; // in case idx was last
             k = k - i - 1; // subtract location of current comma
-            string res = line.Substring(i+1, k); // line.IndexOf(',', i + 1)-i-1
+            string res = line.Substring(i+1, k); // line.IndexOf(',', i + 1)-i-1            
             return res;
         }
+     */
 
         private void del_Allfail_benchmark()
         {            
@@ -1494,21 +1525,32 @@ namespace bench
             HashSet<string> failed_all = new HashSet<string>();
             int cnt = 0;
             // finding failed benchmarks 
+            bool readheader = true;
             try
             {
                 foreach (string line in File.ReadLines(fileName))
                 {
+                    if (readheader)
+                    {                     
+                        readheader = false;
+                        continue;
+                    }
                     benchmarks[getfield(line, header_fields.bench)] = getfield(line, header_fields.dir);
                 }
             }
             catch { MessageBox.Show("seems that " + csv.Text + "is in use"); return; }
 
+            readheader = true;
             foreach (string line in File.ReadLines(fileName))
             {
+                if (readheader)
+                {
+                    readheader = false;
+                    continue;
+                }
                 if (getfield(line,header_fields.fail) == "" &&
                     getfield(line, header_fields.timedout) == "" )                
-                        benchmarks.Remove(getfield(line, header_fields.bench));
-                
+                        benchmarks.Remove(getfield(line, header_fields.bench));                
             }
 
             foreach (string key in benchmarks.Keys)
@@ -1523,6 +1565,7 @@ namespace bench
             listBox1.Items.Add("Deleted benchmarks: " + cnt);
 
             var linesToKeep = File.ReadLines(fileName).Where(l => !failed_all.Contains(getfield(l, header_fields.bench)));
+            
             var tempFile = Path.GetTempFileName();
 
             File.WriteAllLines(tempFile, linesToKeep);
@@ -1544,10 +1587,10 @@ namespace bench
                     if (header)
                     {
                         List<string> labels1  = new List<string>(line.Split(new char[] {',' }));
-                        timeFieldLocation = labels1.IndexOf(stat_field.Text);
+                        timeFieldLocation = labels1.FindIndex(x => x.Equals("time", StringComparison.OrdinalIgnoreCase));                        
                         if (timeFieldLocation == -1)
                         {
-                            MessageBox.Show("cannot find field " + stat_field.Text + " in header of " + fileName);
+                            MessageBox.Show("cannot find field 'time' in header of " + fileName);
                             return;
                         }
                         timeFieldLocation++; // because indexOf is 0-based
@@ -1606,9 +1649,7 @@ namespace bench
             }
             catch { MessageBox.Show("seems that " + csv.Text + "is in use"); return; }
 
-            // keeping only benchmarks that are not failed by any parameter combination. 
-
-            
+            // keeping only benchmarks that are not failed by any parameter combination.            
             StreamReader sr = new StreamReader(fileName);
             string header_line = sr.ReadLine();
             int i = 1;
@@ -1637,7 +1678,7 @@ namespace bench
                 }
                 string line_st = line;
                 if (failed_column > 0) line_st = line_st.Substring(0, line_st.LastIndexOf(",")); // removing old value, including ','
-                if ((!failed_atleast_once.Contains(Path.Combine(getfield(line, header_fields.dir), getfield(line, header_fields.bench)))))
+                if (!failed_atleast_once.Contains(Path.Combine(getfield(line, header_fields.dir), getfield(line, header_fields.bench))))
                 {                    
                     lines.Add(line_st + ","); 
                 }

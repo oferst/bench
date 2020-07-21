@@ -61,6 +61,7 @@
             this.checkBox_skip_long_runs = new System.Windows.Forms.CheckBox();
             this.checkBox_copy = new System.Windows.Forms.CheckBox();
             this.chk_resetcsv = new System.Windows.Forms.CheckBox();
+            this.maxfiles = new System.Windows.Forms.ComboBox();
             this.label10 = new System.Windows.Forms.Label();
             this.button4 = new System.Windows.Forms.Button();
             this.exe = new System.Windows.Forms.ComboBox();
@@ -89,7 +90,6 @@
             this.btn_clear = new System.Windows.Forms.Button();
             this.button_save = new System.Windows.Forms.Button();
             this.label14 = new System.Windows.Forms.Label();
-            this.maxfiles = new System.Windows.Forms.ComboBox();
             this.menuStrip1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
@@ -363,7 +363,8 @@
             this.checkBox_filter_out.Size = new System.Drawing.Size(62, 17);
             this.checkBox_filter_out.TabIndex = 41;
             this.checkBox_filter_out.Text = "out files";
-            this.toolTip1.SetToolTip(this.checkBox_filter_out, "Excludes benchmarks for which there is already an out file");
+            this.toolTip1.SetToolTip(this.checkBox_filter_out, "Excludes benchmarks for which there is already an out file (in the same die as \'d" +
+        "irectory\')");
             this.checkBox_filter_out.UseVisualStyleBackColor = true;
             this.checkBox_filter_out.CheckedChanged += new System.EventHandler(this.checkBox_out_CheckedChanged);
             // 
@@ -416,6 +417,17 @@
             this.toolTip1.SetToolTip(this.chk_resetcsv, "start from an empty csv file (note that if \'csv file\' is checked then the file is" +
         " not reset)");
             this.chk_resetcsv.UseVisualStyleBackColor = true;
+            // 
+            // maxfiles
+            // 
+            this.maxfiles.FormattingEnabled = true;
+            this.maxfiles.Location = new System.Drawing.Point(686, 326);
+            this.maxfiles.Name = "maxfiles";
+            this.maxfiles.Size = new System.Drawing.Size(58, 21);
+            this.maxfiles.TabIndex = 65;
+            this.toolTip1.SetToolTip(this.maxfiles, "Max # of benchmarks");
+            this.maxfiles.SelectionChangeCommitted += new System.EventHandler(this.combo_SelectedIndexChanged);
+            this.maxfiles.Leave += new System.EventHandler(this.comboBox_Leave);
             // 
             // label10
             // 
@@ -679,17 +691,6 @@
             this.label14.Size = new System.Drawing.Size(51, 13);
             this.label14.TabIndex = 64;
             this.label14.Text = "Max files:";
-            // 
-            // maxfiles
-            // 
-            this.maxfiles.FormattingEnabled = true;
-            this.maxfiles.Location = new System.Drawing.Point(686, 326);
-            this.maxfiles.Name = "maxfiles";
-            this.maxfiles.Size = new System.Drawing.Size(58, 21);
-            this.maxfiles.TabIndex = 65;
-            this.toolTip1.SetToolTip(this.maxfiles, "Max # of benchmarks");
-            this.maxfiles.SelectionChangeCommitted += new System.EventHandler(this.combo_SelectedIndexChanged);
-            this.maxfiles.Leave += new System.EventHandler(this.comboBox_Leave);
             // 
             // filter
             // 
