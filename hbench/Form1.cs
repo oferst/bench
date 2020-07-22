@@ -27,7 +27,7 @@ namespace bench
     {
         // reading from config  file: 
         string history_file = Path.Combine(Application.StartupPath, ConfigurationManager.AppSettings["history_filename"]);//"history.txt"
-        string graphDir = ConfigurationManager.AppSettings["cpbm"]; //@"c:\temp\cpbm-0.5\";        
+        string graphDir =  ConfigurationManager.AppSettings["cpbm"]; //@"c:\temp\cpbm-0.5\";        
         StreamWriter logfile = new StreamWriter(ConfigurationManager.AppSettings["log"]); // @"C:\temp\log.txt");        
         string stat_tag = ConfigurationManager.AppSettings["stat_tag"]; // ###
         string abort_tag = ConfigurationManager.AppSettings["abort_tag"];
@@ -663,11 +663,9 @@ namespace bench
             var fileEntries = getFilesInDir();                
             if (fileEntries.Count == 0) listBox1.Items.Add("empty file list\n");
 
+            BenchmarkNamesFromCsv.Clear();
             if (checkBox_filter_csv.Checked && File.Exists(csv.Text))
-            {
-                readBenchmarkNamesFromCsv();
-            }
-            else BenchmarkNamesFromCsv.Clear();
+                readBenchmarkNamesFromCsv();            
 
             bool first = true;
 
@@ -1216,8 +1214,9 @@ namespace bench
 
             try
             {
+                BenchmarkNamesFromCsv.Clear();
                 if (checkBox_filter_csv.Checked && File.Exists(csv.Text)) readBenchmarkNamesFromCsv();
-                else BenchmarkNamesFromCsv.Clear();
+                
                 //init_csv_file();             
             }
             catch (Exception ex)
@@ -1777,8 +1776,9 @@ namespace bench
             if (fileEntries.Count == 0) listBox1.Items.Add("empty file list\n");
             
             processes.Clear();
+            BenchmarkNamesFromCsv.Clear();
             if (checkBox_filter_csv.Checked && File.Exists(csv.Text)) readBenchmarkNamesFromCsv();
-            else BenchmarkNamesFromCsv.Clear();            
+            
             //if (checkBox_remote.Checked) listBox1.Items.Add("Files will be imported to " + Directory.GetCurrentDirectory());
             
             string remote_user = "", remote_bench_path = "";
