@@ -293,7 +293,7 @@ namespace bench
             }
             catch (Exception)
             {
-                MessageBox.Show("cannot read labels from " + csv.Text);
+                MessageBox.Show("cannot read labels from " + csv.Text);                
                 return;
             }
             labels = header.Split(',').ToList<string>();
@@ -400,11 +400,18 @@ namespace bench
             return filename + "." + normalize_string(param) + ".out";
         }
 
+        void scrolldown()
+        {
+            int visibleItems = listBox1.ClientSize.Height / listBox1.ItemHeight;
+            listBox1.TopIndex = Math.Max(listBox1.Items.Count - visibleItems + 1, 0);
+        }
+
         // called from background-worker thread
         void Log(string msg, bool tofile = true)
         {
             listBox1.Items.Add(msg); 
             listBox1.Refresh();
+            scrolldown();
             if (tofile)
             {
                 logfile.WriteLine(msg);
@@ -779,16 +786,16 @@ namespace bench
             stat_field.DataSource = null;
             stat_field.Items.Clear();
             foreach (string lbl in labels) stat_field.Items.Add(lbl);
-            if (Addheader)
-            {
-                foreach (string lbl in labels) csvheader += lbl + ",";
-                csvheader = String.Join(",", Enum.GetNames(typeof(header_fields))) + "," + csvheader;
-                csvheader = csvheader.Substring(0, csvheader.Length - 1); // remove last ','
-                csvfile.Write(csvheader);                
-                csvfile.WriteLine();
-            }
             try
             {
+                if (Addheader)
+                {
+                    foreach (string lbl in labels) csvheader += lbl + ",";
+                    csvheader = String.Join(",", Enum.GetNames(typeof(header_fields))) + "," + csvheader;
+                    csvheader = csvheader.Substring(0, csvheader.Length - 1); // remove last ','
+                    csvfile.Write(csvheader);
+                    csvfile.WriteLine();
+                }
                 csvfile.Write(csvtext);
             }
             catch
@@ -832,6 +839,7 @@ namespace bench
             if (stat_field_col < 0)
             {
                 MessageBox.Show(stat_field.Text + " is not in the header of " + csv.Text);
+                foreach (var key in csv4plot.Keys) ((StreamWriter)csv4plot[key]).Close();
                 csvfile.Close();
                 return false;
 
@@ -860,13 +868,17 @@ namespace bench
             if (forplot.Count == 0)
             {
                 MessageBox.Show("no line in the csv file matches the regular expression " + filter_str.Text);
+                foreach (var key in csv4plot.Keys) ((StreamWriter)csv4plot[key]).Close();
+                csvfile.Close();
                 return false;
             }
             maxval++; // we add one because if there is one dot (or all the dots have the same vlaue, it creates a problem in latex' pgfplot). 
+            HashSet<string> keys = new HashSet<string>();
             foreach (Forplot forp in forplot)
             {
                 if (forp.Val == "") continue;
                 string key = normalize_string(forp.Param);
+                keys.Add(key);
                 Debug.Assert(csv4plot.Contains(key)); 
                 ((StreamWriter)csv4plot[key]).WriteLine(
                 forp.Bench + "," + // full benchmark path
@@ -875,8 +887,31 @@ namespace bench
                 + "," +
                 maxval + "s");
             }
-            foreach (var key in csv4plot.Keys) ((StreamWriter)csv4plot[key]).Close();
-            csvfile.Close();
+
+
+            // copying keys into a temp list. We cannot iterate directly on keys and remove one of the items. 
+            List<string> temp = new List<string>();
+            foreach (var k in csv4plot.Keys)
+            {
+                temp.Add(k.ToString());
+            }            
+            
+            foreach (string key in temp)
+            {
+                if (!keys.Contains(key))
+                {
+                    listBox1.Items.Add("Warning: key " + key + " has no entries in the csv file. Skipping.");
+                    ((StreamWriter)csv4plot[key]).Close();
+                    csv4plot.Remove(key);
+                    continue;
+                }
+            }
+
+            foreach (var key in csv4plot.Keys)
+            {    
+                ((StreamWriter)csv4plot[key]).Close();
+            }
+             csvfile.Close();
             return true;
         }
 
@@ -1273,6 +1308,7 @@ namespace bench
             }
             
             buildcsv();
+            scrolldown();
         }
 
         private void button_kill_Click(object sender, EventArgs e)
@@ -1325,6 +1361,7 @@ namespace bench
             }
             if (csvfile != null) csvfile.Close();
             button1.Enabled = true;
+            scrolldown();
         }
 
         private void button_csv_Click(object sender, EventArgs e)
@@ -1562,6 +1599,7 @@ namespace bench
                 catch { }
             }
             listBox1.Items.Add("Deleted benchmarks: " + cnt);
+            scrolldown();
 
             var linesToKeep = File.ReadLines(fileName).Where(l => !failed_all.Contains(getfield(l, header_fields.bench)));
             
@@ -1691,6 +1729,7 @@ namespace bench
             File.WriteAllLines(tempFile, lines);
             File.Delete(fileName);
             File.Move(tempFile, fileName);
+            scrolldown();
         }
 
         private void button_del_fails_Click(object sender, EventArgs e)
@@ -1712,6 +1751,7 @@ namespace bench
                     listBox1.Items.Add("failed line: " + line);
                     failed_atleast_once.Add(Path.Combine(getfield(line, header_fields.dir), getfield(line, header_fields.bench)));
                 }
+                scrolldown();
             }
             catch { MessageBox.Show("seems that " + csv.Text + "is in use"); return; }
             
@@ -1826,6 +1866,7 @@ namespace bench
             try {
                 import_remote_out();
                 buildcsv();
+                scrolldown();
             }
             catch (Exception ex)
             {

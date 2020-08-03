@@ -7,3 +7,5 @@ hbench/bin/
 CodeGraphData/
 bench/bin/
 bench/obj/
+*.tex
+*.csv

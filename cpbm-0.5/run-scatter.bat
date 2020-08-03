@@ -1,4 +1,5 @@
 rem requires two csv files
+del filename.txt
 rem since make_graph ordres the files internally alphabetically we have to do it here
 rem as well
 if "%1" leq "%2" (
