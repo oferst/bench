@@ -425,7 +425,7 @@
             this.maxfiles.Name = "maxfiles";
             this.maxfiles.Size = new System.Drawing.Size(58, 21);
             this.maxfiles.TabIndex = 65;
-            this.toolTip1.SetToolTip(this.maxfiles, "Max # of benchmarks");
+            this.toolTip1.SetToolTip(this.maxfiles, "Max # of benchmarks (0 = no limit)");
             this.maxfiles.SelectionChangeCommitted += new System.EventHandler(this.combo_SelectedIndexChanged);
             this.maxfiles.Leave += new System.EventHandler(this.comboBox_Leave);
             // 

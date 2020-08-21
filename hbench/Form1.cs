@@ -447,11 +447,12 @@ namespace bench
             int counter = int.MaxValue;
             string text="";
             maxfiles.Invoke(new Action(() => { text = maxfiles.Text; }));
-            if (text != "" && text != "0" && !int.TryParse(text, out counter))
+            if (!int.TryParse(text, out counter))
             {
                 bg.ReportProgress(0, "Non-numeric value in max-files. Putting no limits on # of files.");
                 counter = int.MaxValue;
-            };  
+            };
+            if (counter == 0) counter = int.MaxValue;
             foreach (FileInfo fi in filelist)
             {
                 if (string.Compare(extension, fi.Extension, StringComparison.OrdinalIgnoreCase) != 0) continue;
