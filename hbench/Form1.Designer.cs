@@ -81,6 +81,7 @@
             this.refreshMenusToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.markFailsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.configToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.reloadConfigToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.label7 = new System.Windows.Forms.Label();
             this.stat_field = new System.Windows.Forms.ComboBox();
             this.timeout = new System.Windows.Forms.ComboBox();
@@ -514,7 +515,8 @@
             this.cleanupToolStripMenuItem1,
             this.editHistoryFileToolStripMenuItem,
             this.markFailsToolStripMenuItem,
-            this.configToolStripMenuItem});
+            this.configToolStripMenuItem,
+            this.reloadConfigToolStripMenuItem});
             this.cleanupToolStripMenuItem.Name = "cleanupToolStripMenuItem";
             this.cleanupToolStripMenuItem.Size = new System.Drawing.Size(50, 20);
             this.cleanupToolStripMenuItem.Text = "Menu";
@@ -527,7 +529,7 @@
             this.toolStripSeparator1,
             this.deleteAllfailBenchmarksToolStripMenuItem});
             this.cleanupToolStripMenuItem1.Name = "cleanupToolStripMenuItem1";
-            this.cleanupToolStripMenuItem1.Size = new System.Drawing.Size(169, 22);
+            this.cleanupToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
             this.cleanupToolStripMenuItem1.Text = "Cleanup";
             // 
             // toolStripMenuItem1
@@ -568,7 +570,7 @@
             this.editToolStripMenuItem,
             this.refreshMenusToolStripMenuItem});
             this.editHistoryFileToolStripMenuItem.Name = "editHistoryFileToolStripMenuItem";
-            this.editHistoryFileToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
+            this.editHistoryFileToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.editHistoryFileToolStripMenuItem.Text = "History file";
             // 
             // editToolStripMenuItem
@@ -588,17 +590,24 @@
             // markFailsToolStripMenuItem
             // 
             this.markFailsToolStripMenuItem.Name = "markFailsToolStripMenuItem";
-            this.markFailsToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
+            this.markFailsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.markFailsToolStripMenuItem.Text = "mark fails";
             this.markFailsToolStripMenuItem.Click += new System.EventHandler(this.button_mark_fails_Click);
             // 
             // configToolStripMenuItem
             // 
             this.configToolStripMenuItem.Name = "configToolStripMenuItem";
-            this.configToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
+            this.configToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.configToolStripMenuItem.Text = "Advanced Config.";
-            this.configToolStripMenuItem.ToolTipText = "Requires restart after change.";
+            this.configToolStripMenuItem.ToolTipText = "Press \'Reload Config\' after change.";
             this.configToolStripMenuItem.Click += new System.EventHandler(this.configToolStripMenuItem_Click);
+            // 
+            // reloadConfigToolStripMenuItem
+            // 
+            this.reloadConfigToolStripMenuItem.Name = "reloadConfigToolStripMenuItem";
+            this.reloadConfigToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.reloadConfigToolStripMenuItem.Text = "Reload Config.";
+            this.reloadConfigToolStripMenuItem.Click += new System.EventHandler(this.reloadConfigToolStripMenuItem_Click);
             // 
             // label7
             // 
@@ -818,6 +827,7 @@
         private System.Windows.Forms.Button button_save;
         private System.Windows.Forms.Label label14;
         private System.Windows.Forms.ComboBox maxfiles;
+        private System.Windows.Forms.ToolStripMenuItem reloadConfigToolStripMenuItem;
     }
 }
 

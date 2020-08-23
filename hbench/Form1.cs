@@ -31,7 +31,10 @@ namespace bench
         StreamWriter logfile = new StreamWriter(ConfigurationManager.AppSettings["log"]); // @"C:\temp\log.txt");        
         string stat_tag = ConfigurationManager.AppSettings["stat_tag"]; // ###
         string abort_tag = ConfigurationManager.AppSettings["abort_tag"];
-        const string timedout_Tag = "timedout";
+        // currently the timeout featured is practically turned off. 
+        // The application has to create a time-out field like any other field, e.g.,
+        // see chrono (by catching sigint). 
+        const string timedout_Tag = "bla"; //"timedout"; 
         bool hyperthreading = ConfigurationManager.AppSettings["hyperthreading"] == "true";
         static int param_list_size = int.Parse(ConfigurationManager.AppSettings["param_list_size"]);
 
@@ -249,7 +252,11 @@ namespace bench
         // called from background-worker thread
         string normalize_string(string s)
         {
-            return s.Replace("=", "").Replace(" ", "").Replace("_", "").Replace(labelTag, "").Replace("%f", "").Replace("-",""); // to make param a legal file name. Might have a problem with '-' because some parameters use negative values. We cannot use in the replacement string a "-" because having this in the file name makes scatter/cactus refer to this as a parameter.
+            // to make param a legal file name. Might have a problem with '-' because 
+            // some parameters use negative values. We cannot use in the replacement 
+            // string a "-" because having this in the file name makes scatter/cactus 
+            // refer to this as a parameter.
+            return s.Replace("=", "").Replace(" ", "").Replace("_", "").Replace(labelTag, "").Replace("%f", "").Replace("-",""); 
         }
 
 
@@ -1409,7 +1416,9 @@ namespace bench
                     }
                     indices.Add(new Tuple<int, int>(start, end));
                     string s = str.Substring(start + 1, end - start - 1); //the contents of the set
-                    sets.Add(s.Split(setSeparator));
+                    // removing spaces (e.g. {2 | 3 |4 } becomes "2","3","4" and not "2 "," 3 ","4 ")
+                    // This is important in e.g. chrono, where the argument is expected to be without spaces
+                    sets.Add(s.Split(setSeparator).Select(x => x.Trim()).ToArray());
                     foreach (string st in sets.Last())
                     {
                         if (st == "")
@@ -1850,7 +1859,8 @@ namespace bench
                         imported++;
                         listBox1.Items.Add(outText);
                         if (res.Item1 != 0) listBox1.Items.Add("*** Warning: exit code " + res.Item1);
-                        listBox1.Refresh();                        
+                        listBox1.Refresh();
+                        scrolldown();
                     }
                 }
                 listBox1.Refresh();
@@ -2009,6 +2019,11 @@ namespace bench
         private void stat_field_Click(object sender, EventArgs e)
         {
             readLabelsFromCsv();
+        }
+
+        private void reloadConfigToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ConfigurationManager.RefreshSection("appSettings");
         }
 
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
