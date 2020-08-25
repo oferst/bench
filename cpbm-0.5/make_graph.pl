@@ -210,8 +210,9 @@ if(! -d "pgfplots") {
 my $fn = "";
 my $title = scalar(keys %per_file_data) > 1 ? "Comparison of " : "";
 my $legend = "";
+$fn .= "myfile"; #ofer. Because concatenating the file names is too long for windows. 
 foreach (sort keys %per_file_data) {
-  $fn .= $per_file_data{$_}{name} . "_";
+  #$fn .= $per_file_data{$_}{name} . "_"; 
   $title .= $per_file_data{$_}{name} . ", ";
   $legend .= $per_file_data{$_}{name} . " " .  ", ";
 }
@@ -244,7 +245,7 @@ if(!$opt_s && !$opt_c) {
   $width = scalar(keys %results) * 0.05;
 }
 
-$width = 14 if($width < 14); #ofer: was 4 in both cases 
+$width = 8 if($width < 8); #ofer: was 4 in both cases 
 $width = 75 if($width > 75);
 $xenlarge = 1/$width;
 # ofer: added 'every axis ... '
@@ -372,6 +373,7 @@ EOF
     $xlabel .= " [\\%]";
   }
  #ofer, used to be title = {\\Large $title}
+ #ofer: used to be columns=-1 (which puts the legends horizontally)
   print TEX << "EOF";
 \\begin{$axis}[
   title={},
@@ -380,15 +382,16 @@ EOF
   axis x line*=none,
   axis y line=box, $xbounds
   legend style={at={(0.5,-2.2cm)}, 
-  anchor=north,legend columns=-1},
+  anchor=north,legend columns=1, font = \\tiny},
   nodes near coords,
   point meta=explicit symbolic,$axis_decoration
 ]
 EOF
-  print TEX "\\addplot+ coordinates { $coordstrings{$_} };\n"
+#ofer: added mark size=1
+  print TEX "\\addplot+[mark size=1pt] coordinates { $coordstrings{$_} };\n"
     foreach (sort keys %per_file_data);
   print TEX << "EOF";
-\\legend{ $legend };
+\\legend{$legend};
 \\end{$axis}
 EOF
 } else {

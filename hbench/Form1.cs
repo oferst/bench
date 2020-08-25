@@ -256,7 +256,9 @@ namespace bench
             // some parameters use negative values. We cannot use in the replacement 
             // string a "-" because having this in the file name makes scatter/cactus 
             // refer to this as a parameter.
-            return s.Replace("=", "").Replace(" ", "").Replace("_", "").Replace(labelTag, "").Replace("%f", "").Replace("-",""); 
+            string res = s.Replace("=", "").Replace(" ", "").Replace("_", "").Replace(labelTag, "").Replace("%f", "").Replace("-", ""); 
+            if (res == "") res = "NoArgs";
+            return res;
         }
 
 
@@ -1513,7 +1515,11 @@ namespace bench
             startInfo.FileName = "run-cactus.bat";
             startInfo.Arguments = "";
             expand_param_list();
-            for (int par = 0; par < ext_param_list.Count; ++par)  // for each parameter
+            if (ext_param_list.Count > 20) // if need more, change run-cactus.bat
+                listBox1.Items.Add("Warning: only first 20 entries are sent to cactus plot");
+            if (ext_param_list.Count > 9)
+                listBox1.Items.Add("Warning: beyond 9 lines, 'tick' style is repeated. Change manually in the .tex.");
+            for (int par = 0; par < ext_param_list.Count && (par < 20); ++par)  // for each parameter
             {           
                 startInfo.Arguments += " " + normalize_string(ext_param_list[par]) + ".csv";
             }
