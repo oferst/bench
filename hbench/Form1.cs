@@ -1545,52 +1545,45 @@ namespace bench
             HashSet<string> failed_all = new HashSet<string>();
             int cnt = 0;
             // finding failed benchmarks 
-            bool readheader = true;
+            List<string> lines;
             try
             {
-                foreach (string line in File.ReadLines(fileName))
-                {
-                    if (readheader)
-                    {                     
-                        readheader = false;
-                        continue;
-                    }
-                    benchmarks[get_field(line, header_fields.bench)] = get_field(line, header_fields.dir);
-                }
+                lines = File.ReadLines(fileName).ToList();
             }
             catch { MessageBox.Show("seems that " + csv.Text + " is in use"); return; }
 
-            readheader = true;
-            foreach (string line in File.ReadLines(fileName))
+            string header = lines[0];
+            lines.RemoveAt(0);
+
+            foreach (string line in lines)
             {
-                if (readheader)
-                {
-                    readheader = false;
-                    continue;
-                }
-                if (get_field(line,header_fields.fail) == "" &&                    
-                    get_field(line, 20) == "0")
+                benchmarks[get_field(line, header_fields.bench)] = get_field(line, header_fields.dir);
+            }
+
+            int timedoutidx = get_field_idx(header, timedout_Tag);
+            foreach (string line in lines)
+            {
+                if (get_field(line, header_fields.fail) == "" &&
+                    get_field(line, timedoutidx) == "0")
                     benchmarks.Remove(get_field(line, header_fields.bench));                
             }
 
             foreach (string key in benchmarks.Keys)
             {
-                string path = benchmarks[key] + "\\" +  key;
+                string path = benchmarks[key] + "\\" + key;
                 listBox1.Items.Add("deleting All-failed benchmark " + path);
                 failed_all.Add(key);
                 cnt++;
                 try { File.Delete(path);}
-                catch { }
+                catch { listBox1.Items.Add("cannot delete " + path); }
             }
             listBox1.Items.Add("Deleted benchmarks: " + cnt);
             scrolldown();
 
-            var linesToKeep = File.ReadLines(fileName).Where(l => !failed_all.Contains(get_field(l, header_fields.bench)));
-            
+            List<string> linesToKeep = lines.Where(l => !failed_all.Contains(get_field(l, header_fields.bench))).ToList();
+            linesToKeep.Insert(0, header);
             var tempFile = Path.GetTempFileName();
-
             File.WriteAllLines(tempFile, linesToKeep);
-
             File.Delete(fileName);
             File.Move(tempFile, fileName);           
         }
