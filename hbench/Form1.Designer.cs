@@ -80,6 +80,7 @@
             this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.refreshMenusToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.markFailsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.markwinner = new System.Windows.Forms.ToolStripMenuItem();
             this.configToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.reloadConfigToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.label7 = new System.Windows.Forms.Label();
@@ -91,6 +92,7 @@
             this.btn_clear = new System.Windows.Forms.Button();
             this.button_save = new System.Windows.Forms.Button();
             this.label14 = new System.Windows.Forms.Label();
+            this.button2 = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
@@ -515,6 +517,7 @@
             this.cleanupToolStripMenuItem1,
             this.editHistoryFileToolStripMenuItem,
             this.markFailsToolStripMenuItem,
+            this.markwinner,
             this.configToolStripMenuItem,
             this.reloadConfigToolStripMenuItem});
             this.cleanupToolStripMenuItem.Name = "cleanupToolStripMenuItem";
@@ -593,6 +596,13 @@
             this.markFailsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.markFailsToolStripMenuItem.Text = "mark fails";
             this.markFailsToolStripMenuItem.Click += new System.EventHandler(this.button_mark_fails_Click);
+            // 
+            // markwinner
+            // 
+            this.markwinner.Name = "markwinner";
+            this.markwinner.Size = new System.Drawing.Size(180, 22);
+            this.markwinner.Text = "mark winners";
+            this.markwinner.Click += new System.EventHandler(this.markwinner_Click);
             // 
             // configToolStripMenuItem
             // 
@@ -701,11 +711,22 @@
             this.label14.TabIndex = 64;
             this.label14.Text = "Max files:";
             // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(329, 699);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(80, 23);
+            this.button2.TabIndex = 66;
+            this.button2.Text = "export source";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
+            // 
             // filter
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(780, 749);
+            this.Controls.Add(this.button2);
             this.Controls.Add(this.maxfiles);
             this.Controls.Add(this.label14);
             this.Controls.Add(this.button_save);
@@ -828,6 +849,8 @@
         private System.Windows.Forms.Label label14;
         private System.Windows.Forms.ComboBox maxfiles;
         private System.Windows.Forms.ToolStripMenuItem reloadConfigToolStripMenuItem;
+        private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.ToolStripMenuItem markwinner;
     }
 }
 
