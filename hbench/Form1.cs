@@ -56,14 +56,15 @@ namespace bench
             exe, dir, filter_str, maxfiles, csv, param, param_groups, stat_field, core_list, timeout, min_mem,  // combos
             checkBox_skip_long_runs, checkBox_remote, checkBox_rec, checkBox_rerun_empty_out, checkBox_filter_out, checkBox_filter_csv, checkBox_copy, // checkboxes
             misc }; // elements maintained in the history file
-        enum header_fields { exedate, param, dir, bench, fail};
+        enum header_fields { exedate, param, dir, bench, fail}; // these are not reported in the out files, yet they are part of each record. 
+        List<string> labels = new List<string>();  // never includes header_fields. 
         // declarations:
         Hashtable processes = new Hashtable();  // from process to <args, benchmark, list of results>
         List<string> failed_benchmarks;
         List<System.Threading.Timer> timers = new List<System.Threading.Timer>();
         // the list of labels below represents the union of lables in the various output files processed 
         // so far (up to 'reset csv') + labels added via 'mark winners'/'mark fails'.       
-        List<string> labels = new List<string>();  
+        
         TextBox[] param_list = new TextBox[param_list_size];
         List<string> ext_param_list = new List<string>(); 
         RadioButton[] scatter1 = new RadioButton[param_list_size];
@@ -311,6 +312,8 @@ namespace bench
                 return;
             }
             labels = header.Split(',').ToList<string>();
+            int offset = Enum.GetValues(typeof(header_fields)).Length;
+            labels.RemoveRange(0, offset);
             bool validfirstline = nextline != null;
             if (validfirstline) vals = nextline.Split(',').ToList<string>();
             else vals = labels; // just to get the same count; won't be used. 
@@ -339,13 +342,46 @@ namespace bench
                 MessageBox.Show(ex.Message + "\n seems that " + csv.Text + " is in use");
                 throw;
             }
-                        
+
             while ((line = csvfile.ReadLine()) != null)
-            {  
-                res = getid(get_field(line, header_fields.param), get_field(line, header_fields.dir), get_field(line, header_fields.bench),"");
-                BenchmarkNamesFromCsv.Add(res);            
+            {
+                if (get_field(line, header_fields.param) == "") continue;
+                res = getid(get_field(line, header_fields.param), get_field(line, header_fields.dir), get_field(line, header_fields.bench), "");
+                BenchmarkNamesFromCsv.Add(res);                                
+            }
+    
+            csvfile.Close();
+        }
+
+        // The point about this function is that it may be called after labels from other out files 
+        // were added. This keeps it all aligned with the new fields. 
+        string readBenchmarkDataFromCsv()
+        {
+            string line;
+            StreamReader csvfile;
+            string res = "";
+            try
+            {
+                csvfile = new StreamReader(csv.Text);      //(@"C:\temp\res.csv");
+                csvfile.ReadLine(); // header
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message + "\n seems that " + csv.Text + " is in use");
+                throw;
+            }
+
+            int offset = Enum.GetValues(typeof(header_fields)).Length;
+            while ((line = csvfile.ReadLine()) != null)
+            {
+                if (!line.Any(x => char.IsLetter(x) || char.IsNumber(x))) continue; // This solves a problem that csv file sometimes contain lines of only commas.
+                res += line;
+                string[] parts = line.Split(',');
+                for (int i = parts.Length; i < labels.Count; ++i) res += ",-1";
+                res += "\r\n";
             }
             csvfile.Close();
+            return res;
         }
 
         string GetRelativePath(string filespec, string folder)
@@ -667,8 +703,10 @@ namespace bench
             if (fileEntries.Count == 0) listBox1.Items.Add("empty file list\n");
 
             BenchmarkNamesFromCsv.Clear();
-            if (checkBox_filter_csv.Checked && File.Exists(csv.Text))
-                readBenchmarkNamesFromCsv();            
+            if (checkBox_filter_csv.Checked && File.Exists(csv.Text))            
+                readBenchmarkNamesFromCsv();
+
+            
 
             bool first = true;
 
@@ -679,14 +717,16 @@ namespace bench
                 {
                     string fileName = fileinfo.FullName;
                     string id = getid(ext_param_list[par], fileName);
-                    if (BenchmarkNamesFromCsv.Contains(id)) { in_csv++; continue; }
-                    string outfileName = outfile(fileName, ext_param_list[par]); // we import from the same directory as the source cnf file;                    
+                    if (BenchmarkNamesFromCsv.Contains(id)) { 
+                        in_csv++;                      
+                        continue; 
+                    }
+                    string outfileName = outfile(fileName, ext_param_list[par]); // we import from the same directory as the source cnf file;
 
                     if (File.Exists(outfileName))
                     {
                         bool exists = false;
-                        Process p1 = null;
-                        // Adding a 'timedout' label to output files of processes that timed-out. 
+                        Process p1 = null;                        
                         foreach (Process p in processes.Keys)
                         {
                             benchmark bench = processes[p] as benchmark;
@@ -730,15 +770,18 @@ namespace bench
 
         void buildcsv()
         {
-            bool Addheader = chk_resetcsv.Checked || !File.Exists(csv.Text);
+            bool resetcsv = chk_resetcsv.Checked || !File.Exists(csv.Text);
             string csvheader = "", csvtext = "";            
             string exedate = "";
             if (!checkBox_remote.Checked) exedate = File.GetLastWriteTime(exe.Text).ToString();
-
+                        
             prepareDataForCsv(); // this fills 'processes'.
+            string existingEntries = "";            
+            if (!resetcsv) existingEntries = readBenchmarkDataFromCsv();
+
             try
             {
-                csvfile = new StreamWriter(csv.Text, checkBox_filter_csv.Checked || !chk_resetcsv.Checked);
+                csvfile = new StreamWriter(csv.Text, false);
             }
             catch
             {
@@ -754,10 +797,10 @@ namespace bench
                 var res = bm.res;
                 // each line must *not* end with "," (because excel erases last ',' anyway when saving csv)
                 csvtext += exedate + ",";    
-                csvtext += getid(bm.param, bm.name) + ","; // benchmark. There is an extra ',' because of the 'fail' column.
-
-                foreach (string lbl in labels)
+                csvtext += getid(bm.param, bm.name) + ","; // benchmark. There is an extra ',' because of the 'fail' column.                
+                for (int i = 0; i < labels.Count; ++i) 
                 {
+                    string lbl = labels[i];
                     string st_res;
                     if (res.ContainsKey(lbl)) st_res = res[lbl].ToString();
                     else
@@ -775,14 +818,11 @@ namespace bench
             stat_field.Items.Clear();
             foreach (string lbl in labels) stat_field.Items.Add(lbl);
             try
-            {
-                if (Addheader)
-                {
-                    csvheader = String.Join(",", Enum.GetNames(typeof(header_fields))) + "," +
-                                String.Join(",", labels); 
-                    csvfile.Write(csvheader);
-                    csvfile.WriteLine();
-                }
+            {                
+                string[] hd = (Enum.GetNames(typeof(header_fields)));
+                csvheader += String.Join(",", hd.ToList<string>().Concat(labels));                
+                csvfile.WriteLine(csvheader);                
+                if (!resetcsv) csvfile.Write(existingEntries);
                 csvfile.Write(csvtext);
             }
             catch
