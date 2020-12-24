@@ -93,6 +93,7 @@
             this.button_save = new System.Windows.Forms.Button();
             this.label14 = new System.Windows.Forms.Label();
             this.button2 = new System.Windows.Forms.Button();
+            this.button_putty = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
@@ -101,7 +102,7 @@
             // 
             this.button1.BackColor = System.Drawing.SystemColors.Control;
             this.button1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(177)));
-            this.button1.Location = new System.Drawing.Point(658, 692);
+            this.button1.Location = new System.Drawing.Point(658, 686);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(86, 36);
             this.button1.TabIndex = 1;
@@ -239,7 +240,7 @@
             // 
             // button_kill
             // 
-            this.button_kill.Location = new System.Drawing.Point(658, 663);
+            this.button_kill.Location = new System.Drawing.Point(658, 657);
             this.button_kill.Name = "button_kill";
             this.button_kill.Size = new System.Drawing.Size(86, 26);
             this.button_kill.TabIndex = 26;
@@ -338,7 +339,7 @@
             // checkBox_remote
             // 
             this.checkBox_remote.AutoSize = true;
-            this.checkBox_remote.Location = new System.Drawing.Point(553, 672);
+            this.checkBox_remote.Location = new System.Drawing.Point(553, 679);
             this.checkBox_remote.Name = "checkBox_remote";
             this.checkBox_remote.Size = new System.Drawing.Size(58, 17);
             this.checkBox_remote.TabIndex = 37;
@@ -400,7 +401,7 @@
             // checkBox_copy
             // 
             this.checkBox_copy.AutoSize = true;
-            this.checkBox_copy.Location = new System.Drawing.Point(553, 695);
+            this.checkBox_copy.Location = new System.Drawing.Point(553, 702);
             this.checkBox_copy.Name = "checkBox_copy";
             this.checkBox_copy.Size = new System.Drawing.Size(96, 17);
             this.checkBox_copy.TabIndex = 58;
@@ -532,7 +533,7 @@
             this.toolStripSeparator1,
             this.deleteAllfailBenchmarksToolStripMenuItem});
             this.cleanupToolStripMenuItem1.Name = "cleanupToolStripMenuItem1";
-            this.cleanupToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
+            this.cleanupToolStripMenuItem1.Size = new System.Drawing.Size(169, 22);
             this.cleanupToolStripMenuItem1.Text = "Cleanup";
             // 
             // toolStripMenuItem1
@@ -573,7 +574,7 @@
             this.editToolStripMenuItem,
             this.refreshMenusToolStripMenuItem});
             this.editHistoryFileToolStripMenuItem.Name = "editHistoryFileToolStripMenuItem";
-            this.editHistoryFileToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.editHistoryFileToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
             this.editHistoryFileToolStripMenuItem.Text = "History file";
             // 
             // editToolStripMenuItem
@@ -593,21 +594,21 @@
             // markFailsToolStripMenuItem
             // 
             this.markFailsToolStripMenuItem.Name = "markFailsToolStripMenuItem";
-            this.markFailsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.markFailsToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
             this.markFailsToolStripMenuItem.Text = "mark fails";
             this.markFailsToolStripMenuItem.Click += new System.EventHandler(this.button_mark_fails_Click);
             // 
             // markwinner
             // 
             this.markwinner.Name = "markwinner";
-            this.markwinner.Size = new System.Drawing.Size(180, 22);
+            this.markwinner.Size = new System.Drawing.Size(169, 22);
             this.markwinner.Text = "mark winners";
             this.markwinner.Click += new System.EventHandler(this.markwinner_Click);
             // 
             // configToolStripMenuItem
             // 
             this.configToolStripMenuItem.Name = "configToolStripMenuItem";
-            this.configToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.configToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
             this.configToolStripMenuItem.Text = "Advanced Config.";
             this.configToolStripMenuItem.ToolTipText = "Press \'Reload Config\' after change.";
             this.configToolStripMenuItem.Click += new System.EventHandler(this.configToolStripMenuItem_Click);
@@ -615,7 +616,7 @@
             // reloadConfigToolStripMenuItem
             // 
             this.reloadConfigToolStripMenuItem.Name = "reloadConfigToolStripMenuItem";
-            this.reloadConfigToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.reloadConfigToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
             this.reloadConfigToolStripMenuItem.Text = "Reload Config.";
             this.reloadConfigToolStripMenuItem.Click += new System.EventHandler(this.reloadConfigToolStripMenuItem_Click);
             // 
@@ -694,7 +695,7 @@
             // 
             // button_save
             // 
-            this.button_save.Location = new System.Drawing.Point(446, 699);
+            this.button_save.Location = new System.Drawing.Point(438, 699);
             this.button_save.Name = "button_save";
             this.button_save.Size = new System.Drawing.Size(75, 23);
             this.button_save.TabIndex = 63;
@@ -713,19 +714,31 @@
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(329, 699);
+            this.button2.Location = new System.Drawing.Point(348, 699);
             this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(80, 23);
+            this.button2.Size = new System.Drawing.Size(84, 23);
             this.button2.TabIndex = 66;
             this.button2.Text = "export source";
             this.button2.UseVisualStyleBackColor = true;
             this.button2.Click += new System.EventHandler(this.button2_Click);
+            // 
+            // button_putty
+            // 
+            this.button_putty.Location = new System.Drawing.Point(272, 699);
+            this.button_putty.Name = "button_putty";
+            this.button_putty.Size = new System.Drawing.Size(70, 23);
+            this.button_putty.TabIndex = 67;
+            this.button_putty.Text = "Putty";
+            this.toolTip1.SetToolTip(this.button_putty, "The pwd is hardcoded");
+            this.button_putty.UseVisualStyleBackColor = true;
+            this.button_putty.Click += new System.EventHandler(this.button_putty_Click);
             // 
             // filter
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(780, 749);
+            this.Controls.Add(this.button_putty);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.maxfiles);
             this.Controls.Add(this.label14);
@@ -851,6 +864,7 @@
         private System.Windows.Forms.ToolStripMenuItem reloadConfigToolStripMenuItem;
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.ToolStripMenuItem markwinner;
+        private System.Windows.Forms.Button button_putty;
     }
 }
 

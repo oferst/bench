@@ -48,7 +48,7 @@ namespace bench
         int cores = Environment.ProcessorCount;
         int[] active = new int[8]; // {3, 5, 7 }; 
         int failed = 0;
-        const string labelTag = "#";
+        const string labelTag = "*"; // adding labels to the parameter list. These will not join the actual parameters. 
         const string noOpTag = "<>";
         const char setSeparator = '|';
 
@@ -770,7 +770,15 @@ namespace bench
 
         void buildcsv()
         {
+            if (chk_resetcsv.Checked) {
+                DialogResult dialogResult = MessageBox.Show("reset csv ?", "reset csv ? ", MessageBoxButtons.YesNo);
+                if (dialogResult == DialogResult.No)
+                {
+                    chk_resetcsv.Checked = false;
+                }
+            }
             bool resetcsv = chk_resetcsv.Checked || !File.Exists(csv.Text);
+
             string csvheader = "", csvtext = "";            
             string exedate = "";
             if (!checkBox_remote.Checked) exedate = File.GetLastWriteTime(exe.Text).ToString();
@@ -811,7 +819,9 @@ namespace bench
                     csvtext += "," + st_res;
                 }
                 csvtext += "\n";
+                string tryj = String.Join(",", labels.Select((x) => res.ContainsKey(x) ? res[x].ToString() : "-1").ToList());
             }
+            
             if (missingvalues) listBox1.Items.Add("*** Warning: Missing values found. Filled with '-1'");
 
             stat_field.DataSource = null;
@@ -964,7 +974,7 @@ namespace bench
         }
 
         // called from background-worker thread
-        Tuple<int, string, string> run_remote(string cmd, string args) // for unix commands. Synchronous. 
+        Tuple<int, string, string> run_remote(string cmd, string args, bool wait = true) // for unix commands. Synchronous. 
         {
             string local_dir_Text="";
             Process p = new Process();
@@ -983,10 +993,17 @@ namespace bench
                 p.Start();
             }
             catch { MessageBox.Show("cannot start process" + p.StartInfo.FileName); throw; }
-            string output = p.StandardOutput.ReadToEnd();            
-            p.WaitForExit();
-            // returns <exist-status, command, output of command>
-            return new Tuple<int,string,string>(p.ExitCode, "> " + p.StartInfo.FileName + " " + p.StartInfo.Arguments, output);
+            string output="";
+            if (wait)
+            {
+                output = p.StandardOutput.ReadToEnd();
+                p.WaitForExit();
+                // returns <exist-status, command, output of command>
+                return new Tuple<int, string, string>(p.ExitCode, "> " + p.StartInfo.FileName + " " + p.StartInfo.Arguments, output);
+            }
+            
+            return new Tuple<int, string, string>(0, "", ""); // only when we have wait = false. Not to be used. 
+
         }
 
         // called from background-worker thread
@@ -1865,11 +1882,14 @@ namespace bench
                     string relativefilename = fileName.Substring(dir.Text.Length).Replace('\\','/'); // e.g. suppose dir = test and the file is in test\dir1\a.cnf, then we get dir1/a.cnf
                     string remote_outfileName = outfile(relativefilename, ext_param_list[par]); // we import from the working directory (bench/bin/release/ or debug/)                        
                     if (!filterOut(outfileName))
-                    {
-                        int subdirLength = relativefilename.IndexOf('/');
-                        string local = subdirLength == -1? "." : relativefilename.Substring(0,subdirLength );
-                        Tuple<int, string,string> res = run_remote("scp ", remote_bench_path + remote_outfileName + " " + local);
-                        string outText = res.Item2; // download the file
+                    {                        
+                        // grep-ing the ### lines from the out file:
+                        Tuple<int, string, string> res = run_remote("ssh ", remote_user + " \"grep '" + stat_tag + "' '" + ConfigurationManager.AppSettings["remote_bench_dir"] + remote_outfileName + "' > $HOME/tmp.out\"");
+                        string outText = res.Item2;
+                        listBox1.Items.Add(outText);               
+                        // downloading:
+                        res = run_remote("scp ", remote_user + ":$HOME/tmp.out " + remote_outfileName);   
+                        outText = res.Item2; 
                         imported++;
                         listBox1.Items.Add(outText);
                         if (res.Item1 != 0) listBox1.Items.Add("*** Warning: exit code " + res.Item1);
@@ -2128,6 +2148,14 @@ namespace bench
                 scrolldown();
             }
             catch { MessageBox.Show("seems that " + csv.Text + "is in use"); return; }
+        }
+
+        private void button_putty_Click(object sender, EventArgs e)
+        {
+            string putty = ConfigurationManager.AppSettings["putty_command"];
+            string user = ConfigurationManager.AppSettings["remote_user"];
+            string domain = ConfigurationManager.AppSettings["remote_domain"];
+            run_remote(putty, user + "@" + domain + " -pw 1010Nkho", false);
         }
 
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
