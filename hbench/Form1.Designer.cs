@@ -720,7 +720,7 @@
             this.button2.TabIndex = 66;
             this.button2.Text = "export source";
             this.button2.UseVisualStyleBackColor = true;
-            this.button2.Click += new System.EventHandler(this.button2_Click);
+            this.button2.Click += new System.EventHandler(this.button_export_source_Click);
             // 
             // button_putty
             // 

@@ -458,6 +458,7 @@ namespace bench
         // called from background-worker thread
         void Log(string msg, bool tofile = true)
         {
+            if (msg == null) return;
             listBox1.Items.Add(msg); 
             listBox1.Refresh();
             scrolldown();
@@ -998,7 +999,7 @@ namespace bench
             {
                 output = p.StandardOutput.ReadToEnd();
                 p.WaitForExit();
-                // returns <exist-status, command, output of command>
+                // returns <exist-status, command, output of command>                
                 return new Tuple<int, string, string>(p.ExitCode, "> " + p.StartInfo.FileName + " " + p.StartInfo.Arguments, output);
             }
             
@@ -1042,7 +1043,7 @@ namespace bench
         
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {            
-            int cnt = 0;
+            int cnt_success = 0, cnt = 0;
             Process[] p = new Process[cores + 1];
             List<FileInfo> fileEntries = getFilesInDir();
             if (fileEntries.Count == 0) bg.ReportProgress(0, "empty file list\n");
@@ -1132,20 +1133,39 @@ namespace bench
 
                                         string bench_remote_path = ConfigurationManager.AppSettings["remote_bench_dir"] + relativepath;                                      
                                         bg.ReportProgress(0, "running " + fileName + " remotely. ");
+                                        
+                                        
+                                        bool runok = false;
                                         cnt++;
-                                        bg.ReportProgress(3, cnt.ToString()); // label_cnt.Text                                         
-                                        Tuple<int, string, string> outTuple = run_remote(
-                                            "ssh ",
-                                            remote_user + " \"" + expand_string(ConfigurationManager.AppSettings["remote_ssh_cmd"], bench_remote_path, remove_label(ext_param_list[par]), outfile(bench_remote_path, ext_param_list[par]))
-                                            );
-                                        bg.ReportProgress(0, outTuple.Item2); // command
-                                        bg.ReportProgress(0, outTuple.Item3); // output
+                                        for (int r = 0; r < 120 && !runok; ++r) // submitted too many, waiting for a process to terminate. 
+                                        {
+                                            Tuple<int, string, string> outTuple = run_remote(
+                                                "ssh ",
+                                                remote_user + " \"" + expand_string(ConfigurationManager.AppSettings["remote_ssh_cmd"], bench_remote_path, remove_label(ext_param_list[par]), outfile(bench_remote_path, ext_param_list[par]))
+                                                );
+
+                                            if (outTuple.Item1 == 0)
+                                            {
+                                                cnt_success++;
+                                                runok = true;
+                                                bg.ReportProgress(0, "exit code = " + outTuple.Item1); // exit status
+                                                bg.ReportProgress(0, outTuple.Item2); // command
+                                                bg.ReportProgress(0, outTuple.Item3); // output
+                                            }
+                                            else
+                                            {
+                                                Thread.Sleep(5000);
+                                                bg.ReportProgress(0, "Trying again... (exit code " + outTuple.Item1 + ")" );
+                                            }
+                                        }
+                                        if (cnt != cnt_success) bg.ReportProgress(3, cnt_success.ToString() + "/" + cnt.ToString());
+                                        else bg.ReportProgress(3, cnt_success.ToString()); // label_cnt.Text                                         
                                     }
                                     else                               
                                     {
                                         bg.ReportProgress(0, "running " + fileName + " on core " + i.ToString());
-                                        cnt++;
-                                        bg.ReportProgress(3, cnt.ToString()); // label_cnt.Text 
+                                        cnt_success++;
+                                        bg.ReportProgress(3, cnt_success.ToString()); // label_cnt.Text 
                                         string local_exe_Text = "";
                                         exe.Invoke(new Action(() => { local_exe_Text = exe.Text; })); // since we are not on the form's thread, this is a safe way to get information from there. Without it we may get an exception.
                                                                                                       // string local_param_list_text = "";
@@ -1172,8 +1192,8 @@ namespace bench
 
             // post processing
 
-            bg.ReportProgress(4, ""); // button1.Enabled = true;
-            if (cnt == 0) return;
+            bg.ReportProgress(4, ""); 
+            if (cnt_success == 0) return;
             if (checkBox_remote.Checked)
             {
                 bg.ReportProgress(0, DateTime.Now.ToString("H:mm:ss") + ": Waiting for remote termination... "); 
@@ -1187,7 +1207,7 @@ namespace bench
                 stopwatch.Stop();
 
                 string time = (Convert.ToSingle(stopwatch.ElapsedMilliseconds) / 1000.0).ToString();
-                bg.ReportProgress(0, "# of benchmarks:" + cnt);
+                bg.ReportProgress(0, "# of benchmarks:" + cnt_success);
 
                 bg.ReportProgress(0, "parallel time = " + time);
                 bg.ReportProgress(0, "============================");
@@ -1882,17 +1902,22 @@ namespace bench
                     string relativefilename = fileName.Substring(dir.Text.Length).Replace('\\','/'); // e.g. suppose dir = test and the file is in test\dir1\a.cnf, then we get dir1/a.cnf
                     string remote_outfileName = outfile(relativefilename, ext_param_list[par]); // we import from the working directory (bench/bin/release/ or debug/)                        
                     if (!filterOut(outfileName))
-                    {                        
+                    {
                         // grep-ing the ### lines from the out file:
-                        Tuple<int, string, string> res = run_remote("ssh ", remote_user + " \"grep '" + stat_tag + "' '" + ConfigurationManager.AppSettings["remote_bench_dir"] + remote_outfileName + "' > $HOME/tmp.out\"");
+                        Tuple<int, string, string> res = run_remote("ssh ", remote_user + " \"rm $HOME/tmp.out\"");
                         string outText = res.Item2;
-                        listBox1.Items.Add(outText);               
-                        // downloading:
-                        res = run_remote("scp ", remote_user + ":$HOME/tmp.out " + remote_outfileName);   
-                        outText = res.Item2; 
-                        imported++;
                         listBox1.Items.Add(outText);
                         if (res.Item1 != 0) listBox1.Items.Add("*** Warning: exit code " + res.Item1);
+                        res = run_remote("ssh ", remote_user + " \"grep '" + stat_tag + "' '" + ConfigurationManager.AppSettings["remote_bench_dir"] + remote_outfileName + "' > $HOME/tmp.out\"");
+                         outText = res.Item2;
+                        listBox1.Items.Add(outText);
+                        if (res.Item1 != 0) listBox1.Items.Add("*** Warning: exit code " + res.Item1);
+                        // downloading:
+                        res = run_remote("scp ", remote_user + ":$HOME/tmp.out " + remote_outfileName);   
+                        outText = res.Item2;                         
+                        listBox1.Items.Add(outText);
+                        if (res.Item1 != 0) listBox1.Items.Add("*** Warning: exit code " + res.Item1);
+                        else imported++;
                         listBox1.Refresh();
                         scrolldown();
                     }
@@ -2061,7 +2086,7 @@ namespace bench
             ConfigurationManager.RefreshSection("appSettings");
         }
 
-        private void button2_Click(object sender, EventArgs e)
+        private void button_export_source_Click(object sender, EventArgs e)
         {
             Process p = new Process();
 
