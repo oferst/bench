@@ -9,3 +9,4 @@ bench/bin/
 bench/obj/
 *.tex
 *.csv
+*.gz

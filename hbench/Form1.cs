@@ -323,7 +323,7 @@ namespace bench
             // only include labels that the entry in the next line is either a number or empty.
             // We use decimal because it permits e.g. 1.3E7
             for (int i = 0; i < labels.Count() && i < vals.Count(); ++i) 
-                if (!validfirstline || decimal.TryParse(vals[i], NumberStyles.Any, CultureInfo.InvariantCulture, out res) || vals[i] == "") 
+                if (!validfirstline || decimal.TryParse(vals[i + offset], NumberStyles.Any, CultureInfo.InvariantCulture, out res) || vals[i + offset] == "") 
                     stat_field.Items.Add(labels[i]);
             csvfile.Close(); 
         }
