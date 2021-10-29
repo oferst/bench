@@ -493,7 +493,7 @@ namespace bench
                 MessageBox.Show("cannot open directory " + benchmarksDir + ". Aborting.");
                 Application.Exit();
             }
-          //  if (extension == "") return filelist.ToList();
+          
             int counter = int.MaxValue;
             string text="";
             maxfiles.Invoke(new Action(() => { text = maxfiles.Text; }));
