@@ -492,7 +492,7 @@ namespace bench
             {
                 MessageBox.Show("cannot open directory " + benchmarksDir + ". Aborting.");
                 Application.Exit();
-             }
+            }
           
             int counter = int.MaxValue;
             string text="";
