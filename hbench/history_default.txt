@@ -7,6 +7,9 @@
 -- filter_str
 *.*
 
+-- maxfiles
+0
+
 -- csv
 c:\results.csv
 

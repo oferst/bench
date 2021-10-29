@@ -493,7 +493,7 @@ namespace bench
                 MessageBox.Show("cannot open directory " + benchmarksDir + ". Aborting.");
                 Application.Exit();
             }
-            if (extension == "") return filelist.ToList();
+          //  if (extension == "") return filelist.ToList();
             int counter = int.MaxValue;
             string text="";
             maxfiles.Invoke(new Action(() => { text = maxfiles.Text; }));
@@ -503,9 +503,9 @@ namespace bench
                 counter = int.MaxValue;
             };
             if (counter == 0) counter = int.MaxValue;
+            if (counter >= filelist.Count()) return filelist.ToList();
             foreach (FileInfo fi in filelist)
-            {
-                if (string.Compare(extension, fi.Extension, StringComparison.OrdinalIgnoreCase) != 0) continue;
+            {                
                 counter--;
                 if (counter < 0) break;
                 res.Add(fi);
