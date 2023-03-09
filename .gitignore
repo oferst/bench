@@ -10,3 +10,6 @@ bench/obj/
 *.tex
 *.csv
 *.gz
+cpbm-0.5/
+*.suo
+*.db

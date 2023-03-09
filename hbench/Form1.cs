@@ -1010,8 +1010,9 @@ namespace bench
         // called from background-worker thread
         Process run(string cmd, string args, string outfilename, int affinity = 0x007F)
         {
+         
             Process p = new Process();
-
+            p.StartInfo.WorkingDirectory = Path.GetDirectoryName(outfilename);
             
             p.StartInfo.FileName = cmd;
             p.StartInfo.Arguments = remove_label(args);
@@ -1036,7 +1037,7 @@ namespace bench
             p.ProcessorAffinity = (IntPtr)affinity;
             p.PriorityClass = ProcessPriorityClass.RealTime;
 
-            var timer = new System.Threading.Timer(kill_process, p, timeout_val, Timeout.Infinite);
+            var timer = new System.Threading.Timer(kill_process, p, timeout_val > 0? timeout_val : -1, Timeout.Infinite);
             timers.Add(timer); // needed ?
             return p;
         }
