@@ -270,7 +270,7 @@ namespace bench
         // called from background-worker thread
         string expand_string(string s, string filename, string param="", string outfilename="")  // the last two are used for remote execution
         {            
-            string res = s.Replace("%f", "\"" + filename + "\"").Replace("%p", param).Replace("%o", outfilename);
+            string res = s.Replace("%f", filename).Replace("%p", param).Replace("%o", outfilename);
             if (res == s) return res;
             else return expand_string(res, filename, param, outfilename);  // recursive because the replacing strings may contain %directives themselves.
         }
@@ -677,7 +677,7 @@ namespace bench
             
             while (true)
             {
-                res = run_remote("ssh ", remote_user + " \"qstat -u " + ConfigurationManager.AppSettings["remote_user"] + "| grep \"" + ConfigurationManager.AppSettings["remote_user"] + "\"").Item1;
+                res = run_remote(ConfigurationManager.AppSettings["local_ssh_cmd"], remote_user + " \"qstat -u " + ConfigurationManager.AppSettings["remote_user"] + "| grep \"" + ConfigurationManager.AppSettings["remote_user"] + "\"").Item1;
                 if (res != 0) break;                
                 Thread.Sleep(10000); // 10 seconds wait                        
             }
@@ -979,11 +979,11 @@ namespace bench
         {
             string local_dir_Text="";
             Process p = new Process();
-                                 
-            p.StartInfo.FileName = cmd;
+
+            p.StartInfo.FileName = cmd; //Note: if ssh is under a system32 folder, this won't work without admin rights. 
             p.StartInfo.Arguments = remove_label(args);
             p.StartInfo.UseShellExecute = false;
-            p.StartInfo.RedirectStandardOutput = true;// false;
+            p.StartInfo.RedirectStandardOutput =  true;
             p.StartInfo.CreateNoWindow = true;
             dir.Invoke(new Action(() => { local_dir_Text = dir.Text; }));
             p.StartInfo.WorkingDirectory = local_dir_Text;    // when executing a scp command, this will bring the files to the benchmarks dir. 
@@ -993,7 +993,7 @@ namespace bench
             {
                 p.Start();
             }
-            catch { MessageBox.Show("cannot start process" + p.StartInfo.FileName); throw; }
+            catch (Exception ex) { MessageBox.Show("cannot start process " + p.StartInfo.FileName + "\n" + ex.Message); throw; }
             string output="";
             if (wait)
             {
@@ -1111,7 +1111,7 @@ namespace bench
                                         if (copy_to_remote)
                                         {                                         
                                             string target = remote_bench_path + relativepath;
-                                            Tuple<int, string, string> res = run_remote("scp ", relativepath + " " + target);
+                                            Tuple<int, string, string> res = run_remote(ConfigurationManager.AppSettings["local_scp_cmd"], relativepath + " " + target);
                                             if (res.Item1 != 0)
                                             {
                                                 bg.ReportProgress(0, "*** Failed copying to remote dir " + target + ".");
@@ -1122,7 +1122,7 @@ namespace bench
                                             }                                            
                                             outText = res.Item2;//" ofers@tamnun.technion.ac.il:~/hmuc/test");
                                             bg.ReportProgress(0, outText);
-                                            res = run_remote("ssh ", remote_user + " \"chmod 644 " + ConfigurationManager.AppSettings["remote_bench_dir"] + relativepath + "\"");
+                                            res = run_remote(ConfigurationManager.AppSettings["local_ssh_cmd"], remote_user + " \"chmod 644 " + ConfigurationManager.AppSettings["remote_bench_dir"] + relativepath + "\"");
                                             if (res.Item1 != 0)
                                             {
                                                 bg.ReportProgress(0, "*** Failed to change mode. Aborting");
@@ -1141,7 +1141,7 @@ namespace bench
                                         for (int r = 0; r < 120 && !runok; ++r) // submitted too many, waiting for a process to terminate. 
                                         {
                                             Tuple<int, string, string> outTuple = run_remote(
-                                                "ssh ",
+                                                ConfigurationManager.AppSettings["local_ssh_cmd"],
                                                 remote_user + " \"" + expand_string(ConfigurationManager.AppSettings["remote_ssh_cmd"], bench_remote_path, remove_label(ext_param_list[par]), outfile(bench_remote_path, ext_param_list[par]))
                                                 );
 
@@ -1376,7 +1376,7 @@ namespace bench
                 string remote_user = ConfigurationManager.AppSettings["remote_user"] + "@" + ConfigurationManager.AppSettings["remote_domain"];
                 if (MessageBox.Show("Delete all processes of user " + remote_user + "?", "Confirm kill processes", MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {
-                    string outText = run_remote("ssh ", remote_user + " \"qstat -u" + ConfigurationManager.AppSettings["remote_user"] + "| grep \"" +
+                    string outText = run_remote(ConfigurationManager.AppSettings["local_ssh_cmd"], remote_user + " \"qstat -u" + ConfigurationManager.AppSettings["remote_user"] + "| grep \"" +
                       ConfigurationManager.AppSettings["remote_user"] + "\" | cut -d\".\" -f1 | xargs qdel\"").Item2;
                     listBox1.Items.Add(outText);
                 }
@@ -1905,16 +1905,16 @@ namespace bench
                     if (!filterOut(outfileName))
                     {
                         // grep-ing the ### lines from the out file:
-                        Tuple<int, string, string> res = run_remote("ssh ", remote_user + " \"rm $HOME/tmp.out\"");
+                        Tuple<int, string, string> res = run_remote(ConfigurationManager.AppSettings["local_ssh_cmd"], remote_user + " \"rm $HOME/tmp.out\"");
                         string outText = res.Item2;
                         listBox1.Items.Add(outText);
                         if (res.Item1 != 0) listBox1.Items.Add("*** Warning: exit code " + res.Item1);
-                        res = run_remote("ssh ", remote_user + " \"grep '" + stat_tag + "' '" + ConfigurationManager.AppSettings["remote_bench_dir"] + remote_outfileName + "' > $HOME/tmp.out\"");
+                        res = run_remote(ConfigurationManager.AppSettings["local_ssh_cmd"], remote_user + " \"grep '" + stat_tag + "' '" + ConfigurationManager.AppSettings["remote_bench_dir"] + remote_outfileName + "' > $HOME/tmp.out\"");
                          outText = res.Item2;
                         listBox1.Items.Add(outText);
                         if (res.Item1 != 0) listBox1.Items.Add("*** Warning: exit code " + res.Item1);
                         // downloading:
-                        res = run_remote("scp ", remote_user + ":$HOME/tmp.out " + remote_outfileName);   
+                        res = run_remote(ConfigurationManager.AppSettings["local_scp_cmd"], remote_user + ":$HOME/tmp.out " + remote_outfileName);   
                         outText = res.Item2;                         
                         listBox1.Items.Add(outText);
                         if (res.Item1 != 0) listBox1.Items.Add("*** Warning: exit code " + res.Item1);
@@ -2181,7 +2181,7 @@ namespace bench
             string putty = ConfigurationManager.AppSettings["putty_command"];
             string user = ConfigurationManager.AppSettings["remote_user"];
             string domain = ConfigurationManager.AppSettings["remote_domain"];
-            run_remote(putty, user + "@" + domain + " -pw 1010Nkho", false);
+            run_remote(putty, user + "@" + domain + " -pw 4545Nkho!!", false);
         }
 
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
