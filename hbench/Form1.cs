@@ -1008,7 +1008,7 @@ namespace bench
         }
 
         // called from background-worker thread
-        Process run(string cmd, string args, string outfilename, int affinity = 0x007F)
+        Process run(string cmd, string args, string outfilename, string local_workdir, int affinity = 0x007F)
         {
          
             Process p = new Process();
@@ -1016,7 +1016,7 @@ namespace bench
             
             p.StartInfo.FileName = cmd;
             p.StartInfo.Arguments = remove_label(args);
-
+            if (local_workdir != "") p.StartInfo.WorkingDirectory = local_workdir;
             p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
             p.StartInfo.UseShellExecute = false;
             p.StartInfo.RedirectStandardOutput = true;
@@ -1057,7 +1057,8 @@ namespace bench
             Stopwatch stopwatch = Stopwatch.StartNew();
             bool ok = false;
             bool copy_to_remote = checkBox_copy.Checked;
-            expand_param_list();             
+            expand_param_list();
+            string local_workdir = ConfigurationManager.AppSettings["local_workdir"].ToString();
             for (int par = 0; par < ext_param_list.Count; ++par)  // for each parameter
             {
                 if (ext_param_list[par].IndexOf("%f") == -1)
@@ -1170,8 +1171,7 @@ namespace bench
                                         string local_exe_Text = "";
                                         exe.Invoke(new Action(() => { local_exe_Text = exe.Text; })); // since we are not on the form's thread, this is a safe way to get information from there. Without it we may get an exception.
                                                                                                       // string local_param_list_text = "";
-                                                                                                      //param_list[par].Invoke(new Action(() => { local_param_list_text = ext_param_list[par]; })); // since we are not on the form's thread, this is a safe way to get information from there. Without it we may get an exception.
-                                        p[i] = run(local_exe_Text, expand_string(ext_param_list[par], fileName), outfilename, 1 << (i - 1));
+                                        p[i] = run(local_exe_Text, expand_string(ext_param_list[par], fileName), outfilename, local_workdir, 1 << (i - 1));
                                         Dictionary<string, float> l = new Dictionary<string, float>();
                                         processes[p[i]] = new benchmark(ext_param_list[par], fileName, l);
                                     }
