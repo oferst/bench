@@ -48,7 +48,7 @@ namespace bench
         int cores = Environment.ProcessorCount;
         int[] active = new int[8]; // {3, 5, 7 }; 
         int failed = 0;
-        const string labelTag = "*"; // adding labels to the parameter list. These will not join the actual parameters. 
+        const string labelTag = "^"; // adding labels to the parameter list. These will not join the actual parameters. 
         const string noOpTag = "<>";
         const char setSeparator = '|';
 
@@ -724,7 +724,7 @@ namespace bench
                 if (engine == 1 && ((!checkBox_remote.Checked) || (ConfigurationManager.AppSettings["remote_ssh_cmd1"] == ""))) continue;
                 for (int par = 0; par < ext_param_list.Count; ++par)  // for each parameter
                 {
-                    string param = (engine == 0) ? ext_param_list[par] : ext_param_list[par] + " " + labelTag + ConfigurationManager.AppSettings["remote_ssh_cmd1_label"];
+                    string param = (engine == 0) ? ext_param_list[par] : remove_label(ext_param_list[par] ) + labelTag + ConfigurationManager.AppSettings["remote_ssh_cmd1_label"];
 
                     foreach (FileInfo fileinfo in fileEntries)  // for each benchmark file
                     {
@@ -992,7 +992,7 @@ namespace bench
 
         // called from background-worker thread
         Tuple<int, string, string> run_remote(string cmd, string args, bool wait = true) // for unix commands. Synchronous. 
-        {
+        {            
             string local_dir_Text = "";
             Process p = new Process();
 
@@ -1088,7 +1088,7 @@ namespace bench
                         listBox1.Items.Add("Warning: param " + ext_param_list[par] + " does not include a %f directive. Skipping");
                         continue;
                     }
-                    string param = (engine == 0) ? ext_param_list[par] : ext_param_list[par] + " " + labelTag + ConfigurationManager.AppSettings["remote_ssh_cmd1_label"];
+                    string param = (engine == 0) ? ext_param_list[par] : remove_label(ext_param_list[par] ) + labelTag + ConfigurationManager.AppSettings["remote_ssh_cmd1_label"];
 
                     bg.ReportProgress(0, "- - - - - " + param + "- - - - - ");
                     failed = 0;
@@ -1924,41 +1924,78 @@ namespace bench
                 if (engine == 1 && ((!checkBox_remote.Checked) || (ConfigurationManager.AppSettings["remote_ssh_cmd1"] == ""))) continue;
 
                 for (int par = 0; par < ext_param_list.Count; ++par)  // for each parameter
-                {                    
-                    string param = (engine == 0) ? ext_param_list[par] : ext_param_list[par] + " " + labelTag + ConfigurationManager.AppSettings["remote_ssh_cmd1_label"];
-
-                    foreach (FileInfo fileinfo in fileEntries)  // for each benchmark file
+                {
+                    string param = (engine == 0) ? ext_param_list[par] : remove_label(ext_param_list[par] ) + labelTag + ConfigurationManager.AppSettings["remote_ssh_cmd1_label"];
+                    if (true) // the new way: create a summary file with all lines remotely, and parse it locally. 
+                        // This is much faster that doing it separately for each flie. 
                     {
-                        string fileName = fileinfo.FullName;
-                        string id = getid(param, fileName);
-                        if (BenchmarkNamesFromCsv.Contains(id)) { in_csv++; continue; }
-                        string outfileName = outfile(fileName, param); // we import from the same directory as the source cnf file;                    
-
-                        // download those files to the local dir. 
-                        string relativefilename = fileName.Substring(dir.Text.Length).Replace('\\', '/'); // e.g. suppose dir = test and the file is in test\dir1\a.cnf, then we get dir1/a.cnf
-                        string remote_outfileName = outfile(relativefilename, param); // we import from the working directory (bench/bin/release/ or debug/)                        
-                        if (!filterOut(outfileName))
+                        string suffix = "*" + normalize_string(param) + ".out";
+                        Tuple<int, string, string> res = run_remote(ConfigurationManager.AppSettings["local_ssh_cmd"], remote_user + " \"bash -c 'grep \\\"" + stat_tag + "\\\" " + ConfigurationManager.AppSettings["remote_bench_dir"] + suffix + "' > /home/ofers/summary.out\"");
+                        string outText = res.Item2;
+                        listBox1.Items.Add(outText);
+                        res = run_remote(ConfigurationManager.AppSettings["local_scp_cmd"], remote_user + ":/home/ofers/summary.out " + "summary.out");
+                        string local_dir_Text;
+                        dir.Invoke(new Action(() => { local_dir_Text = dir.Text; }));
+                        Directory.SetCurrentDirectory(dir.Text);
+                        
+                        // store the data from the summary.out flie in a dictionary, where the file name is the key
+                        Dictionary<string, List<string>> data = new Dictionary<string, List<string>>();
+                        foreach (string line in File.ReadAllLines("summary.out"))
+                        {                            
+                            char[] separators = new char[] { ' ', ':' };
+                            string[] cols = line.Split(separators);
+                            Debug.Assert(cols[1] == stat_tag);
+                            string filename = cols[0].Substring(cols[0].LastIndexOf('/') + 1);
+                            if (BenchmarkNamesFromCsv.Contains(filename)) { in_csv++; continue; }
+                            if (filterOut(filename)) continue;
+                            string outline = cols[1] + " " + cols[2] + " " + cols[3] + "\n";
+                            if (!data.ContainsKey(filename)) data[filename] = new List<string>();
+                            data[filename].Add(outline);                            
+                        } 
+                        
+                        // create the out files
+                        foreach (var d in data)
                         {
-                            // grep-ing the ### lines from the out file:
-                            Tuple<int, string, string> res = run_remote(ConfigurationManager.AppSettings["local_ssh_cmd"], remote_user + " \"rm $HOME/tmp.out\"");
-                            string outText = res.Item2;
-                            listBox1.Items.Add(outText);
-                            if (res.Item1 != 0) listBox1.Items.Add("*** Warning: exit code " + res.Item1);
-                            res = run_remote(ConfigurationManager.AppSettings["local_ssh_cmd"], remote_user + " \"grep '" + stat_tag + "' '" + ConfigurationManager.AppSettings["remote_bench_dir"] + remote_outfileName + "' > $HOME/tmp.out\"");
-                            outText = res.Item2;
-                            listBox1.Items.Add(outText);
-                            if (res.Item1 != 0) listBox1.Items.Add("*** Warning: exit code " + res.Item1);
-                            // downloading:
-                            res = run_remote(ConfigurationManager.AppSettings["local_scp_cmd"], remote_user + ":$HOME/tmp.out " + remote_outfileName);
-                            outText = res.Item2;
-                            listBox1.Items.Add(outText);
-                            if (res.Item1 != 0) listBox1.Items.Add("*** Warning: exit code " + res.Item1);
-                            else imported++;
-                            listBox1.Refresh();
-                            scrolldown();
+                            if (File.Exists(d.Key)) File.Delete(d.Key);
+                            foreach (string t in d.Value) File.AppendAllText(d.Key,t);
                         }
                     }
-                    listBox1.Refresh();
+                    else
+                    {
+                        foreach (FileInfo fileinfo in fileEntries)  // for each benchmark file
+                        {
+                            string fileName = fileinfo.FullName;
+                            string id = getid(param, fileName);
+                            if (BenchmarkNamesFromCsv.Contains(id)) { in_csv++; continue; }
+                            string outfileName = outfile(fileName, param); // we import from the same directory as the source cnf file;                    
+
+                            // download those files to the local dir. 
+                            string relativefilename = fileName.Substring(dir.Text.Length).Replace('\\', '/'); // e.g. suppose dir = test and the file is in test\dir1\a.cnf, then we get dir1/a.cnf
+                            string remote_outfileName = outfile(relativefilename, param); // we import from the working directory (bench/bin/release/ or debug/)                        
+                            if (!filterOut(outfileName))
+                            {
+                                // grep-ing the ### lines from the out file:
+                                Tuple<int, string, string> res = run_remote(ConfigurationManager.AppSettings["local_ssh_cmd"], remote_user + " \"rm /home/ofers/tmp.out\"");
+                                string outText = res.Item2;
+                                listBox1.Items.Add(outText);
+                                if (res.Item1 != 0) listBox1.Items.Add("*** Warning: exit code " + res.Item1);
+                                res = run_remote(ConfigurationManager.AppSettings["local_ssh_cmd"], remote_user + " \"grep '" + stat_tag + "' '" + ConfigurationManager.AppSettings["remote_bench_dir"] + remote_outfileName + "' > /home/ofers/tmp.out\"");
+                                outText = res.Item2;
+                                listBox1.Items.Add(outText);
+                                if (res.Item1 != 0) listBox1.Items.Add("*** Warning: exit code " + res.Item1);
+                                // downloading:
+                                res = run_remote(ConfigurationManager.AppSettings["local_scp_cmd"], remote_user + ":/home/ofers/tmp.out " + remote_outfileName);
+                                outText = res.Item2;
+                                listBox1.Items.Add(outText);
+                                if (res.Item1 != 0) listBox1.Items.Add("*** Warning: exit code " + res.Item1);
+                                else imported++;
+                                listBox1.Refresh();
+                                scrolldown();
+                            }
+                        }
+
+                        listBox1.Refresh();
+                    }
                 }
             }
 
