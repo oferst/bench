@@ -383,7 +383,7 @@ namespace bench
                 if (!line.Any(x => char.IsLetter(x) || char.IsNumber(x))) continue; // This solves a problem that csv file sometimes contain lines of only commas.
                 res += line;
                 string[] parts = line.Split(',');
-                for (int i = parts.Length; i < labels.Count; ++i) res += ",-1";
+                for (int i = parts.Length - offset; i < labels.Count; ++i) res += ",-1";
                 res += "\r\n";
             }
             csvfile.Close();
@@ -701,14 +701,18 @@ namespace bench
             }
         }
 
-        void prepareDataForCsv()
+        bool prepareDataForCsv()
         {
             int in_csv = 0;
 
             filter_str.Invoke(new Action(() => { searchPattern = filter_str.Text; }));
             dir.Invoke(new Action(() => { benchmarksDir = dir.Text; }));
             var fileEntries = getFilesInDir();
-            if (fileEntries.Count == 0) listBox1.Items.Add("empty file list\n");
+            if (fileEntries.Count == 0)
+            {
+                listBox1.Items.Add("empty file list\n");
+                return false;
+            }
 
             BenchmarkNamesFromCsv.Clear();
             if (checkBox_filter_csv.Checked && File.Exists(csv.Text))
@@ -781,6 +785,7 @@ namespace bench
                     }
                 }
             }
+            return true;
         }
 
         void buildcsv()
@@ -799,9 +804,9 @@ namespace bench
             string exedate = "";
             if (!checkBox_remote.Checked) exedate = File.GetLastWriteTime(exe.Text).ToString();
 
-            prepareDataForCsv(); // this fills 'processes'.
+            if (!prepareDataForCsv()) return; // this fills 'processes'. Returns false if no files were found. 
             string existingEntries = "";
-            if (!resetcsv) existingEntries = readBenchmarkDataFromCsv();
+            if (!resetcsv) existingEntries = readBenchmarkDataFromCsv(); // it also fills missing fields with '-1'
 
             try
             {
@@ -1607,7 +1612,7 @@ namespace bench
         private void checkBox_remote_CheckedChanged(object sender, EventArgs e)
         {
             timeout.Enabled = min_mem.Enabled = exe.Enabled = checkedListBox_cores.Enabled = !(((CheckBox)sender).Checked);
-            checkBox_copy.Enabled = button_import.Enabled = (((CheckBox)sender).Checked);
+            checkBox_copy.Enabled = /*button_import.Enabled =*/ (((CheckBox)sender).Checked);
             checkBox_CheckedChanged(sender, e);
         }
 
@@ -1897,7 +1902,7 @@ namespace bench
                 MessageBox.Show("remote_bench_dir as defined in .config file has to terminate with a '/'. Aborting.");
                 return;
             }
-
+            if (!test_dir_compatibility()) return;
             int in_csv = 0, imported = 0;
             listBox1.Items.Add("--- Importing ---");
             listBox1.Refresh();
@@ -1930,7 +1935,7 @@ namespace bench
                         // This is much faster that doing it separately for each flie. 
                     {
                         string suffix = "*" + normalize_string(param) + ".out";
-                        Tuple<int, string, string> res = run_remote(ConfigurationManager.AppSettings["local_ssh_cmd"], remote_user + " \"bash -c 'grep \\\"" + stat_tag + "\\\" " + ConfigurationManager.AppSettings["remote_bench_dir"] + suffix + "' > /home/ofers/summary.out\"");
+                        Tuple<int, string, string> res = run_remote(ConfigurationManager.AppSettings["local_ssh_cmd"], remote_user + " \"bash -c 'grep -H \\\"" + stat_tag + "\\\" " + ConfigurationManager.AppSettings["remote_bench_dir"] + suffix + "' > /home/ofers/summary.out\"");
                         string outText = res.Item2;
                         listBox1.Items.Add(outText);
                         res = run_remote(ConfigurationManager.AppSettings["local_scp_cmd"], remote_user + ":/home/ofers/summary.out " + "summary.out");
@@ -1944,7 +1949,7 @@ namespace bench
                         {                            
                             char[] separators = new char[] { ' ', ':' };
                             string[] cols = line.Split(separators);
-                            Debug.Assert(cols[1] == stat_tag);
+                                                        
                             string filename = cols[0].Substring(cols[0].LastIndexOf('/') + 1);
                             if (BenchmarkNamesFromCsv.Contains(filename)) { in_csv++; continue; }
                             if (filterOut(filename)) continue;
@@ -2007,10 +2012,10 @@ namespace bench
         {
 
             if (chk_resetcsv.Checked) labels.Clear();
-            if (!test_dir_compatibility()) return;
+            
             try
             {
-                import_remote_out();
+                if (checkBox_remote.Checked) import_remote_out();
                 buildcsv();
                 scrolldown();
             }
