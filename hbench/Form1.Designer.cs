@@ -62,6 +62,7 @@
             this.checkBox_copy = new System.Windows.Forms.CheckBox();
             this.chk_resetcsv = new System.Windows.Forms.CheckBox();
             this.maxfiles = new System.Windows.Forms.ComboBox();
+            this.button_putty = new System.Windows.Forms.Button();
             this.label10 = new System.Windows.Forms.Label();
             this.button4 = new System.Windows.Forms.Button();
             this.exe = new System.Windows.Forms.ComboBox();
@@ -93,7 +94,7 @@
             this.button_save = new System.Windows.Forms.Button();
             this.label14 = new System.Windows.Forms.Label();
             this.button2 = new System.Windows.Forms.Button();
-            this.button_putty = new System.Windows.Forms.Button();
+            this.clearParamDataToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
@@ -433,6 +434,17 @@
             this.maxfiles.SelectionChangeCommitted += new System.EventHandler(this.combo_SelectedIndexChanged);
             this.maxfiles.Leave += new System.EventHandler(this.comboBox_Leave);
             // 
+            // button_putty
+            // 
+            this.button_putty.Location = new System.Drawing.Point(272, 699);
+            this.button_putty.Name = "button_putty";
+            this.button_putty.Size = new System.Drawing.Size(70, 23);
+            this.button_putty.TabIndex = 67;
+            this.button_putty.Text = "Putty";
+            this.toolTip1.SetToolTip(this.button_putty, "The pwd is hardcoded");
+            this.button_putty.UseVisualStyleBackColor = true;
+            this.button_putty.Click += new System.EventHandler(this.button_putty_Click);
+            // 
             // label10
             // 
             this.label10.AutoSize = true;
@@ -531,9 +543,10 @@
             this.toolStripMenuItem1,
             this.deleteShortsFromCsvToolStripMenuItem,
             this.toolStripSeparator1,
-            this.deleteAllfailBenchmarksToolStripMenuItem});
+            this.deleteAllfailBenchmarksToolStripMenuItem,
+            this.clearParamDataToolStripMenuItem});
             this.cleanupToolStripMenuItem1.Name = "cleanupToolStripMenuItem1";
-            this.cleanupToolStripMenuItem1.Size = new System.Drawing.Size(169, 22);
+            this.cleanupToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
             this.cleanupToolStripMenuItem1.Text = "Cleanup";
             // 
             // toolStripMenuItem1
@@ -574,7 +587,7 @@
             this.editToolStripMenuItem,
             this.refreshMenusToolStripMenuItem});
             this.editHistoryFileToolStripMenuItem.Name = "editHistoryFileToolStripMenuItem";
-            this.editHistoryFileToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
+            this.editHistoryFileToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.editHistoryFileToolStripMenuItem.Text = "History file";
             // 
             // editToolStripMenuItem
@@ -594,21 +607,21 @@
             // markFailsToolStripMenuItem
             // 
             this.markFailsToolStripMenuItem.Name = "markFailsToolStripMenuItem";
-            this.markFailsToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
+            this.markFailsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.markFailsToolStripMenuItem.Text = "mark fails";
             this.markFailsToolStripMenuItem.Click += new System.EventHandler(this.button_mark_fails_Click);
             // 
             // markwinner
             // 
             this.markwinner.Name = "markwinner";
-            this.markwinner.Size = new System.Drawing.Size(169, 22);
+            this.markwinner.Size = new System.Drawing.Size(180, 22);
             this.markwinner.Text = "mark winners";
             this.markwinner.Click += new System.EventHandler(this.markwinner_Click);
             // 
             // configToolStripMenuItem
             // 
             this.configToolStripMenuItem.Name = "configToolStripMenuItem";
-            this.configToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
+            this.configToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.configToolStripMenuItem.Text = "Advanced Config.";
             this.configToolStripMenuItem.ToolTipText = "Press \'Reload Config\' after change.";
             this.configToolStripMenuItem.Click += new System.EventHandler(this.configToolStripMenuItem_Click);
@@ -616,7 +629,7 @@
             // reloadConfigToolStripMenuItem
             // 
             this.reloadConfigToolStripMenuItem.Name = "reloadConfigToolStripMenuItem";
-            this.reloadConfigToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
+            this.reloadConfigToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.reloadConfigToolStripMenuItem.Text = "Reload Config.";
             this.reloadConfigToolStripMenuItem.Click += new System.EventHandler(this.reloadConfigToolStripMenuItem_Click);
             // 
@@ -722,16 +735,12 @@
             this.button2.UseVisualStyleBackColor = true;
             this.button2.Click += new System.EventHandler(this.button_export_source_Click);
             // 
-            // button_putty
+            // clearParamDataToolStripMenuItem
             // 
-            this.button_putty.Location = new System.Drawing.Point(272, 699);
-            this.button_putty.Name = "button_putty";
-            this.button_putty.Size = new System.Drawing.Size(70, 23);
-            this.button_putty.TabIndex = 67;
-            this.button_putty.Text = "Putty";
-            this.toolTip1.SetToolTip(this.button_putty, "The pwd is hardcoded");
-            this.button_putty.UseVisualStyleBackColor = true;
-            this.button_putty.Click += new System.EventHandler(this.button_putty_Click);
+            this.clearParamDataToolStripMenuItem.Name = "clearParamDataToolStripMenuItem";
+            this.clearParamDataToolStripMenuItem.Size = new System.Drawing.Size(211, 22);
+            this.clearParamDataToolStripMenuItem.Text = "Clear param data";
+            this.clearParamDataToolStripMenuItem.Click += new System.EventHandler(this.clearParamDataToolStripMenuItem_Click);
             // 
             // filter
             // 
@@ -865,6 +874,7 @@
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.ToolStripMenuItem markwinner;
         private System.Windows.Forms.Button button_putty;
+        private System.Windows.Forms.ToolStripMenuItem clearParamDataToolStripMenuItem;
     }
 }
 

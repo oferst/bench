@@ -20,6 +20,7 @@ using System.Threading;
 using System.Management;
 using System.Text.RegularExpressions;
 using System.Globalization;
+using Microsoft.VisualBasic;
 
 namespace bench
 {
@@ -2263,6 +2264,45 @@ namespace bench
             string user = ConfigurationManager.AppSettings["remote_user"];
             string domain = ConfigurationManager.AppSettings["remote_domain"];
             run_remote(putty, user + "@" + domain + " -pw 4545Nkho!!", false);
+        }
+
+        private void clearParamDataToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string userInput = Interaction.InputBox(
+            "Clear data for param: ",   // Prompt
+            "Input Required",            // Title
+            ""              // Default text
+            );
+            if (userInput != "")
+            {
+                // Pattern to match (e.g. all .log files)
+                string pattern = "*" + normalize_string(userInput) + ".out";
+
+                try
+                {
+                    // Get all files matching the pattern
+                    string[] files = Directory.GetFiles(benchmarksDir, pattern);
+
+                    foreach (string file in files)
+                    {
+                        File.Delete(file);
+                    }
+                    listBox1.Items.Add("Deleted " + files.Length + " files.");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Error: " + ex.Message);
+                }
+                List<string> outlines = new List<string>();
+                string[] lines = File.ReadAllLines(csv.Text);
+                foreach (string line in lines)
+                {
+                    if (!line.Contains(userInput)) {
+                        outlines.Add(line);
+                    }
+                }
+                File.WriteAllLines(csv.Text, outlines.ToArray());
+            }
         }
 
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
