@@ -55,7 +55,7 @@ namespace bench
 
         enum fields
         {
-            exe, dir, filter_str, maxfiles, csv, param, param_groups, stat_field, core_list, timeout, min_mem,  // combos
+            exe, dir, wdir, filter_str, maxfiles, csv, param, param_groups, stat_field, core_list, timeout, min_mem,  // combos
             checkBox_skip_long_runs, checkBox_remote, checkBox_rec, checkBox_rerun_empty_out, checkBox_filter_out, checkBox_filter_csv, checkBox_copy, // checkboxes
             misc
         }; // elements maintained in the history file
@@ -552,31 +552,32 @@ namespace bench
 
             while ((line = file.ReadLine()) != null)
             {
+                if (line.Length <= stat_tag.Length) continue;
+                if (!line.Contains(stat_tag)) continue;
+                // for cases in which the previous line in the output did not have an eol. 
+                if (line.Substring(0, stat_tag.Length) != stat_tag) line = line.Substring(line.IndexOf(stat_tag));
 
-                if (line.Length > stat_tag.Length && line.Substring(0, stat_tag.Length) == stat_tag)
+                var parts = line.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries); // The RemoveEmptyEntries takes care of multiple spaces. 
+                string tag = parts[1];
+
+                if (tag == abort_tag || tag == "SAT")
                 {
-                    var parts = line.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries); // The RemoveEmptyEntries takes care of multiple spaces. 
-                    string tag = parts[1];
-
-                    if (tag == abort_tag || tag == "SAT")
-                    {
-                        listBox1.Items.Add("* * * * * * * * * * * * *  Abort!");
-                        file.Close();
-                        return true;
-                    }
-
-                    float res;
-
-                    benchmark data = (benchmark)processes[p];
-
-                    if (float.TryParse(parts[2], out res))
-                    {
-                        if (!labels.Exists(x => x == tag)) labels.Add(tag);
-                        success = true;
-                        data.res.Add(tag, res);
-                    }
-                    else listBox1.Items.Add("skipping non-numerical data: " + parts[2]);
+                    listBox1.Items.Add("* * * * * * * * * * * * *  Abort!");
+                    file.Close();
+                    return true;
                 }
+
+                float res;
+
+                benchmark data = (benchmark)processes[p];
+
+                if (float.TryParse(parts[2], out res))
+                {
+                    if (!labels.Exists(x => x == tag)) labels.Add(tag);
+                    success = true;
+                    data.res.Add(tag, res);
+                }
+                else listBox1.Items.Add("skipping non-numerical data: " + parts[2]);
             }
             file.Close();
             if (first)
@@ -800,7 +801,7 @@ namespace bench
                 }
             }
             bool resetcsv = chk_resetcsv.Checked || !File.Exists(csv.Text);
-
+            if (resetcsv) labels.Clear();
             string csvheader = "", csvtext = "";
             string exedate = "";
             if (!checkBox_remote.Checked) exedate = File.GetLastWriteTime(exe.Text).ToString();
@@ -1034,6 +1035,9 @@ namespace bench
         {
 
             Process p = new Process();
+            if (wdir.Text != "") 
+                p.StartInfo.WorkingDirectory = wdir.Text;
+            else
             p.StartInfo.WorkingDirectory = Path.GetDirectoryName(outfilename);
 
             p.StartInfo.FileName = cmd;
@@ -1066,6 +1070,7 @@ namespace bench
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
+            bg.ReportProgress(0,"directory = " + Directory.GetCurrentDirectory());
             int cnt_success = 0, cnt = 0;
             Process[] p = new Process[cores + 1];
             List<FileInfo> fileEntries = getFilesInDir();
@@ -1314,8 +1319,7 @@ namespace bench
             if (checkBox_remote.Checked && !test_dir_compatibility()) return;
             label_paralel_time.Text = "";
             label_cnt.Text = "";
-            label_fails.Text = "";
-            labels.Clear();
+            label_fails.Text = "";            
             bg = new AbortableBackgroundWorker();
             processes.Clear();
             accum_results.Clear();
@@ -1950,10 +1954,11 @@ namespace bench
                         {                            
                             char[] separators = new char[] { ' ', ':' };
                             string[] cols = line.Split(separators);
-                                                        
+                            Debug.Assert(cols.Length >= 4);
                             string filename = cols[0].Substring(cols[0].LastIndexOf('/') + 1);
                             if (BenchmarkNamesFromCsv.Contains(filename)) { in_csv++; continue; }
                             if (filterOut(filename)) continue;
+                            listBox1.Items.Add($"{filename}");
                             string outline = cols[1] + " " + cols[2] + " " + cols[3] + "\n";
                             if (!data.ContainsKey(filename)) data[filename] = new List<string>();
                             data[filename].Add(outline);                            
