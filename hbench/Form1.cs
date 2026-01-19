@@ -1940,7 +1940,15 @@ namespace bench
                         // This is much faster that doing it separately for each flie. 
                     {
                         string suffix = "*" + normalize_string(param) + ".out";
-                        Tuple<int, string, string> res = run_remote(ConfigurationManager.AppSettings["local_ssh_cmd"], remote_user + " \"bash -c 'grep -H \\\"" + stat_tag + "\\\" " + ConfigurationManager.AppSettings["remote_bench_dir"] + suffix + "' > /home/ofers/summary.out\"");
+                        string cmd;
+                        if (checkBox_rec.Checked) {
+                            cmd = remote_user + " \"bash -c 'grep -H \\\"" + stat_tag + "\\\" -r --include=\"" + suffix + "\" " + ConfigurationManager.AppSettings["remote_bench_dir"] + "' > /home/ofers/summary.out\"";
+                                }
+                        else 
+                        cmd = remote_user + " \"bash -c 'grep -H \\\"" + stat_tag + "\\\" " + ConfigurationManager.AppSettings["remote_bench_dir"] + suffix + "' > /home/ofers/summary.out\"";
+
+
+                        Tuple<int, string, string> res = run_remote(ConfigurationManager.AppSettings["local_ssh_cmd"], cmd);
                         string outText = res.Item2;
                         listBox1.Items.Add(outText);
                         res = run_remote(ConfigurationManager.AppSettings["local_scp_cmd"], remote_user + ":/home/ofers/summary.out " + "summary.out");
