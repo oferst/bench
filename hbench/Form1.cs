@@ -2318,6 +2318,39 @@ namespace bench
             }
         }
 
+        private void openOutFileToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string userInput = Interaction.InputBox(
+            "Line number in the CSV: ",   // Prompt
+            "Input Required",            // Title
+            ""              // Default text
+            );
+            if (userInput != "")
+            {
+                // get the line from the csv file: 
+                string line;
+                try
+                {
+                    int lineNumber = int.Parse(userInput);
+                    string[] lines = File.ReadAllLines(csv.Text);
+                    line = lines[lineNumber - 1];
+                }
+                catch
+                {
+                    Interaction.MsgBox("Wrong line number");
+                    return;
+                }
+                string dir = get_field(line, header_fields.dir);
+                string bench = get_field(line, header_fields.bench);
+                string param = get_field(line, header_fields.param);
+                string outfilename = Path.Combine(dir, bench + "." + normalize_string(param.Replace("P:","")) + ".out");
+                Process p = new Process();
+                p.StartInfo.FileName = "notepad";
+                p.StartInfo.Arguments = outfilename;
+                p.Start();
+            }
+        }
+
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
             // here we update the history file if needed. 

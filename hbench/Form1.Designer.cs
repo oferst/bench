@@ -97,6 +97,7 @@
             this.button2 = new System.Windows.Forms.Button();
             this.wdir = new System.Windows.Forms.ComboBox();
             this.label15 = new System.Windows.Forms.Label();
+            this.openOutFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
@@ -531,6 +532,7 @@
             this.cleanupToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.cleanupToolStripMenuItem1,
             this.editHistoryFileToolStripMenuItem,
+            this.openOutFileToolStripMenuItem,
             this.markFailsToolStripMenuItem,
             this.markwinner,
             this.configToolStripMenuItem,
@@ -548,7 +550,7 @@
             this.deleteAllfailBenchmarksToolStripMenuItem,
             this.clearParamDataToolStripMenuItem});
             this.cleanupToolStripMenuItem1.Name = "cleanupToolStripMenuItem1";
-            this.cleanupToolStripMenuItem1.Size = new System.Drawing.Size(169, 22);
+            this.cleanupToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
             this.cleanupToolStripMenuItem1.Text = "Cleanup";
             // 
             // toolStripMenuItem1
@@ -596,7 +598,7 @@
             this.editToolStripMenuItem,
             this.refreshMenusToolStripMenuItem});
             this.editHistoryFileToolStripMenuItem.Name = "editHistoryFileToolStripMenuItem";
-            this.editHistoryFileToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
+            this.editHistoryFileToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.editHistoryFileToolStripMenuItem.Text = "History file";
             // 
             // editToolStripMenuItem
@@ -616,21 +618,21 @@
             // markFailsToolStripMenuItem
             // 
             this.markFailsToolStripMenuItem.Name = "markFailsToolStripMenuItem";
-            this.markFailsToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
+            this.markFailsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.markFailsToolStripMenuItem.Text = "mark fails";
             this.markFailsToolStripMenuItem.Click += new System.EventHandler(this.button_mark_fails_Click);
             // 
             // markwinner
             // 
             this.markwinner.Name = "markwinner";
-            this.markwinner.Size = new System.Drawing.Size(169, 22);
+            this.markwinner.Size = new System.Drawing.Size(180, 22);
             this.markwinner.Text = "mark winners";
             this.markwinner.Click += new System.EventHandler(this.markwinner_Click);
             // 
             // configToolStripMenuItem
             // 
             this.configToolStripMenuItem.Name = "configToolStripMenuItem";
-            this.configToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
+            this.configToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.configToolStripMenuItem.Text = "Advanced Config.";
             this.configToolStripMenuItem.ToolTipText = "Press \'Reload Config\' after change.";
             this.configToolStripMenuItem.Click += new System.EventHandler(this.configToolStripMenuItem_Click);
@@ -638,7 +640,7 @@
             // reloadConfigToolStripMenuItem
             // 
             this.reloadConfigToolStripMenuItem.Name = "reloadConfigToolStripMenuItem";
-            this.reloadConfigToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
+            this.reloadConfigToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.reloadConfigToolStripMenuItem.Text = "Reload Config.";
             this.reloadConfigToolStripMenuItem.Click += new System.EventHandler(this.reloadConfigToolStripMenuItem_Click);
             // 
@@ -762,6 +764,13 @@
             this.label15.Size = new System.Drawing.Size(47, 13);
             this.label15.TabIndex = 69;
             this.label15.Text = "Work-dir";
+            // 
+            // openOutFileToolStripMenuItem
+            // 
+            this.openOutFileToolStripMenuItem.Name = "openOutFileToolStripMenuItem";
+            this.openOutFileToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.openOutFileToolStripMenuItem.Text = "open out file";
+            this.openOutFileToolStripMenuItem.Click += new System.EventHandler(this.openOutFileToolStripMenuItem_Click);
             // 
             // filter
             // 
@@ -900,6 +909,7 @@
         private System.Windows.Forms.ToolStripMenuItem clearParamDataToolStripMenuItem;
         private System.Windows.Forms.ComboBox wdir;
         private System.Windows.Forms.Label label15;
+        private System.Windows.Forms.ToolStripMenuItem openOutFileToolStripMenuItem;
     }
 }
 
