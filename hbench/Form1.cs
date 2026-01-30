@@ -28,7 +28,8 @@ namespace bench
     {
         // reading from config  file: 
         string history_file = Path.Combine(Application.StartupPath, ConfigurationManager.AppSettings["history_filename"]);//"history.txt"
-        string graphDir = ConfigurationManager.AppSettings["cpbm"]; //@"c:\temp\cpbm-0.5\";        
+        string graphDir = ConfigurationManager.AppSettings["cpbm"]; //@"c:\temp\cpbm-0.5\";
+        // If this file gets locked: use c:\temp\handle.exe to find which process locks it. 
         StreamWriter logfile = new StreamWriter(ConfigurationManager.AppSettings["log"]); // @"C:\temp\log.txt");        
         string stat_tag = ConfigurationManager.AppSettings["stat_tag"]; // ###
         string abort_tag = ConfigurationManager.AppSettings["abort_tag"];
@@ -691,6 +692,11 @@ namespace bench
                 Thread.Sleep(10000); // 10 seconds wait                        
             }
             bg.ReportProgress(0, DateTime.Now.ToString("H:mm:ss") + ": * All remote processes terminated *");
+            if (bg != null)
+            {
+                bg.Abort();
+                bg.Dispose();
+            }
         }
 
         // called from background-worker thread
@@ -700,6 +706,11 @@ namespace bench
             {
                 Process p1 = (Process)entry.Key;
                 if (!p1.HasExited) p1.WaitForExit();
+            }
+            if (bg != null)
+            {
+                bg.Abort();
+                bg.Dispose();
             }
         }
 
@@ -1416,7 +1427,7 @@ namespace bench
                 if (MessageBox.Show("Delete all processes of user " + remote_user + "?", "Confirm kill processes", MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {
                     string outText = run_remote(ConfigurationManager.AppSettings["local_ssh_cmd"], remote_user + " \"qstat -u" + ConfigurationManager.AppSettings["remote_user"] + "| grep \"" +
-                      ConfigurationManager.AppSettings["remote_user"] + "\" | cut -d\".\" -f1 | xargs qdel\"").Item2;
+                      ConfigurationManager.AppSettings["remote_user"] + "\" | cut -d\".\" -f1 | xargs qdel\"", false).Item2;
                     listBox1.Items.Add(outText);
                 }
             }
@@ -1449,11 +1460,7 @@ namespace bench
                     listBox1.Items.Add("Retrieved Affinity");
                 }
             }
-            if (bg != null)
-            {
-                bg.Abort();
-                bg.Dispose();
-            }
+
             if (csvfile != null) csvfile.Close();
             button1.Enabled = true;
             scrolldown();
@@ -1616,7 +1623,7 @@ namespace bench
 
         private void checkBox_remote_CheckedChanged(object sender, EventArgs e)
         {
-            timeout.Enabled = min_mem.Enabled = exe.Enabled = checkedListBox_cores.Enabled = !(((CheckBox)sender).Checked);
+            timeout.Enabled = wdir.Enabled = min_mem.Enabled = exe.Enabled = checkedListBox_cores.Enabled = !(((CheckBox)sender).Checked);
             checkBox_copy.Enabled = /*button_import.Enabled =*/ (((CheckBox)sender).Checked);
             checkBox_CheckedChanged(sender, e);
         }
@@ -1936,7 +1943,7 @@ namespace bench
                 for (int par = 0; par < ext_param_list.Count; ++par)  // for each parameter
                 {
                     string param = (engine == 0) ? ext_param_list[par] : remove_label(ext_param_list[par] ) + labelTag + ConfigurationManager.AppSettings["remote_ssh_cmd1_label"];
-                    if (true) // the new way: create a summary file with all lines remotely, and parse it locally. 
+                    if (false) // the new way: create a summary file with all lines remotely, and parse it locally. 
                         // This is much faster that doing it separately for each flie. 
                     {
                         string suffix = "*" + normalize_string(param) + ".out";
