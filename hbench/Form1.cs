@@ -5,28 +5,29 @@
  */
 
 
+using Microsoft.VisualBasic;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Configuration;
 using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Windows.Forms;
-using System.Collections;
-using System.IO;
 using System.Diagnostics;
-using System.Threading;
+using System.Drawing;
+using System.Globalization;
+using System.IO;
+using System.Linq;
 using System.Management;
 using System.Text.RegularExpressions;
-using System.Globalization;
-using Microsoft.VisualBasic;
+using System.Threading;
+using System.Windows.Forms;
+using static System.Net.Mime.MediaTypeNames;
 namespace bench
 {
     public partial class filter : Form
     {
         // reading from config  file: 
-        string history_file = Path.Combine(Application.StartupPath, ConfigurationManager.AppSettings["history_filename"]);//"history.txt"
+        string history_file = Path.Combine(System.Windows.Forms.Application.StartupPath, ConfigurationManager.AppSettings["history_filename"]);//"history.txt"
         string graphDir = ConfigurationManager.AppSettings["cpbm"]; //@"c:\temp\cpbm-0.5\";
         // If this file gets locked: use c:\temp\handle.exe to find which process locks it. 
         StreamWriter logfile = new StreamWriter(ConfigurationManager.AppSettings["log"]); // @"C:\temp\log.txt");        
@@ -499,7 +500,7 @@ namespace bench
             catch
             {
                 MessageBox.Show("cannot open directory " + benchmarksDir + ". Aborting.");
-                Application.Exit();
+                System.Windows.Forms.Application.Exit();
             }
 
             int counter = int.MaxValue;
@@ -1047,8 +1048,10 @@ namespace bench
         {
 
             Process p = new Process();
-            if (wdir.Text != "") 
-                p.StartInfo.WorkingDirectory = wdir.Text;
+            string text = "";
+            wdir.Invoke(new Action(() => { text = wdir.Text; }));
+            if (text != "") 
+                p.StartInfo.WorkingDirectory = text;
             else
             p.StartInfo.WorkingDirectory = Path.GetDirectoryName(outfilename);
 
@@ -1422,7 +1425,6 @@ namespace bench
         {
             if (checkBox_remote.Checked)
             {
-
                 // the following command produeces, e.g., qstat -uofers | grep "ofers" | cut -d"." -f1 | xargs qdel, which kills all prcesses by user ofers.
                 string remote_user = ConfigurationManager.AppSettings["remote_user"] + "@" + ConfigurationManager.AppSettings["remote_domain"];
                 if (MessageBox.Show("Delete all processes of user " + remote_user + "?", "Confirm kill processes", MessageBoxButtons.YesNo) == DialogResult.Yes)
@@ -1464,6 +1466,12 @@ namespace bench
 
             if (csvfile != null) csvfile.Close();
             button1.Enabled = true;
+
+            if (bg != null)
+            {
+                bg.Abort();
+                bg.Dispose();
+            }
             scrolldown();
         }
 
