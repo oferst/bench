@@ -21,7 +21,6 @@ using System.Management;
 using System.Text.RegularExpressions;
 using System.Globalization;
 using Microsoft.VisualBasic;
-
 namespace bench
 {
     public partial class filter : Form
@@ -692,6 +691,7 @@ namespace bench
                 Thread.Sleep(10000); // 10 seconds wait                        
             }
             bg.ReportProgress(0, DateTime.Now.ToString("H:mm:ss") + ": * All remote processes terminated *");
+            scrolldown();
             if (bg != null)
             {
                 bg.Abort();
@@ -716,6 +716,7 @@ namespace bench
 
         bool prepareDataForCsv()
         {
+            listBox1.Items.Add("Preparing data for csv file");
             int in_csv = 0;
 
             filter_str.Invoke(new Action(() => { searchPattern = filter_str.Text; }));
@@ -728,7 +729,7 @@ namespace bench
             }
 
             BenchmarkNamesFromCsv.Clear();
-            if (checkBox_filter_csv.Checked && File.Exists(csv.Text))
+            if (!chk_resetcsv.Checked && checkBox_filter_csv.Checked && File.Exists(csv.Text))
                 readBenchmarkNamesFromCsv();
 
 
@@ -1918,6 +1919,7 @@ namespace bench
             int in_csv = 0, imported = 0;
             listBox1.Items.Add("--- Importing ---");
             listBox1.Refresh();
+            scrolldown();
             dir.Invoke(new Action(() => { benchmarksDir = dir.Text; }));
             filter_str.Invoke(new Action(() => { searchPattern = filter_str.Text; }));
             var fileEntries = getFilesInDir();
@@ -1943,7 +1945,7 @@ namespace bench
                 for (int par = 0; par < ext_param_list.Count; ++par)  // for each parameter
                 {
                     string param = (engine == 0) ? ext_param_list[par] : remove_label(ext_param_list[par] ) + labelTag + ConfigurationManager.AppSettings["remote_ssh_cmd1_label"];
-                    if (false) // the new way: create a summary file with all lines remotely, and parse it locally. 
+                    if (true) // the new way: create a summary file with all lines remotely, and parse it locally. 
                         // This is much faster that doing it separately for each flie. 
                     {
                         string suffix = "*" + normalize_string(param) + ".out";
@@ -1959,7 +1961,7 @@ namespace bench
                         string outText = res.Item2;
                         listBox1.Items.Add(outText);
                         res = run_remote(ConfigurationManager.AppSettings["local_scp_cmd"], remote_user + ":/home/ofers/summary.out " + "summary.out");
-                        string local_dir_Text;
+                        string local_dir_Text="";
                         dir.Invoke(new Action(() => { local_dir_Text = dir.Text; }));
                         Directory.SetCurrentDirectory(dir.Text);
                         
@@ -1975,15 +1977,29 @@ namespace bench
                             if (filterOut(filename)) continue;
                             listBox1.Items.Add($"{filename}");
                             string outline = cols[1] + " " + cols[2] + " " + cols[3] + "\n";
-                            if (!data.ContainsKey(filename)) data[filename] = new List<string>();
-                            data[filename].Add(outline);                            
+                            if (!data.ContainsKey(cols[0])) data[cols[0]] = new List<string>();
+                            data[cols[0]].Add(outline);
+                            scrolldown();
                         } 
                         
                         // create the out files
                         foreach (var d in data)
                         {
-                            if (File.Exists(d.Key)) File.Delete(d.Key);
-                            foreach (string t in d.Value) File.AppendAllText(d.Key,t);
+                            // The key is e.g. /home/ofers/ToDnnf/test/benchmarks/iscas85/or/c1355/c1355.aag.file.out
+                            // we have to turn it into c:\...\benchmarks\iscas85\or\c1355\c1355.aag.file.out
+                            
+                            string text = d.Key;
+                            string marker = ConfigurationManager.AppSettings["remote_bench_dir"];
+                            if (text.StartsWith(marker))
+                            {
+                                text = text.Substring(marker.Length);
+                            }
+                            // so not we have e.g. /iscas85/or/c1355/c1355.aag.file.out
+                            // we have to turn it into windows style path:
+                            text = text.Replace('/', '\\');
+                            string fileName = Path.Combine(local_dir_Text, text);
+                            if (File.Exists(fileName)) File.Delete(fileName);
+                            foreach (string t in d.Value) File.AppendAllText(fileName, t);
                         }
                     }
                     else
