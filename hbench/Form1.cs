@@ -2057,7 +2057,7 @@ namespace bench
         {
 
             if (chk_resetcsv.Checked) labels.Clear();
-            
+            processes.Clear();
             try
             {
                 if (checkBox_remote.Checked) import_remote_out();
