@@ -21,6 +21,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Management;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
@@ -837,7 +838,8 @@ namespace bench
             }
             bool resetcsv = chk_resetcsv.Checked || !File.Exists(csv.Text);
             if (resetcsv) labels.Clear();
-            string csvheader = "", csvtext = "";
+            var csvheader = new StringBuilder();
+            var csvtext = new StringBuilder();
             string exedate = "";
             if (!checkBox_remote.Checked) exedate = File.GetLastWriteTime(exe.Text).ToString();
 
@@ -862,8 +864,8 @@ namespace bench
 
                 var res = bm.res;
                 // each line must *not* end with "," (because excel erases last ',' anyway when saving csv)
-                csvtext += exedate + ",";
-                csvtext += getid(bm.param, bm.name) + ","; // benchmark. There is an extra ',' because of the 'fail' column.                
+                csvtext.Append(exedate + ",");
+                csvtext.Append(getid(bm.param, bm.name) + ","); // benchmark. There is an extra ',' because of the 'fail' column.                
                 for (int i = 0; i < labels.Count; ++i)
                 {
                     string lbl = labels[i];
@@ -874,9 +876,9 @@ namespace bench
                         st_res = "-1";
                         missingvalues = true;
                     }
-                    csvtext += "," + st_res;
+                    csvtext.Append("," + st_res);
                 }
-                csvtext += "\n";
+                csvtext.AppendLine();
                 string tryj = String.Join(",", labels.Select((x) => res.ContainsKey(x) ? res[x].ToString() : "-1").ToList());
             }
 
@@ -888,10 +890,10 @@ namespace bench
             try
             {
                 string[] hd = (Enum.GetNames(typeof(header_fields)));
-                csvheader += String.Join(",", hd.ToList<string>().Concat(labels));
-                csvfile.WriteLine(csvheader);
+                csvheader.Append(String.Join(",", hd.ToList<string>().Concat(labels)));
+                csvfile.WriteLine(csvheader.ToString());
                 if (!resetcsv) csvfile.Write(existingEntries);
-                csvfile.Write(csvtext);
+                csvfile.Write(csvtext.ToString());
             }
             catch
             {
@@ -1110,7 +1112,11 @@ namespace bench
             int cnt_success = 0, cnt = 0;
             Process[] p = new Process[cores + 1];
             List<FileInfo> fileEntries = getFilesInDir();
-            if (fileEntries.Count == 0) bg.ReportProgress(0, "empty file list\n");
+            if (fileEntries.Count == 0) {
+                bg.ReportProgress(0, "empty file list\n");
+                e.Cancel = true;
+                return;
+            }
             string remote_user = "", remote_bench_path = "";
             if (checkBox_remote.Checked)
             {
@@ -1752,7 +1758,7 @@ namespace bench
 
 
             try   {
-                foreach (string line in File.ReadLines(fileName))
+                foreach (string line in File.ReadAllLines(fileName))
                 {
                     if (header)
                     {
@@ -1981,16 +1987,16 @@ namespace bench
                         string suffix = "*" + normalize_string(param) + ".out";
                         string cmd;
                         if (checkBox_rec.Checked) {
-                            cmd = remote_user + " \"bash -c 'grep -H \\\"" + stat_tag + "\\\" -r --include=\"" + suffix + "\" " + ConfigurationManager.AppSettings["remote_bench_dir"] + "' > /home/ofers/summary.out\"";
+                            cmd = remote_user + " \"bash -c 'grep -H \\\"" + stat_tag + "\\\" -r --include=\"" + suffix + "\" " + ConfigurationManager.AppSettings["remote_bench_dir"] + "' > " + ConfigurationManager.AppSettings["remote_summary_file"] + "\"";
                                 }
                         else 
-                        cmd = remote_user + " \"bash -c 'grep -H \\\"" + stat_tag + "\\\" " + ConfigurationManager.AppSettings["remote_bench_dir"] + suffix + "' > /home/ofers/summary.out\"";
+                        cmd = remote_user + " \"bash -c 'grep -H \\\"" + stat_tag + "\\\" " + ConfigurationManager.AppSettings["remote_bench_dir"] + suffix + "' > " + ConfigurationManager.AppSettings["remote_summary_file"] +"\"";
 
 
                         Tuple<int, string, string> res = run_remote(ConfigurationManager.AppSettings["local_ssh_cmd"], cmd);
                         string outText = res.Item2;
                         listBox1.Items.Add(outText);
-                        res = run_remote(ConfigurationManager.AppSettings["local_scp_cmd"], remote_user + ":/home/ofers/summary.out " + "summary.out");
+                        res = run_remote(ConfigurationManager.AppSettings["local_scp_cmd"], remote_user + ":" + ConfigurationManager.AppSettings["remote_summary_file"] + "summary.out");
                         string local_dir_Text="";
                         dir.BeginInvoke(new Action(() => { local_dir_Text = dir.Text; }));
                         Directory.SetCurrentDirectory(dir.Text);
@@ -2026,7 +2032,7 @@ namespace bench
                             }
                             // so not we have e.g. /iscas85/or/c1355/c1355.aag.file.out
                             // we have to turn it into windows style path:
-                            text = text.Replace('/', '\\');
+                            text = text.Replace('/', '\\'); // Unix to Windows
                             string fileName = Path.Combine(local_dir_Text, text);
                             if (File.Exists(fileName)) File.Delete(fileName);
                             foreach (string t in d.Value) File.AppendAllText(fileName, t);
