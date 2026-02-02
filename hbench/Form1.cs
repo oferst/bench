@@ -4,10 +4,13 @@
  * Distributed freely under the GPL license
  */
 
+// TODO: use csvhelper. 
+
 
 using Microsoft.VisualBasic;
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Configuration;
@@ -21,7 +24,6 @@ using System.Management;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
-using static System.Net.Mime.MediaTypeNames;
 namespace bench
 {
     public partial class filter : Form
@@ -30,7 +32,7 @@ namespace bench
         string history_file = Path.Combine(System.Windows.Forms.Application.StartupPath, ConfigurationManager.AppSettings["history_filename"]);//"history.txt"
         string graphDir = ConfigurationManager.AppSettings["cpbm"]; //@"c:\temp\cpbm-0.5\";
         // If this file gets locked: use c:\temp\handle.exe to find which process locks it. 
-        StreamWriter logfile = new StreamWriter(ConfigurationManager.AppSettings["log"]); // @"C:\temp\log.txt");        
+        StreamWriter logfile = new StreamWriter(ConfigurationManager.AppSettings["log"]);
         string stat_tag = ConfigurationManager.AppSettings["stat_tag"]; // ###
         string abort_tag = ConfigurationManager.AppSettings["abort_tag"];
 
@@ -48,7 +50,9 @@ namespace bench
         bool preserveFirstCores = ConfigurationManager.AppSettings["PreserveFirstCores"] == "true";
         int firstcore;
         int cores = Environment.ProcessorCount;
-        int[] active = new int[8]; // {3, 5, 7 }; 
+        List<int> active;
+        
+        // = new List<int>(cores); // {3, 5, 7 }; 
         int failed = 0;
         const string labelTag = "^"; // adding labels to the parameter list. These will not join the actual parameters. 
         const string noOpTag = "<>";
@@ -63,9 +67,8 @@ namespace bench
         enum header_fields { exedate, param, dir, bench, fail }; // these are not reported in the out files, yet they are part of each record. 
         List<string> labels = new List<string>();  // never includes header_fields. 
         // declarations:
-        Hashtable processes = new Hashtable();  // from process to <args, benchmark, list of results>
-        List<string> failed_benchmarks;
-        List<System.Threading.Timer> timers = new List<System.Threading.Timer>();
+        readonly ConcurrentDictionary<Process, benchmark> processes = new ConcurrentDictionary<Process, benchmark>();
+        List<string> failed_benchmarks;        
         // the list of labels below represents the union of lables in the various output files processed 
         // so far (up to 'reset csv') + labels added via 'mark winners'/'mark fails'.       
 
@@ -208,7 +211,9 @@ namespace bench
                         ((ComboBox)C).DataSource = bs;
                     }
                     catch
-                    { }   // could be missing entry in the history file, so we let it go through. 
+                    { 
+                    listBox1.Items.Add("could not find entry for " + C.Name + " in history file" );
+                    }   // could be missing entry in the history file, so we let it go through. 
                 }
                 else if (type == typeof(CheckBox))
                 {
@@ -218,7 +223,9 @@ namespace bench
                         ((CheckBox)C).Checked = history[field][0] == "yes";
                     }
                     catch
-                    { }
+                    {
+                        listBox1.Items.Add("could not find entry for " + C.Name + " in history file");
+                    }
                 }
             }
 
@@ -443,11 +450,18 @@ namespace bench
             if (!p.HasExited)
             {
                 bg.ReportProgress(0, "timeout: process killed: " + p.StartInfo.Arguments);
-                benchmark data = (benchmark)processes[p];
+                benchmark data = processes[p];
                 failed_benchmarks.Add(data.name);
                 failed++;
                 bg.ReportProgress(5, failed.ToString());
-                KillProcessAndChildren(p.Id);
+                try
+                {
+                    KillProcessAndChildren(p.Id);
+                }
+                catch
+                {
+                    bg.ReportProgress(0, "could not kill process " + p.StartInfo.Arguments);
+                }
             }
         }
 
@@ -505,7 +519,7 @@ namespace bench
 
             int counter = int.MaxValue;
             string text = "";
-            maxfiles.Invoke(new Action(() => { text = maxfiles.Text; }));
+            maxfiles.BeginInvoke(new Action(() => { text = maxfiles.Text; }));
             if (!int.TryParse(text, out counter))
             {
                 bg.ReportProgress(0, "Non-numeric value in max-files. Putting no limits on # of files.");
@@ -536,6 +550,7 @@ namespace bench
         {
 
             bool success = false;
+
             StreamReader file = null;
             for (int i = 0; i < 3; ++i)
             {
@@ -546,8 +561,14 @@ namespace bench
                 }
                 catch
                 {
+                    listBox1.Items.Add("waiting to read " + filename);
                     Thread.Sleep(3000);
                 }
+            }
+            if (file == null)
+            {
+                listBox1.Items.Add("cannot open " + filename);
+                return false;
             }
             string line;
 
@@ -559,6 +580,7 @@ namespace bench
                 if (line.Substring(0, stat_tag.Length) != stat_tag) line = line.Substring(line.IndexOf(stat_tag));
 
                 var parts = line.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries); // The RemoveEmptyEntries takes care of multiple spaces. 
+                Debug.Assert(parts.Length == 3); // e.g. ### Time 12.34
                 string tag = parts[1];
 
                 if (tag == abort_tag || tag == "SAT")
@@ -570,7 +592,7 @@ namespace bench
 
                 float res;
 
-                benchmark data = (benchmark)processes[p];
+                benchmark data = processes[p];
 
                 if (float.TryParse(parts[2], out res))
                 {
@@ -662,7 +684,7 @@ namespace bench
                             return false; // !! remove easy instances
                         }
 
-                        benchmark data = (benchmark)processes[p];
+                        benchmark data = processes[p];
                         data.res.Add(tag, res);
 
                     }
@@ -703,7 +725,7 @@ namespace bench
         // called from background-worker thread
         void wait_for_Termination()
         {
-            foreach (DictionaryEntry entry in processes)
+            foreach (KeyValuePair<Process, benchmark> entry in processes)
             {
                 Process p1 = (Process)entry.Key;
                 if (!p1.HasExited) p1.WaitForExit();
@@ -720,8 +742,8 @@ namespace bench
             listBox1.Items.Add("Preparing data for csv file");
             int in_csv = 0;
 
-            filter_str.Invoke(new Action(() => { searchPattern = filter_str.Text; }));
-            dir.Invoke(new Action(() => { benchmarksDir = dir.Text; }));
+            filter_str.BeginInvoke(new Action(() => { searchPattern = filter_str.Text; }));
+            dir.BeginInvoke(new Action(() => { benchmarksDir = dir.Text; }));
             var fileEntries = getFilesInDir();
             if (fileEntries.Count == 0)
             {
@@ -833,7 +855,7 @@ namespace bench
                 throw;
             }
             bool missingvalues = false;
-            foreach (DictionaryEntry entry in processes)
+            foreach (var entry in processes)
             {
                 benchmark bm = entry.Value as benchmark;
                 Process p1 = (Process)entry.Key;
@@ -1021,7 +1043,7 @@ namespace bench
             p.StartInfo.UseShellExecute = false;
             p.StartInfo.RedirectStandardOutput = true;
             p.StartInfo.CreateNoWindow = true;
-            dir.Invoke(new Action(() => { local_dir_Text = dir.Text; }));
+            dir.BeginInvoke(new Action(() => { local_dir_Text = dir.Text; }));
             p.StartInfo.WorkingDirectory = local_dir_Text;    // when executing a scp command, this will bring the files to the benchmarks dir. 
 
 
@@ -1049,7 +1071,7 @@ namespace bench
 
             Process p = new Process();
             string text = "";
-            wdir.Invoke(new Action(() => { text = wdir.Text; }));
+            wdir.BeginInvoke(new Action(() => { text = wdir.Text; }));
             if (text != "") 
                 p.StartInfo.WorkingDirectory = text;
             else
@@ -1078,8 +1100,7 @@ namespace bench
             p.ProcessorAffinity = (IntPtr)affinity;
             p.PriorityClass = ProcessPriorityClass.RealTime;
 
-            var timer = new System.Threading.Timer(kill_process, p, timeout_val > 0 ? timeout_val : -1, Timeout.Infinite);
-            timers.Add(timer); // needed ?
+            var timer = new System.Threading.Timer(kill_process, p, timeout_val > 0 ? timeout_val : -1, Timeout.Infinite);           
             return p;
         }
 
@@ -1222,9 +1243,9 @@ namespace bench
                                             cnt_success++;
                                             bg.ReportProgress(3, cnt_success.ToString()); // label_cnt.Text 
                                             string local_exe_Text = "";
-                                            exe.Invoke(new Action(() => { local_exe_Text = exe.Text; })); // since we are not on the form's thread, this is a safe way to get information from there. Without it we may get an exception.
+                                            exe.BeginInvoke(new Action(() => { local_exe_Text = exe.Text; })); // since we are not on the form's thread, this is a safe way to get information from there. Without it we may get an exception.
                                                                                                           // string local_param_list_text = "";
-                                                                                                          //param_list[par].Invoke(new Action(() => { local_param_list_text = ext_param_list[par]; })); // since we are not on the form's thread, this is a safe way to get information from there. Without it we may get an exception.
+                                                                                                          //param_list[par].BeginInvoke(new Action(() => { local_param_list_text = ext_param_list[par]; })); // since we are not on the form's thread, this is a safe way to get information from there. Without it we may get an exception.
                                             p[i] = run(local_exe_Text, expand_string(param, fileName), outfilename, 1 << (i - 1));
                                             Dictionary<string, float> l = new Dictionary<string, float>();
                                             processes[p[i]] = new benchmark(param, fileName, l);
@@ -1340,10 +1361,10 @@ namespace bench
             accum_results.Clear();
             results.Clear();
 
-            int j = 0;
+            //int j = 0;
             foreach (int indexChecked in checkedListBox_cores.CheckedIndices)
             {
-                active[j++] = indexChecked + firstcore;
+                active.Add(indexChecked + firstcore);
             }
             try  // in case the field contains non-numeral.
             {
@@ -1458,6 +1479,7 @@ namespace bench
                         }
                         catch
                         {
+                            listBox1.Items.Add("Failed to set affinity for process " + p.ProcessName);
                         }
                     }
                     listBox1.Items.Add("Retrieved Affinity");
@@ -1928,8 +1950,8 @@ namespace bench
             listBox1.Items.Add("--- Importing ---");
             listBox1.Refresh();
             scrolldown();
-            dir.Invoke(new Action(() => { benchmarksDir = dir.Text; }));
-            filter_str.Invoke(new Action(() => { searchPattern = filter_str.Text; }));
+            dir.BeginInvoke(new Action(() => { benchmarksDir = dir.Text; }));
+            filter_str.BeginInvoke(new Action(() => { searchPattern = filter_str.Text; }));
             var fileEntries = getFilesInDir();
             if (fileEntries.Count == 0) listBox1.Items.Add("empty file list\n");
 
@@ -1970,7 +1992,7 @@ namespace bench
                         listBox1.Items.Add(outText);
                         res = run_remote(ConfigurationManager.AppSettings["local_scp_cmd"], remote_user + ":/home/ofers/summary.out " + "summary.out");
                         string local_dir_Text="";
-                        dir.Invoke(new Action(() => { local_dir_Text = dir.Text; }));
+                        dir.BeginInvoke(new Action(() => { local_dir_Text = dir.Text; }));
                         Directory.SetCurrentDirectory(dir.Text);
                         
                         // store the data from the summary.out flie in a dictionary, where the file name is the key
@@ -2289,9 +2311,7 @@ namespace bench
                     else lines[i] += ",0";
                 }
                 lines.Insert(0, header);
-
                 var tempFile = Path.GetTempFileName();
-
                 File.WriteAllLines(tempFile, lines);
                 File.Delete(fileName);
                 File.Move(tempFile, fileName);

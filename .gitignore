@@ -13,3 +13,4 @@ bench/obj/
 cpbm-0.5/
 *.suo
 *.db
+/packages
