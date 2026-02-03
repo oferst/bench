@@ -34,7 +34,7 @@ namespace bench
             // 
             DateTime exe_date = File.GetLastWriteTime(System.Reflection.Assembly.GetEntryAssembly().Location);
             DateTime source_date = File.GetLastWriteTime(@"..\..\Form1.cs");
-            if (source_date > exe_date) MessageBox.Show("Warning: date of executable is before date of source Form1.cs. Recompile !","Warning",MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            if (source_date > exe_date) MessageBox.Show("Warning: date of (release) executable is before date of source Form1.cs. Recompile !","Warning",MessageBoxButtons.OK, MessageBoxIcon.Warning);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new filter());

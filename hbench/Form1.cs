@@ -2245,7 +2245,8 @@ namespace bench
             Process p = new Process();
             // This may not work as it calls ssh which invokes openssh under system32, and something is blocking it. 
             // In the office computer I installed ssh / scp via cygwin and changed the path so it looks for it first. 
-            p.StartInfo.FileName = ConfigurationManager.AppSettings["export_batch_file"];
+            // The Environment.ExpandEnvironmentVariables below is to allow, e.g., %USERNAME% in the path.
+            p.StartInfo.FileName = Environment.ExpandEnvironmentVariables(ConfigurationManager.AppSettings["export_batch_file"]);
             p.Start();
         }
 
