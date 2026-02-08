@@ -282,7 +282,7 @@ namespace bench
             // some parameters use negative values. We cannot use in the replacement 
             // string a "-" because having this in the file name makes scatter/cactus 
             // refer to this as a parameter.
-            string res = s.Replace("=", "").Replace(" ", "").Replace("_", "").Replace(labelTag, "").Replace("%f", "").Replace("-", "").Replace("P:","");
+            string res = s.Replace("=", "").Replace(" ", "").Replace("_", "").Replace(labelTag, "").Replace("%f", "").Replace("-", "").Replace(id_prefix, "");
             if (res == "") res = "NoArgs";
             return res;
         }
@@ -299,7 +299,7 @@ namespace bench
 
         string strip_id_prefix(string param)
         {
-            System.Diagnostics.Debug.Assert(param.Substring(0, 3) == id_prefix);
+            Debug.Assert(param.Substring(0, 3) == id_prefix);
             return param.Substring(3);
         }
 
@@ -430,8 +430,8 @@ namespace bench
                             end = true;
                             break;
                         }
-                        lastrow--;
                     }
+                    if (!end) lastrow--;
                 }
                 rows = lastrow;
 
@@ -447,8 +447,8 @@ namespace bench
                             end = true;
                             break;
                         }
-                        lastcol--;
                     }
+                    if (!end) lastcol--;
                 }
                 cols = lastcol;
 
@@ -627,7 +627,13 @@ namespace bench
         {
             List<FileInfo> res = new List<FileInfo>();
             FileInfo[] filelist = null;
-            string extension = searchPattern.Substring(searchPattern.LastIndexOf('.'));
+            int loc = searchPattern.LastIndexOf('.');
+            if (loc < 0)
+            {
+                listBox1.Items.Add("no '.' in filter pattern ? ");
+                return res;
+            }
+            string extension = searchPattern.Substring(loc);
             try
             {
                 filelist = new DirectoryInfo(benchmarksDir).GetFiles(searchPattern, checkBox_rec.Checked ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
@@ -1118,7 +1124,7 @@ namespace bench
         }
 
 
-        bool prepare_plot_data_fromCSV()
+        bool prepare_plot_data()
         {
             string line;
             List<List<string>> table = getDataFromFile();
@@ -1135,9 +1141,9 @@ namespace bench
             init_plot_files();
             
             // header
-            List<string> cols = table[0];
+            List<string> header = table[0];
 
-            int stat_field_col = cols.IndexOf(stat_field.Text);
+            int stat_field_col = header.IndexOf(stat_field.Text);
             if (stat_field_col < 0)
             {
                 MessageBox.Show(stat_field.Text + " is not in the header of " + csv.Text);
@@ -1152,17 +1158,17 @@ namespace bench
                 if (!rgx.IsMatch(string.Join(",",row))) continue; // TODO: check
                 //cols = line.Split(',').ToList();
                 if (row.Count - 1 < stat_field_col) continue;
-                string param = strip_id_prefix(get_field(cols, header_fields.param));
+                string param = strip_id_prefix(get_field(row, header_fields.param));
                 string key = normalize_string(param);
                 if (!csv4plot.Contains(key)) continue; // This can happen if the csv file contains entries different than what appear in the GUI list. 
-                if (cols[stat_field_col] == "") continue; // timeout cases
+                if (row[stat_field_col] == "") continue; // timeout cases
                 fp = new Forplot(
-                    Path.Combine(get_field(cols, header_fields.dir), get_field(row, header_fields.bench)),
+                    Path.Combine(get_field(row, header_fields.dir), get_field(row, header_fields.bench)),
                     param,
-                    cols[stat_field_col]
+                    row[stat_field_col]
                     );
                 forplot.Add(fp);
-                if (float.TryParse(cols[stat_field_col], out val) && val > maxval) maxval = val;
+                if (float.TryParse(row[stat_field_col], out val) && val > maxval) maxval = val;
             }
             if (forplot.Count == 0)
             {
@@ -1582,7 +1588,7 @@ namespace bench
 
             try  // in case the field contains non-numeral.
             {
-                MinMem_val = Convert.ToInt32(timeout.Text);
+                MinMem_val = Convert.ToInt32(min_mem.Text);
             }
             catch { MinMem_val = 0; }
 
@@ -1805,7 +1811,7 @@ namespace bench
             //prepare_plot_data();
             try
             {
-                if (!prepare_plot_data_fromCSV()) return;
+                if (!prepare_plot_data()) return;
             }
             catch (Exception ex)
             {
@@ -1836,7 +1842,7 @@ namespace bench
             //   prepare_plot_data();
             try
             {
-                if (!prepare_plot_data_fromCSV()) return;
+                if (!prepare_plot_data()) return;
             }
             catch { return; }
 
