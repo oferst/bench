@@ -28,8 +28,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
-using System.Windows.Media.Converters;
-using static System.Windows.Forms.LinkLabel;
 
 namespace bench
 {
@@ -355,8 +353,8 @@ namespace bench
                 string ext = Path.GetExtension(csv.Text);
                 if (ext == ".xlsx")
                 {
-                    labels = ExcelGetLine(csv.Text, "Sheet1",1);
-                    vals = ExcelGetLine(csv.Text, "Sheet1", 2);
+                    labels = ExcelGetLine(csv.Text, ConfigurationManager.AppSettings["ExcelTabName"], 1);
+                    vals = ExcelGetLine(csv.Text, ConfigurationManager.AppSettings["ExcelTabName"], 2);
                 }
                 else if (ext == ".csv") {                 
                     csvfile = new StreamReader(csv.Text);      //(@"C:\temp\res.csv");
@@ -487,7 +485,7 @@ namespace bench
 
                 else if (ext == ".xlsx")
                 {
-                    res = ExcelReadAllLines(csv.Text, "sheet1");
+                    res = ExcelReadAllLines(csv.Text, ConfigurationManager.AppSettings["ExcelTabName"]);
                 }
                 else listBox1.Items.Add("unsupported file type: " + ext);
 
@@ -957,9 +955,9 @@ namespace bench
 
             using (var package = new ExcelPackage(new FileInfo(filePath)))
             {
-                var worksheet = package.Workbook.Worksheets["Sheet1"];
+                var worksheet = package.Workbook.Worksheets[ConfigurationManager.AppSettings["ExcelTabName"]];
                 if (worksheet == null)
-                    throw new System.Exception("Worksheet 'Sheet1' not found");
+                    throw new System.Exception("Worksheet " + ConfigurationManager.AppSettings["ExcelTabName"] + " not found");
                                 
                 for (int row = 1; row <= values.Count; ++row)
                 {
@@ -2704,7 +2702,5 @@ namespace bench
             }
         }
     }
-
-
 }
 
