@@ -81,6 +81,7 @@
             this.editHistoryFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.refreshMenusToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.openOutFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.markFailsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.markwinner = new System.Windows.Forms.ToolStripMenuItem();
             this.configToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -97,7 +98,6 @@
             this.button2 = new System.Windows.Forms.Button();
             this.wdir = new System.Windows.Forms.ComboBox();
             this.label15 = new System.Windows.Forms.Label();
-            this.openOutFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
@@ -238,9 +238,9 @@
             this.label11.AutoSize = true;
             this.label11.Location = new System.Drawing.Point(9, 635);
             this.label11.Name = "label11";
-            this.label11.Size = new System.Drawing.Size(43, 13);
+            this.label11.Size = new System.Drawing.Size(74, 13);
             this.label11.TabIndex = 25;
-            this.label11.Text = "csv file:";
+            this.label11.Text = "File (csv/xlsx):";
             // 
             // button_kill
             // 
@@ -254,11 +254,11 @@
             // 
             // button_opencsv
             // 
-            this.button_opencsv.Location = new System.Drawing.Point(272, 632);
+            this.button_opencsv.Location = new System.Drawing.Point(288, 632);
             this.button_opencsv.Name = "button_opencsv";
             this.button_opencsv.Size = new System.Drawing.Size(70, 23);
             this.button_opencsv.TabIndex = 27;
-            this.button_opencsv.Text = "open csv";
+            this.button_opencsv.Text = "open";
             this.button_opencsv.UseVisualStyleBackColor = true;
             this.button_opencsv.Click += new System.EventHandler(this.button_csv_Click);
             // 
@@ -310,9 +310,9 @@
             this.checkBox_filter_csv.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkBox_filter_csv.Location = new System.Drawing.Point(133, 404);
             this.checkBox_filter_csv.Name = "checkBox_filter_csv";
-            this.checkBox_filter_csv.Size = new System.Drawing.Size(59, 17);
+            this.checkBox_filter_csv.Size = new System.Drawing.Size(39, 17);
             this.checkBox_filter_csv.TabIndex = 33;
-            this.checkBox_filter_csv.Text = "csv file";
+            this.checkBox_filter_csv.Text = "file";
             this.toolTip1.SetToolTip(this.checkBox_filter_csv, "Excludes benchmarks for which there is an entry in the csv file. If unchecked the" +
         " csv file is reset.");
             this.checkBox_filter_csv.UseVisualStyleBackColor = true;
@@ -354,7 +354,7 @@
             // 
             // button_import
             // 
-            this.button_import.Location = new System.Drawing.Point(348, 632);
+            this.button_import.Location = new System.Drawing.Point(364, 632);
             this.button_import.Name = "button_import";
             this.button_import.Size = new System.Drawing.Size(70, 23);
             this.button_import.TabIndex = 38;
@@ -417,11 +417,11 @@
             // chk_resetcsv
             // 
             this.chk_resetcsv.AutoSize = true;
-            this.chk_resetcsv.Location = new System.Drawing.Point(275, 662);
+            this.chk_resetcsv.Location = new System.Drawing.Point(291, 662);
             this.chk_resetcsv.Name = "chk_resetcsv";
-            this.chk_resetcsv.Size = new System.Drawing.Size(69, 17);
+            this.chk_resetcsv.Size = new System.Drawing.Size(65, 17);
             this.chk_resetcsv.TabIndex = 62;
-            this.chk_resetcsv.Text = "reset csv";
+            this.chk_resetcsv.Text = "reset file";
             this.toolTip1.SetToolTip(this.chk_resetcsv, "start from an empty csv file (note that if \'csv file\' is checked then the file is" +
         " not reset)");
             this.chk_resetcsv.UseVisualStyleBackColor = true;
@@ -500,7 +500,7 @@
             // csv
             // 
             this.csv.FormattingEnabled = true;
-            this.csv.Location = new System.Drawing.Point(61, 632);
+            this.csv.Location = new System.Drawing.Point(81, 632);
             this.csv.Name = "csv";
             this.csv.Size = new System.Drawing.Size(205, 21);
             this.csv.TabIndex = 51;
@@ -550,7 +550,7 @@
             this.deleteAllfailBenchmarksToolStripMenuItem,
             this.clearParamDataToolStripMenuItem});
             this.cleanupToolStripMenuItem1.Name = "cleanupToolStripMenuItem1";
-            this.cleanupToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
+            this.cleanupToolStripMenuItem1.Size = new System.Drawing.Size(169, 22);
             this.cleanupToolStripMenuItem1.Text = "Cleanup";
             // 
             // toolStripMenuItem1
@@ -598,7 +598,7 @@
             this.editToolStripMenuItem,
             this.refreshMenusToolStripMenuItem});
             this.editHistoryFileToolStripMenuItem.Name = "editHistoryFileToolStripMenuItem";
-            this.editHistoryFileToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.editHistoryFileToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
             this.editHistoryFileToolStripMenuItem.Text = "History file";
             // 
             // editToolStripMenuItem
@@ -615,24 +615,31 @@
             this.refreshMenusToolStripMenuItem.Text = "Refresh menus";
             this.refreshMenusToolStripMenuItem.Click += new System.EventHandler(this.refreshMenusToolStripMenuItem_Click);
             // 
+            // openOutFileToolStripMenuItem
+            // 
+            this.openOutFileToolStripMenuItem.Name = "openOutFileToolStripMenuItem";
+            this.openOutFileToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
+            this.openOutFileToolStripMenuItem.Text = "open out file";
+            this.openOutFileToolStripMenuItem.Click += new System.EventHandler(this.openOutFileToolStripMenuItem_Click);
+            // 
             // markFailsToolStripMenuItem
             // 
             this.markFailsToolStripMenuItem.Name = "markFailsToolStripMenuItem";
-            this.markFailsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.markFailsToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
             this.markFailsToolStripMenuItem.Text = "mark fails";
             this.markFailsToolStripMenuItem.Click += new System.EventHandler(this.button_mark_fails_Click);
             // 
             // markwinner
             // 
             this.markwinner.Name = "markwinner";
-            this.markwinner.Size = new System.Drawing.Size(180, 22);
+            this.markwinner.Size = new System.Drawing.Size(169, 22);
             this.markwinner.Text = "mark winners";
             this.markwinner.Click += new System.EventHandler(this.markwinner_Click);
             // 
             // configToolStripMenuItem
             // 
             this.configToolStripMenuItem.Name = "configToolStripMenuItem";
-            this.configToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.configToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
             this.configToolStripMenuItem.Text = "Advanced Config.";
             this.configToolStripMenuItem.ToolTipText = "Press \'Reload Config\' after change.";
             this.configToolStripMenuItem.Click += new System.EventHandler(this.configToolStripMenuItem_Click);
@@ -640,7 +647,7 @@
             // reloadConfigToolStripMenuItem
             // 
             this.reloadConfigToolStripMenuItem.Name = "reloadConfigToolStripMenuItem";
-            this.reloadConfigToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.reloadConfigToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
             this.reloadConfigToolStripMenuItem.Text = "Reload Config.";
             this.reloadConfigToolStripMenuItem.Click += new System.EventHandler(this.reloadConfigToolStripMenuItem_Click);
             // 
@@ -764,13 +771,6 @@
             this.label15.Size = new System.Drawing.Size(47, 13);
             this.label15.TabIndex = 69;
             this.label15.Text = "Work-dir";
-            // 
-            // openOutFileToolStripMenuItem
-            // 
-            this.openOutFileToolStripMenuItem.Name = "openOutFileToolStripMenuItem";
-            this.openOutFileToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.openOutFileToolStripMenuItem.Text = "open out file";
-            this.openOutFileToolStripMenuItem.Click += new System.EventHandler(this.openOutFileToolStripMenuItem_Click);
             // 
             // filter
             // 
