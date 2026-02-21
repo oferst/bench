@@ -98,6 +98,7 @@
             this.button2 = new System.Windows.Forms.Button();
             this.wdir = new System.Windows.Forms.ComboBox();
             this.label15 = new System.Windows.Forms.Label();
+            this.checkBox_wsl = new System.Windows.Forms.CheckBox();
             this.menuStrip1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
@@ -118,10 +119,10 @@
             // 
             this.listBox1.FormattingEnabled = true;
             this.listBox1.HorizontalScrollbar = true;
-            this.listBox1.Location = new System.Drawing.Point(0, 25);
+            this.listBox1.Location = new System.Drawing.Point(4, 25);
             this.listBox1.Name = "listBox1";
             this.listBox1.SelectionMode = System.Windows.Forms.SelectionMode.MultiSimple;
-            this.listBox1.Size = new System.Drawing.Size(744, 238);
+            this.listBox1.Size = new System.Drawing.Size(740, 238);
             this.listBox1.TabIndex = 2;
             this.listBox1.TabStop = false;
             // 
@@ -425,6 +426,7 @@
             this.toolTip1.SetToolTip(this.chk_resetcsv, "start from an empty csv file (note that if \'csv file\' is checked then the file is" +
         " not reset)");
             this.chk_resetcsv.UseVisualStyleBackColor = true;
+            this.chk_resetcsv.Leave += new System.EventHandler(this.checkBox_CheckedChanged);
             // 
             // maxfiles
             // 
@@ -772,11 +774,23 @@
             this.label15.TabIndex = 69;
             this.label15.Text = "Work-dir";
             // 
+            // checkBox_wsl
+            // 
+            this.checkBox_wsl.AutoSize = true;
+            this.checkBox_wsl.Location = new System.Drawing.Point(553, 679);
+            this.checkBox_wsl.Name = "checkBox_wsl";
+            this.checkBox_wsl.Size = new System.Drawing.Size(41, 17);
+            this.checkBox_wsl.TabIndex = 70;
+            this.checkBox_wsl.Text = "wsl";
+            this.checkBox_wsl.UseVisualStyleBackColor = true;
+            this.checkBox_wsl.CheckedChanged += new System.EventHandler(this.checkbox_wsl_CheckedChanged);
+            // 
             // filter
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(780, 782);
+            this.Controls.Add(this.checkBox_wsl);
             this.Controls.Add(this.label15);
             this.Controls.Add(this.wdir);
             this.Controls.Add(this.button_putty);
@@ -910,6 +924,7 @@
         private System.Windows.Forms.ComboBox wdir;
         private System.Windows.Forms.Label label15;
         private System.Windows.Forms.ToolStripMenuItem openOutFileToolStripMenuItem;
+        private System.Windows.Forms.CheckBox checkBox_wsl;
     }
 }
 

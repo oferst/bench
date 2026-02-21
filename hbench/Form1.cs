@@ -66,7 +66,7 @@ namespace bench
         enum fields
         {
             exe, dir, wdir, filter_str, maxfiles, csv, param, param_groups, stat_field, core_list, timeout, min_mem,  // combos
-            checkBox_skip_long_runs, checkBox_remote, checkBox_rec, checkBox_rerun_empty_out, checkBox_filter_out, checkBox_filter_csv, checkBox_copy, // checkboxes
+            checkBox_skip_long_runs, checkBox_wsl, checkBox_remote, checkBox_rec, checkBox_rerun_empty_out, checkBox_filter_out, checkBox_filter_csv, checkBox_copy, chk_resetcsv, // checkboxes
             misc
         }; // elements maintained in the history file
         enum header_fields { exedate, param, dir, bench, fail }; // these are not reported in the out files, yet they are part of each record. 
@@ -128,15 +128,18 @@ namespace bench
                 checkedListBox_cores.Items.Add("c" + i.ToString());
 
             ToolTip scatter_tt = new ToolTip();
+            scatter_tt.IsBalloon = true;
+            scatter_tt.ToolTipIcon = ToolTipIcon.Info;
 
             for (int i = 0; i < param_list_size; ++i)
             {
                 param_list[i] = new TextBox();
                 param_list[i].Location = new Point(60, i * 25);
                 param_list[i].Size = new Size(640, 20);
+                param_list[i].BorderStyle = BorderStyle.FixedSingle;
+                param_list[i].BackColor = Color.White;
                 param_list[i].Leave += new System.EventHandler(this.textBox_Leave);
                 panel1.Controls.Add(param_list[i]);
-
 
                 scatter1[i] = new RadioButton();
                 scatter1[i].Location = new Point(0, i * 25);
@@ -289,6 +292,11 @@ namespace bench
         // called from background-worker thread
         string expand_string(string s, string filename, string param = "", string outfilename = "")  // the last two are used for remote execution
         {
+            if (checkBox_wsl.Checked)
+            {
+                filename = windowsToWslPath(filename);
+                outfilename = windowsToWslPath(outfilename);
+            }
             string res = s.Replace("%f", filename).Replace("%p", param).Replace("%o", outfilename);
             if (res == s) return res;
             else return expand_string(res, filename, param, outfilename);  // recursive because the replacing strings may contain %directives themselves.
@@ -478,6 +486,7 @@ namespace bench
                     lines = File.ReadAllLines(csv.Text).ToList<string>();
                     foreach (var l in lines)
                     {
+                        if (l.Trim() == "") continue;
                         row = l.Split(',').ToList<string>();
                         res.Add(row);
                     }
@@ -842,7 +851,7 @@ namespace bench
             scrolldown();
             if (bg != null)
             {
-                bg.Abort();
+                //bg.Abort();
                 bg.Dispose();
             }
         }
@@ -857,7 +866,7 @@ namespace bench
             }
             if (bg != null)
             {
-                bg.Abort();
+                //bg.Abort();
                 bg.Dispose();
             }
         }
@@ -867,8 +876,8 @@ namespace bench
             listBox1.Items.Add("Preparing data for csv file");
             int in_csv = 0;
 
-            filter_str.BeginInvoke(new Action(() => { searchPattern = filter_str.Text; }));
-            dir.BeginInvoke(new Action(() => { benchmarksDir = dir.Text; }));
+            filter_str.Invoke(new Action(() => { searchPattern = filter_str.Text; }));
+            dir.Invoke(new Action(() => { benchmarksDir = dir.Text; }));
             var fileEntries = getFilesInDir();
             if (fileEntries.Count == 0)
             {
@@ -1251,7 +1260,7 @@ namespace bench
             p.StartInfo.UseShellExecute = false;
             p.StartInfo.RedirectStandardOutput = true;
             p.StartInfo.CreateNoWindow = true;
-            dir.BeginInvoke(new Action(() => { local_dir_Text = dir.Text; }));
+            dir.Invoke(new Action(() => { local_dir_Text = dir.Text; }));
             p.StartInfo.WorkingDirectory = local_dir_Text;    // when executing a scp command, this will bring the files to the benchmarks dir. 
 
 
@@ -1273,20 +1282,59 @@ namespace bench
 
         }
 
+        string windowsToWslPath(string winPath) {
+
+        if (!checkBox_wsl.Checked) return winPath; // Not Windows, return as is
+
+        if (winPath.Length < 2 || winPath[1] != ':') {
+			return winPath; // Not an absolute path with drive letter
+        }
+
+        // Extract drive letter and convert to lowercase
+        char drive = char.ToLower(winPath[0]);
+
+        // Start building the WSL path
+        string wslPath = "/mnt/";
+        wslPath += drive;
+
+        // Add the rest of the path, replacing backslashes with forward slashes
+        for (int i = 2; i<winPath.Length; ++i) {
+            if (winPath[i] == '\\')
+                wslPath += '/';
+            else
+                wslPath += winPath[i];
+        }
+
+        return wslPath;
+    }
+
+
         // called from background-worker thread
         Process run(string cmd, string args, string outfilename, int affinity = 0x007F)
         {
 
             Process p = new Process();
             string text = "";
-            wdir.BeginInvoke(new Action(() => { text = wdir.Text; }));
+            wdir.Invoke(new Action(() => { text = wdir.Text; }));
             if (text != "") 
                 p.StartInfo.WorkingDirectory = text;
             else
             p.StartInfo.WorkingDirectory = Path.GetDirectoryName(outfilename);
 
-            p.StartInfo.FileName = cmd;
-            p.StartInfo.Arguments = remove_label(args);
+            if (checkBox_wsl.Checked)
+            {                
+                p.StartInfo.FileName = "wsl";
+                cmd = windowsToWslPath(cmd);
+                if (timeout_val > 0 && timeout_val != Timeout.Infinite) 
+                    cmd = "timeout " + timeout_val/1000 + "s " + cmd; 
+                p.StartInfo.Arguments = cmd + " " + remove_label(args);
+                bg.ReportProgress(0, "Running in WSL mode. Command is: " + p.StartInfo.Arguments);
+            }
+            else
+            {
+                p.StartInfo.FileName = cmd;
+                p.StartInfo.Arguments = remove_label(args);
+            }
 
             p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
             p.StartInfo.UseShellExecute = false;
@@ -1295,6 +1343,7 @@ namespace bench
 
             //process.MaxWorkingSet = new IntPtr(2000000000); //2Gb                
 
+            
             if (File.Exists(outfilename)) File.Delete(outfilename);
             p.OutputDataReceived += (s, e) => File.AppendAllText(outfilename, e.Data + "\n");
             try
@@ -1305,8 +1354,11 @@ namespace bench
             catch { MessageBox.Show("cannot start process" + p.StartInfo.FileName); throw; }
 
 
-            p.ProcessorAffinity = (IntPtr)affinity;
-            p.PriorityClass = ProcessPriorityClass.RealTime;
+            if (!checkBox_wsl.Checked)
+            {
+                p.ProcessorAffinity = (IntPtr)affinity;
+                p.PriorityClass = ProcessPriorityClass.RealTime;
+            }
 
             var timer = new System.Threading.Timer(kill_process, p, timeout_val > 0 ? timeout_val : -1, Timeout.Infinite);           
             return p;
@@ -1451,13 +1503,14 @@ namespace bench
                                         }
                                         else
                                         {
-                                            bg.ReportProgress(0, "running " + fileName + " on core " + i.ToString());
+                                            if (!checkBox_wsl.Checked)
+                                                bg.ReportProgress(0, "running " + fileName + " on core " + i.ToString());
                                             cnt_success++;
                                             bg.ReportProgress(3, cnt_success.ToString()); // label_cnt.Text 
                                             string local_exe_Text = "";
-                                            exe.BeginInvoke(new Action(() => { local_exe_Text = exe.Text; })); // since we are not on the form's thread, this is a safe way to get information from there. Without it we may get an exception.
+                                            exe.Invoke(new Action(() => { local_exe_Text = exe.Text; })); // since we are not on the form's thread, this is a safe way to get information from there. Without it we may get an exception.
                                                                                                           // string local_param_list_text = "";
-                                                                                                          //param_list[par].BeginInvoke(new Action(() => { local_param_list_text = ext_param_list[par]; })); // since we are not on the form's thread, this is a safe way to get information from there. Without it we may get an exception.
+                                                                                                          //param_list[par].Invoke(new Action(() => { local_param_list_text = ext_param_list[par]; })); // since we are not on the form's thread, this is a safe way to get information from there. Without it we may get an exception.
                                             p[i] = run(local_exe_Text, expand_string(param, fileName), outfilename, 1 << (i - 1));
                                             Dictionary<string, float> l = new Dictionary<string, float>();
                                             processes[p[i]] = new benchmark(param, fileName, l);
@@ -1670,7 +1723,9 @@ namespace bench
             else { // local
                 int ind1 = exe.Text.LastIndexOf('\\'),  // we cannot use Path.GetFileNameWithoutExtension because the string may contain "
                 ind2 = exe.Text.LastIndexOf('.');
-                string exe_text = exe.Text.Substring(ind1 + 1, ind2 - ind1 - 1);
+                string exe_text;
+                if (ind1 == -1 || ind2 == -1 || ind2 < ind1) exe_text = Path.GetFileNameWithoutExtension(exe.Text);
+                else exe_text = exe.Text.Substring(ind1 + 1, ind2 - ind1 - 1);
                 if (MessageBox.Show("Delete all processes called " + exe_text + "?", "Confirm kill processes", MessageBoxButtons.YesNo) != DialogResult.Yes) return;
 
                 Process[] Pr = Process.GetProcessesByName(exe_text);
@@ -1703,7 +1758,7 @@ namespace bench
 
             if (bg != null)
             {
-                bg.Abort();
+                //bg.Abort();
                 bg.Dispose();
             }
             scrolldown();
@@ -1868,6 +1923,7 @@ namespace bench
         {
             timeout.Enabled = wdir.Enabled = min_mem.Enabled = exe.Enabled = checkedListBox_cores.Enabled = !(((CheckBox)sender).Checked);
             checkBox_copy.Enabled = /*button_import.Enabled =*/ (((CheckBox)sender).Checked);
+            checkBox_wsl.Enabled = !(((CheckBox)sender).Checked);
             checkBox_CheckedChanged(sender, e);
         }
 
@@ -2009,7 +2065,6 @@ namespace bench
             
             List<List<string>> table = getDataFromFile();
             List<string> header = table[0];
-            
             if (get_field(header, header_fields.param) != "param")
             {
                 listBox1.Items.Add("No heade line, Aborting.");
@@ -2028,9 +2083,7 @@ namespace bench
             table.RemoveAt(0);
 
             HashSet<string> failed_atleast_once = new HashSet<string>();
-
             int cnt = 0;
-
             // finding failed benchmarks 
             int timeout_idx = get_field_idx(header, timedout_Tag);
 
@@ -2147,8 +2200,8 @@ namespace bench
             listBox1.Items.Add("--- Importing ---");
             listBox1.Refresh();
             scrolldown();
-            dir.BeginInvoke(new Action(() => { benchmarksDir = dir.Text; }));
-            filter_str.BeginInvoke(new Action(() => { searchPattern = filter_str.Text; }));
+            dir.Invoke(new Action(() => { benchmarksDir = dir.Text; }));
+            filter_str.Invoke(new Action(() => { searchPattern = filter_str.Text; }));
             var fileEntries = getFilesInDir();
             if (fileEntries.Count == 0) listBox1.Items.Add("empty file list\n");
 
@@ -2172,8 +2225,8 @@ namespace bench
                 for (int par = 0; par < ext_param_list.Count; ++par)  // for each parameter
                 {
                     string param = (engine == 0) ? ext_param_list[par] : remove_label(ext_param_list[par] ) + labelTag + ConfigurationManager.AppSettings["remote_ssh_cmd1_label"];
+
                     if (true) // the new way: create a summary file with all lines remotely, and parse it locally. 
-                        // This is much faster that doing it separately for each flie. 
                     {
                         string suffix = "*" + normalize_string(param) + ".out";
                         string cmd;
@@ -2536,13 +2589,13 @@ namespace bench
             );
             if (userInput != "")
             {
-                // Pattern to match (e.g. all .log files)
+                // Pattern to match (e.g., all .log files)
                 string pattern = "*" + normalize_string(userInput) + ".out";
 
                 try
                 {
                     // Get all files matching the pattern
-                    string[] files = Directory.GetFiles(benchmarksDir, pattern);
+                    string[] files = Directory.GetFiles(benchmarksDir, pattern, SearchOption.AllDirectories);
 
                     foreach (string file in files)
                     {
@@ -2552,14 +2605,16 @@ namespace bench
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("Error: " + ex.Message);
+                    listBox1.Items.Add("Error: " + ex.Message);
+                    return;
                 }
+                
+                listBox1.Items.Add("Clearing entries from " + csv.Text);
                 List<List<string>> outlines = new List<List<string>>();
-
                 List<List<string>> table = getDataFromFile();
                 foreach (List<string> row in table)
                 {
-                    if (!row.Contains(userInput)) {
+                    if (!row.Contains(userInput) && !row.Contains(id_prefix+userInput)) {
                         outlines.Add(row);
                     }
                 }
@@ -2598,6 +2653,12 @@ namespace bench
                 p.StartInfo.Arguments = outfilename;
                 p.Start();
             }
+        }
+
+        private void checkbox_wsl_CheckedChanged(object sender, EventArgs e)
+        {
+            checkBox_copy.Enabled = checkBox_remote.Enabled = !(((CheckBox)sender).Checked);
+            checkBox_CheckedChanged(sender, e);
         }
 
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
