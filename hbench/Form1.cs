@@ -705,6 +705,7 @@ namespace bench
                 return false;
             }
             string line;
+            listBox1.Items.Add("processing " + filename);
 
             while ((line = file.ReadLine()) != null)
             {
@@ -867,7 +868,7 @@ namespace bench
             if (bg != null)
             {
                 //bg.Abort();
-                bg.Dispose();
+                bg.Dispose(); 
             }
         }
 
@@ -957,17 +958,19 @@ namespace bench
             return true;
         }
 
+        // resets the tab to 'values'.
         public static void ExcelWrite(string filePath, List<List<string>> values)
         {
-            if (!File.Exists(filePath))
-                throw new FileNotFoundException("Excel file not found", filePath);
+            var file = new FileInfo(filePath);
 
-            using (var package = new ExcelPackage(new FileInfo(filePath)))
+            using (var package = new ExcelPackage(file.Exists ? file : new FileInfo(filePath)))
             {
-                var worksheet = package.Workbook.Worksheets[ConfigurationManager.AppSettings["ExcelTabName"]];
+                string sheetname = ConfigurationManager.AppSettings["ExcelTabName"];
+                var worksheet = package.Workbook.Worksheets[sheetname];
                 if (worksheet == null)
-                    throw new System.Exception("Worksheet " + ConfigurationManager.AppSettings["ExcelTabName"] + " not found");
-                                
+                    worksheet = package.Workbook.Worksheets.Add(sheetname);
+
+                worksheet.Cells.Clear();
                 for (int row = 1; row <= values.Count; ++row)
                 {
                     for (int col = 1; col <= values[row-1].Count; col++)
@@ -1055,8 +1058,9 @@ namespace bench
             // add the header: 
             if (existingEntries.Count == 0)
             {
-                string[] hd = (Enum.GetNames(typeof(header_fields)));
-                table.Add(hd.ToList<string>());
+                List<string> hd = (Enum.GetNames(typeof(header_fields))).ToList<string>();
+                hd = hd.Concat<string>(labels).ToList();
+                table.Add(hd);
             }
             
             foreach (var entry in processes)
@@ -1272,7 +1276,7 @@ namespace bench
             string output = "";
             if (wait)
             {
-             //   output = p.StandardOutput.ReadToEnd();
+                output = p.StandardOutput.ReadToEnd();
                 p.WaitForExit();
                 // returns <exist-status, command, output of command>                
                 return new Tuple<int, string, string>(p.ExitCode, "> " + p.StartInfo.FileName + " " + p.StartInfo.Arguments, output);
@@ -2255,7 +2259,7 @@ namespace bench
                             string filename = cols[0].Substring(cols[0].LastIndexOf('/') + 1);
                             if (BenchmarkNamesFromCsv.Contains(filename)) { in_csv++; continue; }
                             if (filterOut(filename)) continue;
-                            listBox1.Items.Add($"{filename}");
+                            //listBox1.Items.Add($"{filename}");
                             string outline = cols[1] + " " + cols[2] + " " + cols[3] + "\n";
                             if (!data.ContainsKey(cols[0])) data[cols[0]] = new List<string>();
                             data[cols[0]].Add(outline);
@@ -2281,6 +2285,7 @@ namespace bench
                             if (File.Exists(fileName)) File.Delete(fileName);
                             foreach (string t in d.Value) File.AppendAllText(fileName, t);
                         }
+                        imported = data.Keys.Count;
                     }
                     else
                     {
@@ -2322,7 +2327,7 @@ namespace bench
             }
 
             listBox1.Items.Add(in_csv.ToString() + " benchmarks already in the csv file.");
-            listBox1.Items.Add(imported.ToString() + " imported.");
+            listBox1.Items.Add( imported + " files imported.");
             return true;
         }
 
